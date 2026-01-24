@@ -39,8 +39,9 @@ export default function AdminChatPage() {
 
   const loadChat = async (targetUser: any) => {
     setActiveChat(targetUser);
-    setMessages([]); // FIX: Reset state saat ganti chat
+    setMessages([]); // Reset UI instan
     try {
+      // Ambil ID yang benar-benar baru
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/chat/${targetUser.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -51,12 +52,23 @@ export default function AdminChatPage() {
   const handleSend = () => {
     if (!input || !activeChat) return;
     const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '');
+    
+    // Pastikan targetUserId benar-benar ID user yang sedang aktif dibuka
     socket.emit('sendMessage', {
       content: input,
       senderId: user?.id,
       isAdmin: true,
-      targetUserId: activeChat.id
+      targetUserId: activeChat.id 
     });
+    
+    // Optimistic Update (Biar kerasa cepet)
+    setMessages(prev => [...prev, {
+      content: input,
+      senderId: user?.id,
+      isAdmin: true,
+      createdAt: new Date().toISOString()
+    }]);
+    
     setInput('');
   };
 
