@@ -2,7 +2,7 @@
 
 import Navbar from '@/components/Navbar';
 import { useCartStore } from '@/store/useCartStore';
-import { Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CartPage() {
@@ -13,9 +13,12 @@ export default function CartPage() {
       <div className="min-h-screen bg-white">
         <Navbar />
         <main className="max-w-7xl mx-auto px-8 py-32 text-center">
-          <h1 className="text-4xl font-bold mb-4">Keranjang Kosong</h1>
-          <p className="text-gray-500 mb-8">Anda belum menambahkan produk apapun ke keranjang.</p>
-          <Link href="/products" className="inline-flex items-center space-x-2 px-8 py-4 bg-black text-white font-medium hover:bg-gray-800 transition-colors">
+          <div className="bg-gray-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShoppingBag size={40} className="text-gray-300"/>
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Keranjang Belanja Kosong</h1>
+          <p className="text-gray-500 mb-8">Wah, keranjangmu masih kosong nih. Yuk isi dengan produk keren!</p>
+          <Link href="/products" className="inline-flex items-center space-x-2 px-8 py-3 bg-black text-white font-medium rounded-full hover:bg-gray-800 transition-colors">
             <span>Mulai Belanja</span>
             <ArrowRight size={18} />
           </Link>
@@ -25,67 +28,82 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-8 py-12">
-        <h1 className="text-4xl font-bold mb-12 tracking-tight">Keranjang Belanja</h1>
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-12 pt-24">
+        <h1 className="text-3xl font-bold mb-8">Keranjang Belanja ({items.length})</h1>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-          <div className="lg:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Cart Items */}
+          <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
-              <div key={item.id} className="flex gap-6 pb-8 border-b border-gray-100 last:border-0">
-                <div className="w-24 h-24 bg-gray-100 flex-shrink-0">
+              <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-6 items-center">
+                <div className="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
                   {item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}
                 </div>
-                <div className="flex-grow">
-                  <div className="flex justify-between mb-2">
-                    <h3 className="font-bold">{item.name}</h3>
-                    <button onClick={() => removeItem(item.id)} className="text-gray-400 hover:text-black transition-colors">
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                  <p className="text-sm text-gray-500 mb-4">Rp {item.price.toLocaleString('id-ID')}</p>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center border border-gray-200">
+                
+                <div className="flex-grow min-w-0">
+                  <h3 className="font-bold text-lg mb-1 truncate">{item.name}</h3>
+                  <p className="text-sm font-medium text-gray-500 mb-4">Rp {item.price.toLocaleString('id-ID')}</p>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200">
                       <button 
                         onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                        className="p-2 hover:bg-gray-50 transition-colors"
+                        className="p-2 hover:bg-gray-200 rounded-l-lg transition-colors"
                       >
                         <Minus size={14} />
                       </button>
-                      <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                      <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
                       <button 
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="p-2 hover:bg-gray-50 transition-colors"
+                        className="p-2 hover:bg-gray-200 rounded-r-lg transition-colors"
                       >
                         <Plus size={14} />
                       </button>
                     </div>
+                    <button 
+                      onClick={() => removeItem(item.id)} 
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                      title="Hapus"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="bg-gray-50 p-8 h-fit">
-            <h2 className="text-xl font-bold mb-6">Ringkasan Pesanan</h2>
-            <div className="space-y-4 mb-8">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Subtotal</span>
-                <span>Rp {total().toLocaleString('id-ID')}</span>
+          {/* Summary Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
+              <h2 className="text-xl font-bold mb-6">Ringkasan</h2>
+              <div className="space-y-3 mb-6 border-b border-gray-50 pb-6">
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>Subtotal</span>
+                  <span>Rp {total().toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>Pajak & Biaya</span>
+                  <span className="text-green-600 font-bold">Rp 0</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Biaya Layanan</span>
-                <span>Gratis</span>
+              
+              <div className="flex justify-between items-center mb-8">
+                <span className="font-bold text-lg">Total</span>
+                <span className="font-black text-2xl">Rp {total().toLocaleString('id-ID')}</span>
               </div>
-              <div className="pt-4 border-t border-gray-200 flex justify-between font-bold text-lg">
-                <span>Total</span>
-                <span>Rp {total().toLocaleString('id-ID')}</span>
-              </div>
+
+              <Link href="/checkout" className="w-full py-4 bg-black text-white font-bold rounded-xl flex items-center justify-center space-x-2 hover:bg-gray-800 transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-black/20">
+                <span>Checkout Sekarang</span>
+                <ArrowRight size={18} />
+              </Link>
+              
+              <p className="text-center text-xs text-gray-400 mt-4">
+                Transaksi aman & terenkripsi.
+              </p>
             </div>
-            <Link href="/checkout" className="w-full py-4 bg-black text-white font-medium flex items-center justify-center space-x-2 hover:bg-gray-800 transition-colors">
-              <span>Lanjut ke Checkout</span>
-            </Link>
           </div>
         </div>
       </main>

@@ -21,11 +21,15 @@ export default function MyOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('ALL');
-  const { token } = useAuthStore();
+  const { token, hasHydrated } = useAuthStore(); // Ambil hasHydrated
   const router = useRouter();
 
   useEffect(() => {
+    // Jika belum hydrated, jangan ngapa-ngapain dulu (Tunggu data load)
+    if (!hasHydrated) return;
+
     if (!token) { router.push('/login'); return; }
+    
     const fetchOrders = async () => {
       try {
         const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/orders/my`, {
@@ -35,7 +39,9 @@ export default function MyOrdersPage() {
       } catch (error) { console.error(error); } finally { setLoading(false); }
     };
     fetchOrders();
-  }, [token, router]);
+  }, [token, router, hasHydrated]);
+
+  if (!hasHydrated) return null; // Layar putih sebentar saat loading storage
 
   const filteredOrders = orders.filter(o => {
     if (activeTab === 'ALL') return true;

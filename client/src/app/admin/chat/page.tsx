@@ -24,7 +24,7 @@ export default function AdminChatPage() {
     s.on('connect', () => setIsConnected(true));
     s.on('disconnect', () => setIsConnected(false));
 
-    s.on('receiveMessage', (msg) => {
+    socket.on('receiveMessage', (msg) => {
       // Hanya masukkan ke layar jika pesan milik user yang sedang dibuka
       // atau pesan dari admin sendiri yang ditujukan ke user tersebut
       setMessages((prev) => {
@@ -39,7 +39,13 @@ export default function AdminChatPage() {
       fetchConversations();
     });
 
-    return () => { s.disconnect(); };
+    // Cleanup function yang sangat penting!
+    return () => { 
+      socket.off('receiveMessage');
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.disconnect(); 
+    };
   }, [activeChat?.id]); // Re-subscribe when activeChat changes
 
   const fetchConversations = async () => {
