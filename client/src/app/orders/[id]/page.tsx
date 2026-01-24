@@ -16,7 +16,8 @@ interface OrderDetail {
   snapToken?: string;
   deliveryInfo?: string;
   refundReason?: string;
-  refundStatus?: string; // Derived from status usually, but let's rely on status enum
+  refundAccount?: string; // Added this line
+  refundStatus?: string; 
   createdAt: string;
   items: {
     product: { name: string; images: string[]; type: string };
