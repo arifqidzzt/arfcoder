@@ -18,6 +18,7 @@ interface Order {
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [activeTab, setActiveTab] = useState('ALL');
   const { token } = useAuthStore();
 
   const fetchOrders = async () => {
@@ -35,17 +36,25 @@ export default function AdminOrdersPage() {
     if (token) fetchOrders();
   }, [token]);
 
-  const updateStatus = async (id: string, status: string) => {
-    try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/orders/${id}`, { status }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success('Status pesanan diperbarui');
-      fetchOrders();
-    } catch (error) {
-      toast.error('Gagal update status');
-    }
-  };
+  // Filter Orders based on Tab
+  const filteredOrders = orders.filter(o => {
+    if (activeTab === 'ALL') return true;
+    if (activeTab === 'UNPAID') return o.status === 'PENDING';
+    if (activeTab === 'PROCESS') return o.status === 'PAID' || o.status === 'PROCESSING';
+    if (activeTab === 'SHIPPED') return o.status === 'SHIPPED';
+    if (activeTab === 'DONE') return o.status === 'COMPLETED';
+    if (activeTab === 'CANCEL') return o.status === 'CANCELLED' || o.status === 'REFUND_REQUESTED';
+    return false;
+  });
+
+  const tabs = [
+    { id: 'ALL', label: 'Semua' },
+    { id: 'UNPAID', label: 'Belum Bayar' },
+    { id: 'PROCESS', label: 'Perlu Proses' },
+    { id: 'SHIPPED', label: 'Dikirim' },
+    { id: 'DONE', label: 'Selesai' },
+    { id: 'CANCEL', label: 'Batal/Refund' },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -60,7 +69,21 @@ export default function AdminOrdersPage() {
            </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-200 mb-6 overflow-x-auto bg-white rounded-t-xl px-4 pt-2">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+                ${activeTab === tab.id ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="bg-white rounded-b-xl border border-gray-200 border-t-0 shadow-sm overflow-hidden">
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
@@ -73,34 +96,33 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-mono font-medium">{order.invoiceNumber}</td>
-                  <td className="px-6 py-4">
-                    <p className="font-medium">{order.user.name}</p>
-                    <p className="text-xs text-gray-400">{order.user.email}</p>
-                  </td>
-                  <td className="px-6 py-4">Rp {order.totalAmount.toLocaleString('id-ID')}</td>
-                  <td className="px-6 py-4">
-                    <select 
-                      value={order.status}
-                      onChange={(e) => updateStatus(order.id, e.target.value)}
-                      className="bg-white border border-gray-200 rounded px-2 py-1 text-xs font-bold"
-                    >
-                      <option value="PENDING">PENDING</option>
-                      <option value="PAID">PAID</option>
-                      <option value="COMPLETED">COMPLETED</option>
-                      <option value="CANCELLED">CANCELLED</option>
-                    </select>
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href={`/admin/orders/${order.id}`} className="inline-flex items-center gap-1 bg-black text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors">
-                      Kelola / Kirim
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {filteredOrders.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-10 text-gray-400">Tidak ada pesanan di status ini.</td></tr>
+              ) : (
+                filteredOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-mono font-medium">{order.invoiceNumber}</td>
+                    <td className="px-6 py-4">
+                      <p className="font-medium">{order.user.name}</p>
+                      <p className="text-xs text-gray-400">{order.user.email}</p>
+                    </td>
+                    <td className="px-6 py-4">Rp {order.totalAmount.toLocaleString('id-ID')}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded text-xs font-bold 
+                        ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 
+                          order.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100'}`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-right">
+                      <Link href={`/admin/orders/${order.id}`} className="inline-flex items-center gap-1 bg-black text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors">
+                        Kelola
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

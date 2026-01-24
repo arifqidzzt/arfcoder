@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { ShieldCheck, Truck, CreditCard, ArrowRight, MapPin } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -22,131 +23,121 @@ export default function CheckoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Load Midtrans Snap script (Wajib agar popup muncul)
     const script = document.createElement('script');
     script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
     script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '');
     document.body.appendChild(script);
 
-    if (items.length === 0) {
-      router.push('/cart');
-    }
+    if (items.length === 0) router.push('/cart');
   }, [items, router]);
 
   const handleCheckout = async () => {
-    if (!user) {
-      toast.error('Silakan login terlebih dahulu');
-      router.push('/login');
-      return;
-    }
-
-    if (!address) {
-      toast.error('Alamat/Detail pesanan harus diisi');
-      return;
-    }
+    if (!user) return toast.error('Silakan login');
+    if (!address) return toast.error('Alamat/Catatan harus diisi');
 
     setLoading(true);
     try {
-      // 1. Buat order di database melalui Backend
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
         items: items.map(i => ({ productId: i.id, quantity: i.quantity })),
-        address: address
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+        address
+      }, { headers: { Authorization: `Bearer ${token}` } });
 
       const { snapToken } = res.data;
-
       if (snapToken && window.snap) {
-        // 2. Munculkan Popup Midtrans Snap
         window.snap.pay(snapToken, {
-          onSuccess: (result: any) => {
-            toast.success('Pembayaran Berhasil!');
-            clearCart();
-            router.push('/orders');
-          },
-          onPending: (result: any) => {
-            toast.success('Pesanan dibuat, silakan selesaikan pembayaran');
-            clearCart();
-            router.push('/orders');
-          },
-          onError: (err: any) => {
-            toast.error('Pembayaran Gagal');
-          },
-          onClose: () => {
-            toast('Selesaikan pembayaran nanti di menu Pesanan', { icon: 'ℹ️' });
-            clearCart();
-            router.push('/orders');
-          }
+          onSuccess: () => { toast.success('Pembayaran Berhasil!'); clearCart(); router.push('/orders'); },
+          onPending: () => { toast('Menunggu pembayaran...'); clearCart(); router.push('/orders'); },
+          onError: () => { toast.error('Pembayaran Gagal'); setLoading(false); },
+          onClose: () => { toast('Selesaikan pembayaran di menu Pesanan'); clearCart(); router.push('/orders'); }
         });
-      } else {
-        throw new Error('Gagal mendapatkan token pembayaran');
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Terjadi kesalahan saat checkout');
-    } finally {
+      toast.error('Gagal memproses pesanan');
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-8 py-12">
-        <h1 className="text-4xl font-bold mb-12 tracking-tight">Checkout</h1>
+      <main className="max-w-6xl mx-auto px-4 py-24 w-full">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">1</div>
+          <h1 className="text-3xl font-bold tracking-tight">Konfirmasi Pesanan</h1>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-24">
-          <div className="space-y-12">
-            <section>
-              <h2 className="text-xs font-bold uppercase tracking-widest mb-6 pb-2 border-b border-gray-100">Informasi Pengiriman / Detail Jasa</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Address Section */}
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+              <div className="flex items-center gap-2 mb-6 text-accent">
+                <MapPin size={20} />
+                <h2 className="font-bold uppercase tracking-wider text-sm">Alamat Pengiriman / Catatan Jasa</h2>
+              </div>
+              <textarea 
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                rows={4}
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all"
+                placeholder="Contoh: Jl. Sudirman No. 1 atau detail khusus untuk jasa koding..."
+              />
+            </div>
+
+            {/* Items Section */}
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+              <div className="flex items-center gap-2 mb-6">
+                <Truck size={20} />
+                <h2 className="font-bold uppercase tracking-wider text-sm">Rincian Produk</h2>
+              </div>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-gray-500 mb-2">Nama Lengkap</label>
-                  <input type="text" disabled value={user?.name || ''} className="w-full px-4 py-3 border border-gray-100 bg-gray-50 text-gray-400" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-500 mb-2">Alamat / Catatan Khusus</label>
-                  <textarea 
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors"
-                    placeholder="Masukkan alamat lengkap atau detail instruksi untuk jasa digital..."
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-xs font-bold uppercase tracking-widest mb-6 pb-2 border-b border-gray-100">Metode Pembayaran</h2>
-              <div className="p-4 border border-black bg-black text-white text-sm font-medium flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-                Midtrans Secure Payment (QRIS, Bank Transfer, Virtual Account)
-              </div>
-            </section>
-          </div>
-
-          <div className="bg-gray-50 p-8 h-fit rounded-2xl">
-            <h2 className="text-xl font-bold mb-6">Ringkasan Pesanan</h2>
-            <div className="space-y-4 mb-8">
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span className="text-gray-600">{item.name} x {item.quantity}</span>
-                  <span className="font-medium">Rp {(item.price * item.quantity).toLocaleString('id-ID')}</span>
-                </div>
-              ))}
-              <div className="pt-4 border-t border-gray-200 flex justify-between font-bold text-lg">
-                <span>Total Bayar</span>
-                <span>Rp {total().toLocaleString('id-ID')}</span>
+                {items.map((item) => (
+                  <div key={item.id} className="flex gap-4 py-4 border-b border-gray-50 last:border-0">
+                    <img src={item.image} className="w-20 h-20 rounded-xl object-cover bg-gray-100" />
+                    <div className="flex-1">
+                      <h3 className="font-bold text-sm">{item.name}</h3>
+                      <p className="text-xs text-gray-400 mt-1">{item.quantity} Barang</p>
+                    </div>
+                    <p className="font-bold text-sm">Rp {(item.price * item.quantity).toLocaleString()}</p>
+                  </div>
+                ))}
               </div>
             </div>
-            <button 
-              onClick={handleCheckout}
-              disabled={loading}
-              className="w-full py-4 bg-black text-white font-medium flex items-center justify-center space-x-2 hover:bg-gray-800 transition-colors disabled:bg-gray-400"
-            >
-              {loading ? 'Menghubungkan Midtrans...' : 'Bayar Sekarang'}
-            </button>
+          </div>
+
+          {/* Payment Summary Sidebar */}
+          <div className="space-y-6">
+            <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 sticky top-24">
+              <h2 className="text-xl font-bold mb-6">Ringkasan</h2>
+              <div className="space-y-4 mb-8">
+                <div className="flex justify-between text-gray-500">
+                  <span>Total Harga ({items.length} Barang)</span>
+                  <span>Rp {total().toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-gray-500">
+                  <span>Biaya Layanan</span>
+                  <span className="text-green-600 font-bold">Gratis</span>
+                </div>
+                <div className="pt-4 border-t flex justify-between items-center">
+                  <span className="font-medium">Total Bayar</span>
+                  <span className="text-2xl font-black text-accent">Rp {total().toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-2xl mb-8 flex items-start gap-3">
+                <ShieldCheck className="text-blue-600 shrink-0" size={20} />
+                <p className="text-[10px] text-blue-700 leading-relaxed">
+                  Pembayaran Anda aman dan terenkripsi melalui payment gateway Midtrans.
+                </p>
+              </div>
+
+              <button 
+                onClick={handleCheckout}
+                disabled={loading}
+                className="w-full py-4 bg-black text-white rounded-2xl font-bold hover:bg-gray-800 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:bg-gray-300"
+              >
+                {loading ? 'Memproses...' : 'Buat Pesanan'} <ArrowRight size={18} />
+              </button>
+            </div>
           </div>
         </div>
       </main>

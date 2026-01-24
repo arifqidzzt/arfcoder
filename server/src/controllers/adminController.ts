@@ -137,3 +137,11 @@ export const upsertService = async (req: Request, res: Response) => {
     res.json(service);
   } catch (error) { res.status(500).json({ message: 'Error', error }); }
 };
+
+export const deleteService = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await prisma.service.delete({ where: { id } });
+    res.json({ message: 'Service deleted' });
+  } catch (error) { res.status(500).json({ message: 'Error', error }); }
+};

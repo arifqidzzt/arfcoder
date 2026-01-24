@@ -74,7 +74,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleCancel = async () => {
-    if (!confirm('Yakin ingin membatalkan pesanan ini?')) return;
+    // Custom Confirmation Toast instead of Browser Alert
+    toast((t) => (
+      <div className="flex flex-col gap-2">
+        <span className="font-bold">Yakin batalkan pesanan?</span>
+        <div className="flex gap-2 justify-end">
+          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1 bg-gray-200 rounded text-xs">Tidak</button>
+          <button onClick={() => {
+            confirmCancel();
+            toast.dismiss(t.id);
+          }} className="px-3 py-1 bg-red-600 text-white rounded text-xs font-bold">Ya, Batalkan</button>
+        </div>
+      </div>
+    ), { duration: 5000 });
+  };
+
+  const confirmCancel = async () => {
     try {
       await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/orders/${id}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
