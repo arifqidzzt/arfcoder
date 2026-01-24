@@ -9,6 +9,8 @@ let snap = new midtransClient.Snap({
   clientKey: process.env.MIDTRANS_CLIENT_KEY,
 });
 
+// ... (createOrder, getMyOrders, getOrderById tetap sama)
+
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
     const { items, address } = req.body;
@@ -46,6 +48,14 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       },
       include: { items: true },
     });
+
+    // Kurangi Stok
+    for (const item of orderItemsData) {
+      await prisma.product.update({
+        where: { id: item.productId },
+        data: { stock: { decrement: item.quantity } }
+      });
+    }
 
     const parameter = {
       transaction_details: {
@@ -91,13 +101,10 @@ export const getMyOrders = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// New Function: Get Single Order Detail
 export const getOrderById = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
-    
-    // Explicitly cast id to string to satisfy TS
     const orderId = id as string;
 
     const whereClause: any = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN' 
@@ -119,21 +126,29 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// New Function: Cancel Order
 export const cancelOrder = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
     const orderId = id as string;
 
-    const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
+    const order = await prisma.order.findFirst({ where: { id: orderId, userId }, include: { items: true } });
     if (!order) return res.status(404).json({ message: 'Order not found' });
     if (order.status !== 'PENDING') return res.status(400).json({ message: 'Cannot cancel processed order' });
 
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { status: 'CANCELLED' }
-    });
+    // Return Stock
+    await prisma.$transaction([
+      prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'CANCELLED' }
+      }),
+      ...order.items.map(item => 
+        prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { increment: item.quantity } }
+        })
+      )
+    ]);
 
     res.json({ message: 'Order cancelled' });
   } catch (error) {
@@ -141,7 +156,6 @@ export const cancelOrder = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// New Function: Request Refund
 export const requestRefund = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -168,11 +182,56 @@ export const requestRefund = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// --- NEW FUNCTION: REGENERATE SNAP TOKEN (SMART) ---
+export const regeneratePaymentToken = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.userId;
+    const orderId = id as string;
+
+    const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
+    
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== 'PENDING') return res.status(400).json({ message: 'Order already paid/cancelled' });
+
+    // SMART LOGIC: 
+    // Jika token sudah ada DAN diupdate kurang dari 23 jam lalu (VA Midtrans valid 24 jam), pakai token lama saja.
+    // Ini menjaga agar VA number tidak berubah-ubah selama masa berlaku VA.
+    const timeDiff = new Date().getTime() - new Date(order.updatedAt).getTime();
+    const isRecent = timeDiff < 23 * 60 * 60 * 1000; // 23 Jam
+
+    if (order.snapToken && isRecent) {
+      return res.json({ snapToken: order.snapToken });
+    }
+
+    // Jika sudah lama, buat token baru
+    const newTransactionId = `${orderId}-${Date.now()}`; // Unique ID for Midtrans
+
+    const parameter = {
+      transaction_details: {
+        order_id: newTransactionId, // Pakai ID baru agar Midtrans tidak menolak (Duplicate)
+        gross_amount: Math.round(order.totalAmount),
+      },
+      customer_details: { first_name: req.user?.userId },
+    };
+
+    const transaction = await snap.createTransaction(parameter);
+    
+    // Simpan token baru
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { snapToken: transaction.token, snapUrl: transaction.redirect_url }
+    });
+
+    res.json({ snapToken: transaction.token });
+  } catch (error) {
+    console.error("Regenerate Token Error:", error);
+    res.status(500).json({ message: 'Failed to regenerate token' });
+  }
+};
+
 export const handleMidtransWebhook = async (req: Request, res: Response) => {
   try {
-    console.log('--- WEBHOOK RECEIVED ---');
-    console.log('Body:', req.body); 
-
     const statusResponse = req.body;
     const orderId = statusResponse.order_id;
     const transactionStatus = statusResponse.transaction_status;
@@ -196,16 +255,14 @@ export const handleMidtransWebhook = async (req: Request, res: Response) => {
       orderStatus = 'PENDING';
     }
 
-    // UPDATE DATABASE
     await prisma.order.update({
       where: { id: orderId },
       data: { status: orderStatus },
     });
 
-    console.log(`Order ${orderId} updated to ${orderStatus}`);
     res.status(200).json({ message: 'Webhook received', status: orderStatus });
   } catch (error) {
-    console.error('WEBHOOK ERROR:', error); 
+    console.error(error);
     res.status(500).json({ message: 'Internal server error', error });
   }
 };

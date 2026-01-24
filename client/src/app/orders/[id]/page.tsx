@@ -61,15 +61,31 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const handlePay = () => {
-    if (order?.snapToken && window.snap) {
-      window.snap.pay(order.snapToken, {
-        onSuccess: () => { toast.success('Pembayaran Berhasil!'); fetchOrder(); },
-        onPending: () => { toast('Menunggu pembayaran...'); fetchOrder(); },
-        onError: () => { toast.error('Pembayaran Gagal'); }
+  const handlePay = async () => {
+    if (!window.snap) return toast.error("Sistem pembayaran sedang memuat...");
+
+    try {
+      // Minta token baru (fresh) agar tidak expired
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/orders/${id}/pay`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-    } else {
-      toast.error('Token pembayaran kadaluarsa/tidak valid');
+      
+      const { snapToken } = res.data;
+
+      window.snap.pay(snapToken, {
+        onSuccess: () => { 
+          toast.success('Pembayaran Berhasil!'); 
+          window.location.reload(); 
+        },
+        onPending: () => { 
+          toast('Menunggu pembayaran...'); 
+          window.location.reload(); 
+        },
+        onError: () => { toast.error('Pembayaran Gagal'); },
+        onClose: () => { toast('Pembayaran belum selesai'); }
+      });
+    } catch (error) {
+      toast.error('Gagal memuat pembayaran');
     }
   };
 

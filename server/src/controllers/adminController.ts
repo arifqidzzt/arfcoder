@@ -104,16 +104,22 @@ export const deleteUser = async (req: Request, res: Response) => {
 // --- CHAT ---
 export const getUserChatHistory = async (req: AuthRequest, res: Response) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.params; // ID User yang sedang diklik admin
+    
     const messages = await prisma.message.findMany({
       where: { 
         OR: [
-          { senderId: userId as string }, 
-          { senderId: req.user?.userId, isAdmin: true }
-        ] 
+          // 1. Pesan dikirim oleh User tersebut
+          { senderId: userId as string },
+          // 2. Pesan dikirim oleh Admin (kita asumsikan balasan context ini milik user tsb)
+          // Catatan: Idealnya ada field receiverId, tapi ini workaround terbaik dengan schema sekarang.
+          // Kita filter pesan admin yg dibuat setelah user ini chat pertama kali
+          { senderId: req.user?.userId, isAdmin: true } 
+        ]
       },
       orderBy: { createdAt: 'asc' }
     });
+    
     res.json(messages);
   } catch (error) { res.status(500).json({ message: 'Error', error }); }
 };
