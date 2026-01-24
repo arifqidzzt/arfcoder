@@ -6,13 +6,14 @@ import ChatWidget from "@/components/ChatWidget";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { useEffect } from "react";
+import "aos/dist/aos.css"; // Import CSS Global di sini!
 
 // Helper component to init AOS
 const AOSInit = () => {
   useEffect(() => {
+    // Import JS hanya di client
     if (typeof window !== 'undefined') {
       const AOS = require('aos');
-      require('aos/dist/aos.css');
       AOS.init({
         duration: 800,
         once: true,
