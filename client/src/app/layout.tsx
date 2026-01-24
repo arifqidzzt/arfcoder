@@ -10,13 +10,18 @@ import { useEffect } from "react";
 // Helper component to init AOS
 const AOSInit = () => {
   useEffect(() => {
-    const AOS = require('aos');
-    require('aos/dist/aos.css');
-    AOS.init({
-      duration: 800,
-      once: true,
-      easing: 'ease-out-cubic',
-    });
+    // Only run on client side
+    if (typeof window !== 'undefined') {
+      import('aos').then((AOS) => {
+        // @ts-ignore
+        import('aos/dist/aos.css'); // Import CSS dynamically
+        AOS.init({
+          duration: 800,
+          once: true,
+          easing: 'ease-out-cubic',
+        });
+      }).catch(e => console.log("AOS init error", e));
+    }
   }, []);
   return null;
 };
