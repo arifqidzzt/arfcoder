@@ -3,34 +3,28 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import Navbar from '@/components/Navbar';
+import Link from 'next/link';
+import { Package, ShoppingBag, Users, BarChart3, LogOut } from 'lucide-react';
 import axios from 'axios';
 
 export default function AdminDashboard() {
   const { user, logout, token } = useAuthStore();
   const router = useRouter();
   const [stats, setStats] = useState({ totalSales: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 });
-  const [mounted, setHydrated] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setHydrated(true);
+    setMounted(true);
   }, []);
 
   useEffect(() => {
     if (mounted && (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN'))) {
       router.push('/login');
     }
-  }, [user, mounted]);
+  }, [user, mounted, router]);
 
   useEffect(() => {
     const fetchStats = async () => {
-      // ... sisa kode fetchStats
-    };
-    if (token && mounted) fetchStats();
-  }, [token, mounted]);
-
-  if (!mounted) return null; // Cegah error server-side rendering
-  if (!user) return null;
       try {
         const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/stats`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -41,12 +35,13 @@ export default function AdminDashboard() {
       }
     };
     
-    if (token) fetchStats();
-  }, [user, router, token]);
+    if (token && mounted && user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')) {
+      fetchStats();
+    }
+  }, [token, mounted, user]);
 
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
-    return <div className="min-h-screen flex items-center justify-center">Loading Admin Panel...</div>;
-  }
+  if (!mounted) return null;
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

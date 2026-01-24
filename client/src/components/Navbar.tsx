@@ -15,6 +15,7 @@ export default function Navbar() {
         ARFCODER
       </Link>
       <div className="hidden md:flex space-x-8 text-sm font-medium">
+        <Link href="/" className="hover:text-gray-600 transition-colors">Beranda</Link>
         <Link href="/products" className="hover:text-gray-600 transition-colors">Produk</Link>
         <Link href="/services" className="hover:text-gray-600 transition-colors">Jasa</Link>
         {user && <Link href="/orders" className="hover:text-gray-600 transition-colors">Pesanan</Link>}
