@@ -17,7 +17,10 @@ export default function Navbar() {
       <div className="hidden md:flex space-x-8 text-sm font-medium">
         <Link href="/products" className="hover:text-gray-600 transition-colors">Produk</Link>
         <Link href="/services" className="hover:text-gray-600 transition-colors">Jasa</Link>
-        <Link href="/orders" className="hover:text-gray-600 transition-colors">Pesanan</Link>
+        {user && <Link href="/orders" className="hover:text-gray-600 transition-colors">Pesanan</Link>}
+        {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+          <Link href="/admin" className="text-purple-600 font-bold hover:text-purple-800 transition-colors">Dashboard</Link>
+        )}
       </div>
       <div className="flex items-center space-x-4">
         {user ? (

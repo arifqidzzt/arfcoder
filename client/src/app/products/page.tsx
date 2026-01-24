@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
+import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
 import { ShoppingCart, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 interface Product {
   id: string;
@@ -17,38 +19,29 @@ interface Product {
 
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [search, setSearch] = useState('');
   const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
-    // In real app, fetch from API
-    // Mock data for now
-    setProducts([
-      {
-        id: '1',
-        name: 'Premium UI Kit',
-        description: 'Clean and modern UI components for your next project.',
-        price: 450000,
-        discount: 10,
-        images: ['https://placehold.co/600x400/000000/FFFFFF?text=UI+Kit'],
-      },
-      {
-        id: '2',
-        name: 'Node.js Boilerplate',
-        description: 'Scalable backend architecture with Express and Prisma.',
-        price: 750000,
-        discount: 0,
-        images: ['https://placehold.co/600x400/000000/FFFFFF?text=Backend'],
-      },
-    ]);
-  }, []);
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products?search=${search}`);
+        setProducts(res.data);
+      } catch (error) {
+        console.error('Failed to fetch products');
+      }
+    };
+    fetchProducts();
+  }, [search]);
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault(); // Prevent navigating to detail page when clicking cart
     addItem({
       id: product.id,
       name: product.name,
       price: product.price * (1 - product.discount / 100),
       quantity: 1,
-      image: product.images[0],
+      image: product.images[0] || 'https://placehold.co/600x400/000000/FFFFFF?text=No+Image',
     });
     toast.success(`${product.name} ditambahkan ke keranjang`);
   };
@@ -66,48 +59,56 @@ export default function ProductList() {
             <input 
               type="text" 
               placeholder="Cari produk..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-none focus:outline-none focus:border-black transition-colors"
             />
             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-          {products.map((product) => (
-            <div key={product.id} className="group">
-              <div className="aspect-[4/5] bg-gray-100 mb-6 overflow-hidden relative">
-                <img 
-                  src={product.images[0]} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                {product.discount > 0 && (
-                  <span className="absolute top-4 left-4 bg-black text-white text-[10px] px-2 py-1 font-bold">
-                    -{product.discount}%
+        {products.length === 0 ? (
+          <div className="text-center py-20 text-gray-400">
+            Belum ada produk yang tersedia.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+            {products.map((product) => (
+              <Link href={`/products/${product.id}`} key={product.id} className="group block">
+                <div className="aspect-[4/5] bg-gray-100 mb-6 overflow-hidden relative">
+                  <img 
+                    src={product.images[0] || 'https://placehold.co/600x400/000000/FFFFFF?text=No+Image'} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  {product.discount > 0 && (
+                    <span className="absolute top-4 left-4 bg-black text-white text-[10px] px-2 py-1 font-bold">
+                      -{product.discount}%
+                    </span>
+                  )}
+                  <button 
+                    onClick={(e) => handleAddToCart(e, product)}
+                    className="absolute bottom-4 right-4 bg-white p-3 shadow-xl translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white"
+                  >
+                    <ShoppingCart size={20} />
+                  </button>
+                </div>
+                <h3 className="text-lg font-bold mb-1">{product.name}</h3>
+                <p className="text-sm text-gray-500 mb-3 line-clamp-2">{product.description}</p>
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold">
+                    Rp {(product.price * (1 - product.discount / 100)).toLocaleString('id-ID')}
                   </span>
-                )}
-                <button 
-                  onClick={() => handleAddToCart(product)}
-                  className="absolute bottom-4 right-4 bg-white p-3 shadow-xl translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white"
-                >
-                  <ShoppingCart size={20} />
-                </button>
-              </div>
-              <h3 className="text-lg font-bold mb-1">{product.name}</h3>
-              <p className="text-sm text-gray-500 mb-3 line-clamp-2">{product.description}</p>
-              <div className="flex items-center space-x-2">
-                <span className="font-bold">
-                  Rp {(product.price * (1 - product.discount / 100)).toLocaleString('id-ID')}
-                </span>
-                {product.discount > 0 && (
-                  <span className="text-sm text-gray-400 line-through">
-                    Rp {product.price.toLocaleString('id-ID')}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+                  {product.discount > 0 && (
+                    <span className="text-sm text-gray-400 line-through">
+                      Rp {product.price.toLocaleString('id-ID')}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
