@@ -3,84 +3,6 @@ import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middlewares/auth';
 const midtransClient = require('midtrans-client');
 
-// ... (Create Order & Get Orders remain same)
-
-// New Function: Get Single Order Detail
-export const getOrderById = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user?.userId;
-    
-    // Allow admins to view any order, users only their own
-    const whereClause = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN' 
-      ? { id } 
-      : { id, userId };
-
-    const order = await prisma.order.findFirst({
-      where: whereClause,
-      include: { 
-        items: { include: { product: true } },
-        user: { select: { name: true, email: true } }
-      }
-    });
-
-    if (!order) return res.status(404).json({ message: 'Order not found' });
-    res.json(order);
-  } catch (error) {
-    res.status(500).json({ message: 'Error', error });
-  }
-};
-
-// New Function: Cancel Order
-export const cancelOrder = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user?.userId;
-
-    const order = await prisma.order.findFirst({ where: { id, userId } });
-    if (!order) return res.status(404).json({ message: 'Order not found' });
-    if (order.status !== 'PENDING') return res.status(400).json({ message: 'Cannot cancel processed order' });
-
-    await prisma.order.update({
-      where: { id },
-      data: { status: 'CANCELLED' }
-    });
-
-    res.json({ message: 'Order cancelled' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error', error });
-  }
-};
-
-// New Function: Request Refund
-export const requestRefund = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { reason, account } = req.body;
-    const userId = req.user?.userId;
-
-    const order = await prisma.order.findFirst({ where: { id, userId } });
-    if (!order) return res.status(404).json({ message: 'Order not found' });
-    if (order.status !== 'PAID') return res.status(400).json({ message: 'Only paid orders can be refunded' });
-
-    await prisma.order.update({
-      where: { id },
-      data: { 
-        status: 'REFUND_REQUESTED',
-        refundReason: reason,
-        refundAccount: account
-      }
-    });
-
-    res.json({ message: 'Refund requested' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error', error });
-  }
-};
-
-// ... (Existing handlers like createOrder, getMyOrders, handleMidtransWebhook)
-// I will paste the full file content below to ensure nothing is lost.
-
 let snap = new midtransClient.Snap({
   isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
   serverKey: process.env.MIDTRANS_SERVER_KEY,
@@ -169,12 +91,94 @@ export const getMyOrders = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// New Function: Get Single Order Detail
+export const getOrderById = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.userId;
+    
+    // Explicitly cast id to string to satisfy TS
+    const orderId = id as string;
+
+    const whereClause: any = req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN' 
+      ? { id: orderId } 
+      : { id: orderId, userId };
+
+    const order = await prisma.order.findFirst({
+      where: whereClause,
+      include: { 
+        items: { include: { product: true } },
+        user: { select: { name: true, email: true } }
+      }
+    });
+
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: 'Error', error });
+  }
+};
+
+// New Function: Cancel Order
+export const cancelOrder = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.userId;
+    const orderId = id as string;
+
+    const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== 'PENDING') return res.status(400).json({ message: 'Cannot cancel processed order' });
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: 'CANCELLED' }
+    });
+
+    res.json({ message: 'Order cancelled' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error', error });
+  }
+};
+
+// New Function: Request Refund
+export const requestRefund = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { reason, account } = req.body;
+    const userId = req.user?.userId;
+    const orderId = id as string;
+
+    const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== 'PAID') return res.status(400).json({ message: 'Only paid orders can be refunded' });
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { 
+        status: 'REFUND_REQUESTED',
+        refundReason: reason,
+        refundAccount: account
+      }
+    });
+
+    res.json({ message: 'Refund requested' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error', error });
+  }
+};
+
 export const handleMidtransWebhook = async (req: Request, res: Response) => {
   try {
+    console.log('--- WEBHOOK RECEIVED ---');
+    console.log('Body:', req.body); 
+
     const statusResponse = req.body;
     const orderId = statusResponse.order_id;
     const transactionStatus = statusResponse.transaction_status;
     const fraudStatus = statusResponse.fraud_status;
+
+    console.log(`Processing Order ID: ${orderId} | Status: ${transactionStatus}`);
 
     let orderStatus: any = 'PENDING';
 
@@ -192,14 +196,16 @@ export const handleMidtransWebhook = async (req: Request, res: Response) => {
       orderStatus = 'PENDING';
     }
 
+    // UPDATE DATABASE
     await prisma.order.update({
       where: { id: orderId },
       data: { status: orderStatus },
     });
 
-    res.status(200).json({ message: 'Webhook received' });
+    console.log(`Order ${orderId} updated to ${orderStatus}`);
+    res.status(200).json({ message: 'Webhook received', status: orderStatus });
   } catch (error) {
-    console.error(error);
+    console.error('WEBHOOK ERROR:', error); 
     res.status(500).json({ message: 'Internal server error', error });
   }
 };
