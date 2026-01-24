@@ -195,7 +195,7 @@ export const regeneratePaymentToken = async (req: AuthRequest, res: Response) =>
     if (order.status !== 'PENDING') return res.status(400).json({ message: 'Order already paid/cancelled' });
 
     // SMART LOGIC: 
-    // Jika token sudah ada DAN diupdate kurang dari 23 jam 59 menit (batas aman sebelum 24 jam), pakai token lama.
+    // Kembali ke durasi 24 jam (23h 59m) agar Virtual Account awet.
     const timeDiff = new Date().getTime() - new Date(order.updatedAt).getTime();
     const isRecent = timeDiff < (23 * 60 * 60 * 1000) + (59 * 60 * 1000); // 23h 59m
 
