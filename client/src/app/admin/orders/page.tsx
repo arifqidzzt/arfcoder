@@ -95,7 +95,9 @@ export default function AdminOrdersPage() {
                   </td>
                   <td className="px-6 py-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td className="px-6 py-4 text-right">
-                    {/* View Detail button could go here */}
+                    <Link href={`/admin/orders/${order.id}`} className="inline-flex items-center gap-1 bg-black text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors">
+                      Kelola / Kirim
+                    </Link>
                   </td>
                 </tr>
               ))}

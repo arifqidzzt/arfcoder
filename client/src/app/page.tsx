@@ -39,23 +39,27 @@ export default function Home() {
 
           <div className="container-custom relative z-10 w-full">
             <div className="max-w-4xl mx-auto text-center px-4">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full mb-8 animate-fade-in border border-border shadow-sm">
+              {/* Badge */}
+              <div data-aos="fade-down" className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full mb-8 border border-border shadow-sm">
                 <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
                 <span className="text-xs md:text-sm font-medium text-muted-foreground">
                   Official Partner for Digital Transformation
                 </span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-8 animate-slide-up leading-[1.1]">
+              {/* Heading */}
+              <h1 data-aos="fade-up" data-aos-delay="100" className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-[1.1]">
                 Solusi Digital untuk<br />
                 <span className="text-gradient block mt-2 pb-2">Pertumbuhan Bisnis</span>
               </h1>
 
-              <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-slide-up [animation-delay:200ms] leading-relaxed">
+              {/* Description */}
+              <p data-aos="fade-up" data-aos-delay="200" className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
                 Kami mengubah ide kompleks menjadi produk digital yang simpel, elegan, dan berdampak besar bagi bisnis Anda.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 animate-slide-up [animation-delay:300ms] w-full px-4">
+              {/* CTA Buttons */}
+              <div data-aos="fade-up" data-aos-delay="300" className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 w-full px-4">
                 <Link href="/products" className="btn-hero-primary group w-full sm:w-auto">
                   <span>Belanja Produk</span>
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -65,8 +69,8 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 animate-slide-up [animation-delay:400ms] text-left">
-                <div className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+                <div data-aos="fade-up" data-aos-delay="400" className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
                   <div className="w-10 h-10 rounded-lg bg-black text-white flex items-center justify-center mb-4">
                     <Zap className="w-5 h-5" />
                   </div>

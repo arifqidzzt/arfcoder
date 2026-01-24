@@ -39,6 +39,7 @@ export default function AdminChatPage() {
 
   const loadChat = async (targetUser: any) => {
     setActiveChat(targetUser);
+    setMessages([]); // Clear previous messages first!
     try {
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/chat/${targetUser.id}`, {
         headers: { Authorization: `Bearer ${token}` }
