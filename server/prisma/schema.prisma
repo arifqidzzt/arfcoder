@@ -1,5 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// This is your Prisma schema file
 
 generator client {
   provider = "prisma-client-js"
@@ -24,9 +23,14 @@ enum ProductType {
 enum OrderStatus {
   PENDING
   PAID
-  PROCESSING
-  COMPLETED
+  PROCESSING    // Admin sedang memproses/mengirim
+  SHIPPED       // Barang dikirim/Info diberikan (Menunggu User Klik Selesai)
+  COMPLETED     // Selesai
   CANCELLED
+  REFUND_REQUESTED
+  REFUND_APPROVED
+  REFUND_COMPLETED
+  REFUND_REJECTED
 }
 
 model User {
@@ -78,6 +82,16 @@ model Product {
   orderItems  OrderItem[]
 }
 
+model Service {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  price       String
+  icon        String   // Nama icon lucide (misal: "Code", "Globe")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model CartItem {
   id        String   @id @default(cuid())
   userId    String
@@ -101,7 +115,14 @@ model Order {
   paymentType   String?
   snapToken     String?
   snapUrl       String?
-  address       String?
+  address       String?     // Alamat/Catatan dari User
+  
+  // Kolom Baru untuk Sistem Pengiriman Digital & Refund
+  deliveryInfo  String?     // Diisi Admin: Link Download / Credentials / Resi
+  refundReason  String?     // Diisi User: Alasan Refund
+  refundAccount String?     // Diisi User: No Rekening/E-Wallet tujuan refund
+  refundProof   String?     // Diisi Admin: URL Bukti Transfer Refund
+  
   items         OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -123,5 +144,6 @@ model Message {
   senderId  String
   sender    User     @relation("SentMessages", fields: [senderId], references: [id])
   isAdmin   Boolean  @default(false)
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }

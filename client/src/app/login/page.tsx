@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
+import { ArrowRight, Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -37,30 +38,13 @@ export default function LoginPage() {
         toast.error('Silakan verifikasi email terlebih dahulu');
         router.push(`/verify-otp?userId=${error.response.data.userId}&email=${email}`);
       } else {
-        toast.error(error.response?.data?.message || 'Gagal masuk');
+        toast.error(error.response?.data?.message || 'Email atau password salah');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/google`, {
-          token: tokenResponse.credential || tokenResponse.access_token, // Handling different response types roughly, ideally use credential for ID token flow
-        });
-        // Note: For 'useGoogleLogin' implicit flow, we might need to fetch user info or use id_token flow. 
-        // Simpler for this demo: Assume backend handles the access token validation or we switch to GoogleLogin component.
-        // Let's stick to standard flow:
-      } catch (err) {
-        // Fallback for custom implementation
-      }
-    },
-    flow: 'implicit' 
-  });
-
-  // Using the Component approach is often easier for ID Tokens
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/google`, {
@@ -74,69 +58,83 @@ export default function LoginPage() {
     }
   };
 
-  // Re-importing GoogleLogin component directly for cleaner UI integration
-  const { GoogleLogin } = require('@react-oauth/google');
-
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main className="max-w-md mx-auto px-8 py-24">
-        <h1 className="text-4xl font-bold mb-2 tracking-tight">Selamat Datang</h1>
-        <p className="text-gray-500 mb-8">Masuk ke akun ArfCoder Anda.</p>
+      <main className="flex-grow flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        {/* Background Blobs */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px] -z-10" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px] -z-10" />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-2">Email</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors"
-              placeholder="nama@email.com"
-            />
+        <div className="w-full max-w-md bg-white/50 backdrop-blur-xl border border-white/20 p-8 rounded-3xl shadow-xl">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Selamat Datang</h1>
+            <p className="text-muted-foreground">Masuk untuk melanjutkan perjalanan digital Anda.</p>
           </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-2">Password</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors"
-              placeholder="••••••••"
-            />
-          </div>
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full py-4 bg-black text-white font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-400"
-          >
-            {loading ? 'Memproses...' : 'Masuk'}
-          </button>
-        </form>
 
-        <div className="relative my-8">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200"></div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm font-medium ml-1">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-3.5 text-gray-400" size={18} />
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
+                  placeholder="nama@email.com"
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium ml-1">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-3.5 text-gray-400" size={18} />
+                <input 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full py-3.5 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              {loading ? 'Memproses...' : 'Masuk Sekarang'} <ArrowRight size={18} />
+            </button>
+          </form>
+
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase tracking-wider font-bold text-gray-400">
+              <span className="px-2 bg-white/0 backdrop-blur-xl">Atau Lanjutkan Dengan</span>
+            </div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Atau masuk dengan</span>
+
+          <div className="flex justify-center">
+             <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error('Login Gagal')}
+                useOneTap
+                theme="filled_black"
+                shape="pill"
+                width="100%"
+                text="continue_with"
+              />
           </div>
+
+          <p className="mt-8 text-center text-sm text-gray-500">
+            Belum punya akun? <Link href="/register" className="text-accent font-bold hover:underline">Daftar Sekarang</Link>
+          </p>
         </div>
-
-        <div className="flex justify-center">
-           <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => toast.error('Login Failed')}
-              useOneTap
-              theme="filled_black"
-              shape="pill"
-              width="100%"
-            />
-        </div>
-
-        <p className="mt-8 text-center text-sm text-gray-500">
-          Belum punya akun? <Link href="/register" className="text-black font-bold">Daftar Sekarang</Link>
-        </p>
       </main>
     </div>
   );
