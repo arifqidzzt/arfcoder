@@ -195,10 +195,9 @@ export const regeneratePaymentToken = async (req: AuthRequest, res: Response) =>
     if (order.status !== 'PENDING') return res.status(400).json({ message: 'Order already paid/cancelled' });
 
     // SMART LOGIC: 
-    // Jika token sudah ada DAN diupdate kurang dari 23 jam lalu (VA Midtrans valid 24 jam), pakai token lama saja.
-    // Ini menjaga agar VA number tidak berubah-ubah selama masa berlaku VA.
+    // Jika token sudah ada DAN diupdate kurang dari 23 jam 59 menit (batas aman sebelum 24 jam), pakai token lama.
     const timeDiff = new Date().getTime() - new Date(order.updatedAt).getTime();
-    const isRecent = timeDiff < 23 * 60 * 60 * 1000; // 23 Jam
+    const isRecent = timeDiff < (23 * 60 * 60 * 1000) + (59 * 60 * 1000); // 23h 59m
 
     if (order.snapToken && isRecent) {
       return res.json({ snapToken: order.snapToken });
