@@ -13,7 +13,17 @@ import { saveMessage } from './services/chatService';
 dotenv.config();
 
 const app = express();
-// ...
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+  },
+});
+
+app.use(cors());
+app.use(express.json());
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -28,7 +38,7 @@ app.get('/', (req: Request, res: Response) => {
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  socket.on('sendMessage', async (data) => {
+  socket.on('sendMessage', async (data: any) => {
     const { content, senderId, isAdmin } = data;
     try {
       const message = await saveMessage(content, senderId, isAdmin);

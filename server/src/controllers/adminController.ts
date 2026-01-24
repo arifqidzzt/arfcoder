@@ -49,7 +49,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     const { status } = req.body;
     
     const order = await prisma.order.update({
-      where: { id },
+      where: { id: id as string },
       data: { status },
     });
     
@@ -74,7 +74,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.user.delete({ where: { id } });
+    await prisma.user.delete({ where: { id: id as string } });
     res.json({ message: 'User deleted' });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error', error });
