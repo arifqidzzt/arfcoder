@@ -118,7 +118,7 @@ export default function AdminChatPage() {
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-white">
+        <div className="flex-1 flex flex-col bg-white" key={activeChat?.id}> {/* KUNCI PERBAIKAN: KEY PROP */}
           {activeChat ? (
             <>
               <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
