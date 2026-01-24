@@ -8,6 +8,12 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
+
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
   const { user, token } = useAuthStore();
