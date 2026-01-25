@@ -159,7 +159,11 @@ export const requestNewPhoneOtp = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     const { newPhoneNumber } = req.body;
 
+    console.log(`Requesting OTP for new phone: ${newPhoneNumber}`);
+
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Kirim WA dulu sebelum simpan ke DB, biar kalau gagal gak nyampah di DB
     await waService.sendOTP(newPhoneNumber, otpCode);
     
     await prisma.otp.create({
@@ -167,7 +171,10 @@ export const requestNewPhoneOtp = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ message: 'OTP dikirim ke WhatsApp baru' });
-  } catch (error) { res.status(500).json({ message: 'Gagal kirim WA ke nomor baru', error }); }
+  } catch (error: any) { 
+    console.error('Controller Error:', error);
+    res.status(500).json({ message: error.message || 'Gagal kirim WA ke nomor baru' }); 
+  }
 };
 
 // 4. Verify New Phone & Update DB

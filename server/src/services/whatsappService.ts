@@ -77,31 +77,53 @@ class WhatsAppService {
       throw new Error('WhatsApp bot is not connected');
     }
 
-    // Format phone number to 628xxx (remove 0 or +)
-    let formattedPhone = phoneNumber.replace(/\D/g, '');
+    // Format phone number robustly
+    let formattedPhone = phoneNumber.replace(/\D/g, ''); // Hapus semua karakter non-angka
+    
+    // Ganti 0 di depan dengan 62
     if (formattedPhone.startsWith('0')) {
       formattedPhone = '62' + formattedPhone.slice(1);
     }
+    
+    // Jika user ngetik 628..., biarkan.
+    
+    // Tambahkan suffix wajib Baileys
     if (!formattedPhone.endsWith('@s.whatsapp.net')) {
       formattedPhone += '@s.whatsapp.net';
     }
 
-    await this.sock.sendMessage(formattedPhone, { 
-      text: `*Kode Verifikasi ArfCoder*\n\nKode Anda: *${otp}*\n\nJangan berikan kode ini kepada siapapun.` 
-    });
+    console.log(`Sending WA OTP to: ${formattedPhone}`); // Debug Log
+
+    try {
+      await this.sock.sendMessage(formattedPhone, { 
+        text: `*Kode Verifikasi ArfCoder*\n\nKode Anda: *${otp}*\n\nJangan berikan kode ini kepada siapapun.` 
+      });
+    } catch (error) {
+      console.error('WA Send Error:', error);
+      throw new Error('Gagal mengirim pesan WA');
+    }
   }
 
   public async logout() {
     try {
-      await this.sock?.logout();
-      fs.rmSync(AUTH_DIR, { recursive: true, force: true });
-      this.status = 'DISCONNECTED';
-      this.connect(); // Start fresh for new QR
-      return true;
+      if (this.sock) {
+        await this.sock.logout();
+        this.sock.end(undefined);
+      }
     } catch (e) {
-      console.error(e);
-      return false;
+      console.error("Logout Error (Ignored):", e);
+    } finally {
+      // Force delete auth folder
+      if (fs.existsSync(AUTH_DIR)) {
+        fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+        console.log("WA Auth folder deleted.");
+      }
+      this.status = 'DISCONNECTED';
+      this.qr = '';
+      if (this.io) this.io.emit('wa_status', { status: 'DISCONNECTED' });
+      // Don't auto connect immediately, let user click start
     }
+    return true;
   }
 }
 
