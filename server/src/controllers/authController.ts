@@ -163,6 +163,37 @@ export const googleLogin = async (req: Request, res: Response) => {
   }
 };
 
+export const resendOtp = async (req: Request, res: Response) => {
+  try {
+    const { userId, email } = req.body;
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    await prisma.otp.deleteMany({ where: { userId, email } }); // Clear old ones
+    
+    await prisma.otp.create({
+      data: {
+        code: otpCode,
+        email,
+        userId,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      },
+    });
+
+    try {
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+        to: email,
+        subject: 'Kode Verifikasi Baru ArfCoder',
+        html: `<p>Kode verifikasi baru Anda: <strong>${otpCode}</strong></p>`,
+      });
+    } catch (e) {
+      console.log(`Resend OTP fallback: ${otpCode}`);
+    }
+
+    res.json({ message: 'Kode OTP baru telah dikirim' });
+  } catch (error) { res.status(500).json({ message: 'Error', error }); }
+};
+
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;

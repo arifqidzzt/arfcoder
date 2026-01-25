@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Navbar from '@/components/Navbar';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
@@ -9,26 +9,41 @@ import toast from 'react-hot-toast';
 function VerifyOtpContent() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [timer, setTimer] = useState(60);
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId');
   const email = searchParams.get('email');
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-otp`, {
-        userId,
-        code
-      });
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-otp`, { userId, code });
       toast.success('Email berhasil diverifikasi! Silakan login.');
       router.push('/login');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Kode OTP salah atau kadaluarsa');
+      toast.error(error.response?.data?.message || 'Kode OTP salah');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResend = async () => {
+    setLoading(true);
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/resend-otp`, { userId, email });
+      setTimer(60);
+      toast.success('Kode OTP baru telah dikirim ke email Anda'); 
+    } catch (e) { toast.error('Gagal mengirim ulang kode'); }
+    setLoading(false);
   };
 
   return (
@@ -42,13 +57,12 @@ function VerifyOtpContent() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-2">Kode OTP</label>
             <input 
               type="text" 
               value={code}
               onChange={(e) => setCode(e.target.value)}
               maxLength={6}
-              className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-center text-2xl tracking-[0.5em] font-mono"
+              className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-center text-2xl tracking-[0.5em] font-mono rounded-xl"
               placeholder="000000"
               required
             />
@@ -56,11 +70,21 @@ function VerifyOtpContent() {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full py-4 bg-black text-white font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-400"
+            className="w-full py-4 bg-black text-white font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-400 rounded-xl"
           >
             {loading ? 'Memverifikasi...' : 'Verifikasi Akun'}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          {timer > 0 ? (
+            <p className="text-sm text-gray-400">Kirim ulang dalam {timer} detik</p>
+          ) : (
+            <button onClick={handleResend} className="text-sm font-bold text-blue-600 hover:underline">
+              Kirim Ulang Kode
+            </button>
+          )}
+        </div>
       </main>
     </div>
   );

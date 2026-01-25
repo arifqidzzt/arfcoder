@@ -187,8 +187,24 @@ export default function ProfilePage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
               <h3 className="font-bold mb-4">Edit Profil</h3>
+              <div className="flex justify-center mb-4">
+                <div className="relative w-20 h-20">
+                  <img src={newAvatar || `https://ui-avatars.com/api/?name=${newName}`} className="w-full h-full rounded-full object-cover border" />
+                  <input 
+                    type="file" 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if(file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => setNewAvatar(reader.result as string);
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
+              </div>
               <input value={newName} onChange={e => setNewName(e.target.value)} className="w-full p-3 border rounded-lg mb-3" placeholder="Nama Lengkap" />
-              <input value={newAvatar} onChange={e => setNewAvatar(e.target.value)} className="w-full p-3 border rounded-lg mb-4" placeholder="URL Foto Profil" />
               <div className="flex justify-end gap-2">
                 <button onClick={() => setShowEdit(false)} className="px-4 py-2 bg-gray-100 rounded-lg text-sm">Batal</button>
                 <button onClick={handleUpdateProfile} className="px-4 py-2 bg-black text-white rounded-lg text-sm font-bold">Simpan</button>
@@ -199,8 +215,11 @@ export default function ProfilePage() {
 
         {showPass && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
-              <h3 className="font-bold mb-4">Ganti Password</h3>
+            <div className="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold">Ganti Password</h3>
+                <Link href="/forgot-password" onClick={() => setShowPass(false)} className="text-[10px] font-bold text-accent hover:underline uppercase tracking-wider">Lupa Password?</Link>
+              </div>
               <input type="password" value={passData.old} onChange={e => setPassData({...passData, old: e.target.value})} className="w-full p-3 border rounded-lg mb-3" placeholder="Password Lama" />
               <input type="password" value={passData.new} onChange={e => setPassData({...passData, new: e.target.value})} className="w-full p-3 border rounded-lg mb-3" placeholder="Password Baru" />
               <input type="password" value={passData.confirm} onChange={e => setPassData({...passData, confirm: e.target.value})} className="w-full p-3 border rounded-lg mb-4" placeholder="Konfirmasi Password Baru" />

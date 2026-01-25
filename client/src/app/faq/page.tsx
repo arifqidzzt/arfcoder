@@ -28,7 +28,7 @@ export default function FAQPage() {
     },
     {
       question: "Bagaimana jika saya lupa password akun saya?",
-      answer: "Anda tidak perlu khawatir. Kami menggunakan sistem Login Google yang aman, atau Anda bisa mendaftar ulang jika menggunakan email baru."
+      answer: "Anda dapat menggunakan fitur 'Lupa Password' di halaman login. Kami akan mengirimkan link verifikasi untuk mengatur ulang password baru Anda melalui email terdaftar."
     }
   ];
 
@@ -79,10 +79,10 @@ export default function FAQPage() {
 
         <div className="mt-16 text-center bg-blue-50 p-8 rounded-3xl border border-blue-100">
           <h3 className="font-bold text-xl mb-2">Masih butuh bantuan?</h3>
-          <p className="text-gray-500 mb-6">Tim support kami siap membantu Anda 24/7 melalui Live Chat.</p>
-          <button className="bg-black text-white px-8 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors inline-flex items-center gap-2">
-            <MessageCircle size={18} /> Chat Admin Sekarang
-          </button>
+          <p className="text-gray-500 mb-6">Tim support kami siap membantu Anda 24/7.</p>
+          <a href="/contact" className="bg-black text-white px-8 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors inline-flex items-center gap-2">
+            <MessageCircle size={18} /> Hubungi Kami
+          </a>
         </div>
       </main>
     </div>

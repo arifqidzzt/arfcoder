@@ -141,16 +141,51 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
             </select>
           </div>
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, images: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 space-y-6">
+        {/* ... form fields ... */}
+          
           <div className="md:col-span-2">
-            <label className="block text-sm font-bold mb-2">URL Gambar</label>
-            <input 
-              name="images"
-              value={formData.images}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-black"
-            />
-            <p className="text-xs text-gray-400 mt-1">Masukkan URL gambar langsung (contoh dari Unsplash atau Placehold.co).</p>
+            <label className="block text-sm font-bold mb-2">Gambar Produk</label>
+            
+            {formData.images && (
+              <img src={formData.images} alt="Preview" className="w-32 h-32 object-cover rounded-lg mb-4 border border-gray-200" />
+            )}
+            
+            <div className="flex gap-4">
+              <input 
+                type="text"
+                name="images"
+                value={formData.images}
+                onChange={handleChange}
+                placeholder="URL Gambar (Opsional)"
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-black"
+              />
+              <div className="relative">
+                <input 
+                  type="file" 
+                  onChange={handleImageUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  accept="image/*"
+                />
+                <button type="button" className="px-4 py-2 bg-gray-100 rounded-lg font-bold text-sm hover:bg-gray-200">
+                  Upload File
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Paste URL atau Upload dari perangkat.</p>
           </div>
         </div>
 
