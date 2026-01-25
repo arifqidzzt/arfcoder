@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { generateToken, generateRefreshToken } from '../utils/jwt';
 import { Resend } from 'resend';
 import { OAuth2Client } from 'google-auth-library';
+import crypto from 'crypto';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -27,14 +28,13 @@ export const register = async (req: Request, res: Response) => {
       },
     });
 
-    // Generate & Send Real OTP via Resend
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     await prisma.otp.create({
       data: {
         code: otpCode,
         email,
         userId: user.id,
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       },
     });
 
@@ -48,7 +48,6 @@ export const register = async (req: Request, res: Response) => {
       console.log(`Email OTP sent to ${email}`);
     } catch (emailError) {
       console.error('Resend Error:', emailError);
-      // Fallback log if email fails (e.g. invalid API Key)
       console.log(`Fallback OTP for ${email}: ${otpCode}`);
     }
 
@@ -118,7 +117,6 @@ export const googleLogin = async (req: Request, res: Response) => {
   try {
     const { token: googleToken } = req.body;
     
-    // Verify token with Google
     const ticket = await googleClient.verifyIdToken({
       idToken: googleToken,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -131,22 +129,19 @@ export const googleLogin = async (req: Request, res: Response) => {
 
     const { email, name, sub: googleId } = payload;
 
-    // Check if user exists
     let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      // Create new user from Google
       user = await prisma.user.create({
         data: {
           email,
           name: name || 'User',
           googleId,
-          isVerified: true, // Auto verify for Google
+          isVerified: true,
           role: 'USER',
         },
       });
     } else if (!user.googleId) {
-      // Link existing account
       user = await prisma.user.update({
         where: { id: user.id },
         data: { googleId, isVerified: true },
@@ -156,10 +151,17 @@ export const googleLogin = async (req: Request, res: Response) => {
     const token = generateToken(user.id, user.role);
     const refreshToken = generateRefreshToken(user.id);
 
-// ... existing imports ...
-import crypto from 'crypto'; // Native node module
+    res.status(200).json({
+      token,
+      refreshToken,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    });
 
-// ... existing functions (register, login, etc) ...
+  } catch (error) {
+    console.error('Google Login Error:', error);
+    res.status(500).json({ message: 'Google login failed', error });
+  }
+};
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
@@ -167,7 +169,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(404).json({ message: 'Email tidak terdaftar' });
 
-    // Generate Reset Token
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 Hour
 
@@ -176,18 +177,9 @@ export const forgotPassword = async (req: Request, res: Response) => {
       data: { resetToken, resetTokenExpiry }
     });
 
-    // Send Email (Resend)
     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
-    console.log(`Reset Link for ${email}: ${resetUrl}`); // Log for dev
+    console.log(`Reset Link for ${email}: ${resetUrl}`); 
     
-    // TODO: Uncomment for real email
-    // await resend.emails.send({
-    //   from: process.env.EMAIL_FROM!,
-    //   to: email,
-    //   subject: 'Reset Password ArfCoder',
-    //   html: `<p>Klik link ini untuk reset password: <a href="${resetUrl}">${resetUrl}</a></p>`
-    // });
-
     res.json({ message: 'Link reset dikirim ke email' });
   } catch (error) { res.status(500).json({ message: 'Error', error }); }
 };
