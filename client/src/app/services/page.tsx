@@ -12,10 +12,9 @@ export default function ServicesPage() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products?type=JASA`); // Or specific services endpoint
-        // For simplicity, we fetch from products with type JASA or the new Service model
-        const resServices = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/services`); // Note: In production, make a public route for this
-        setServices(resServices.data);
+        // Panggil endpoint publik (tanpa token admin)
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/services`);
+        setServices(res.data);
       } catch (error) {
         console.error("Failed to fetch services");
       } finally {

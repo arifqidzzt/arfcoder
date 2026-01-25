@@ -60,8 +60,20 @@ export const updateProduct = async (req: Request, res: Response) => {
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.product.delete({ where: { id: id as string } });
+    await prisma.product.delete({ where: { id } });
     res.json({ message: 'Product deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error });
+  }
+};
+
+// --- NEW: Public Services Endpoint ---
+export const getPublicServices = async (req: Request, res: Response) => {
+  try {
+    const services = await prisma.service.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(services);
   } catch (error) {
     res.status(500).json({ message: 'Internal server error', error });
   }
