@@ -12,7 +12,7 @@ export default function Navbar() {
   return (
     <nav className="flex items-center justify-between px-8 py-4 border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50 transition-all">
       <Link href="/" className="flex items-center gap-3 group">
-        <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg overflow-hidden">
+        <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
           <img src="/app_icon.ico" alt="Logo" className="w-full h-full object-cover" />
         </div>
         <span className="text-xl font-bold tracking-tighter">ARFCODER</span>
