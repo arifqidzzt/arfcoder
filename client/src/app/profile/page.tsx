@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Added Link import
 import axios from 'axios';
 import { User, Mail, Phone, Lock, Edit, Camera, LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
