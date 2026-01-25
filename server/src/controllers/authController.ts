@@ -216,13 +216,19 @@ export const forgotPassword = async (req: Request, res: Response) => {
       const { data, error } = await resend.emails.send({
         from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
         to: email,
-        subject: 'Reset Password ArfCoder',
+        subject: 'Permintaan Ganti Password - ArfCoder',
         html: `
-          <h3>Permintaan Reset Password</h3>
-          <p>Seseorang baru saja meminta reset password untuk akun ArfCoder Anda.</p>
-          <p>Klik tombol di bawah ini untuk mengganti password:</p>
-          <a href="${resetUrl}" style="background:#000;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;">Reset Password</a>
-          <p style="margin-top:20px;font-size:12px;color:#888;">Jika bukan Anda, abaikan email ini.</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #000;">Halo, ${user.name || 'User'}</h2>
+            <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun ArfCoder Anda.</p>
+            <p>Jika ini benar Anda, silakan klik tombol di bawah ini:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Ganti Password Saya</a>
+            </div>
+            <p style="color: #666; font-size: 14px;">Tautan ini hanya berlaku selama 1 jam.</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+            <p style="color: #999; font-size: 12px;">Jika Anda tidak merasa melakukan permintaan ini, mohon abaikan email ini.</p>
+          </div>
         `
       });
       

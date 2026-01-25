@@ -4,15 +4,17 @@ import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
+  const router = useRouter();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password`, { email });
-      toast.success('Link reset dikirim ke email!');
+      router.push('/forgot-password/sent');
     } catch (error) { toast.error('Email tidak ditemukan'); }
   };
 
