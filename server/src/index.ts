@@ -13,6 +13,7 @@ import adminRoutes from './routes/adminRoutes';
 import { saveMessage } from './services/chatService';
 import { handleMidtransWebhook } from './controllers/orderController';
 import { prisma } from './lib/prisma';
+import { secureMiddleware } from './middlewares/securityMiddleware';
 
 dotenv.config();
 
@@ -63,19 +64,18 @@ app.use(express.json());
 // Global API Limiter
 app.use('/api', apiLimiter);
 
+// Webhook (NO SECURITY MIDDLEWARE - PUBLIC)
 app.post('/api/midtrans-webhook', handleMidtransWebhook);
 
 import userRoutes from './routes/userRoutes';
 
-// ...
-// Apply stricter limiter to Auth routes
-app.use('/api/auth', authLimiter);
-app.use('/api/auth', authRoutes);
-
-app.use('/api/user', userRoutes); // New Route
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/admin', adminRoutes);
+// Apply Security Middleware to all protected routes
+// This ensures that only our Frontend can talk to these APIs
+app.use('/api/auth', authLimiter, secureMiddleware, authRoutes);
+app.use('/api/user', secureMiddleware, userRoutes);
+app.use('/api/products', secureMiddleware, productRoutes);
+app.use('/api/orders', secureMiddleware, orderRoutes);
+app.use('/api/admin', secureMiddleware, adminRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('ArfCoder API is running...');

@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import axios from 'axios';
+import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
 import { ArrowRight, Mail, Lock, User } from 'lucide-react';
@@ -22,7 +22,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+      const res = await api.post('/auth/register', {
         name,
         email,
         password
@@ -38,7 +38,7 @@ export default function RegisterPage() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/google`, {
+      const res = await api.post('/auth/google', {
         token: credentialResponse.credential,
       });
       loginStore(res.data.user, res.data.token);

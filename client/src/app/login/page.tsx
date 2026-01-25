@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import api from '@/lib/api';
 import { GoogleLogin } from '@react-oauth/google';
 import { ArrowRight, Mail, Lock } from 'lucide-react';
 
@@ -21,7 +21,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      const res = await api.post('/auth/login', {
         email,
         password
       });
@@ -47,7 +47,7 @@ export default function LoginPage() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/google`, {
+      const res = await api.post('/auth/google', {
         token: credentialResponse.credential,
       });
       loginStore(res.data.user, res.data.token);

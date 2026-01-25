@@ -6,7 +6,7 @@ import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import api from '@/lib/api';
 import { ShieldCheck, Truck, CreditCard, ArrowRight, MapPin } from 'lucide-react';
 
 declare global {
@@ -37,10 +37,10 @@ export default function CheckoutPage() {
 
     setLoading(true);
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
+      const res = await api.post('/orders', {
         items: items.map(i => ({ productId: i.id, quantity: i.quantity })),
         address
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      });
 
       const { snapToken } = res.data;
       if (snapToken && window.snap) {

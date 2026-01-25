@@ -45,6 +45,7 @@ if [ -z "$EMAIL_FROM" ]; then
     EMAIL_FROM="onboarding@resend.dev"
 fi
 read -p "11. Google Client ID (apps.googleusercontent.com): " GOOGLE_CLIENT_ID
+read -p "12. APP SECRET KEY (Kunci Enkripsi Payload, minimal 32 karakter acak): " APP_SECRET_KEY
 
 echo ""
 echo "⏳ Memulai proses instalasi..."
@@ -95,6 +96,7 @@ DATABASE_URL="$DATABASE_URL"
 PORT=5000
 JWT_SECRET="$JWT_SECRET"
 REFRESH_TOKEN_SECRET="$REFRESH_TOKEN_SECRET"
+APP_SECRET_KEY="$APP_SECRET_KEY"
 CLIENT_URL="http://$DOMAIN"
 
 # Midtrans
@@ -132,6 +134,7 @@ NEXT_PUBLIC_API_URL="http://$DOMAIN/api"
 NEXT_PUBLIC_SOCKET_URL="http://$DOMAIN"
 NEXT_PUBLIC_MIDTRANS_CLIENT_KEY="$MIDTRANS_CLIENT_KEY"
 NEXT_PUBLIC_GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID"
+NEXT_PUBLIC_APP_SECRET_KEY="$APP_SECRET_KEY"
 EOL
 
 # Install & Build

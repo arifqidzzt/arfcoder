@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link'; // Added Link import
-import axios from 'axios';
+import api from '@/lib/api';
 import { User, Mail, Phone, Lock, Edit, Camera, LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AuthGuard from '@/components/AuthGuard';
@@ -40,9 +40,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get('/user/profile');
       setProfile(res.data);
       setNewName(res.data.name);
       setNewAvatar(res.data.avatar || '');
@@ -51,9 +49,7 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async () => {
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/profile`, { name: newName, avatar: newAvatar }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put('/user/profile', { name: newName, avatar: newAvatar });
       toast.success('Profil diperbarui');
       setShowEdit(false);
       fetchProfile();
@@ -63,9 +59,7 @@ export default function ProfilePage() {
   const handleChangePassword = async () => {
     if (passData.new !== passData.confirm) return toast.error('Password tidak cocok');
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/password`, { oldPassword: passData.old, newPassword: passData.new }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put('/user/password', { oldPassword: passData.old, newPassword: passData.new });
       toast.success('Password diubah');
       setShowPass(false);
     } catch (error: any) { toast.error(error.response?.data?.message || 'Gagal'); }
@@ -74,16 +68,16 @@ export default function ProfilePage() {
   const handleEmailChange = async () => {
     try {
       if (emailStep === 1) {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/email/request`, {}, { headers: { Authorization: `Bearer ${token}` } });
+        await api.post('/user/email/request', {});
         setEmailStep(2);
         toast.success('OTP dikirim ke email lama');
       } else if (emailStep === 2) {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/email/verify-old`, { code: emailForm.code, newEmail: emailForm.newEmail }, { headers: { Authorization: `Bearer ${token}` } });
+        await api.post('/user/email/verify-old', { code: emailForm.code, newEmail: emailForm.newEmail });
         setEmailStep(3);
         setEmailForm(p => ({ ...p, code: '' }));
         toast.success('OTP dikirim ke email baru');
       } else {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/email/verify-new`, { code: emailForm.code, newEmail: emailForm.newEmail }, { headers: { Authorization: `Bearer ${token}` } });
+        await api.post('/user/email/verify-new', { code: emailForm.code, newEmail: emailForm.newEmail });
         toast.success('Email berhasil diganti! Login ulang.');
         logout();
         router.push('/login');
@@ -94,7 +88,7 @@ export default function ProfilePage() {
   const handlePhoneChange = async () => {
     try {
       if (phoneStep === 1) {
-        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/phone/request`, {}, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await api.post('/user/phone/request', {});
         if (res.data.skipOld) {
           setPhoneStep(3);
         } else {
@@ -102,17 +96,17 @@ export default function ProfilePage() {
           toast.success('OTP dikirim ke WhatsApp lama');
         }
       } else if (phoneStep === 2) {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/phone/verify-old`, { code: phoneForm.code }, { headers: { Authorization: `Bearer ${token}` } });
+        await api.post('/user/phone/verify-old', { code: phoneForm.code });
         setPhoneStep(3);
         setPhoneForm(p => ({ ...p, code: '' }));
         toast.success('Verifikasi berhasil. Masukkan nomor baru.');
       } else if (phoneStep === 3) {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/phone/request-new`, { newPhoneNumber: phoneForm.newPhone }, { headers: { Authorization: `Bearer ${token}` } });
+        await api.post('/user/phone/request-new', { newPhoneNumber: phoneForm.newPhone });
         setPhoneStep(4);
         setPhoneForm(p => ({ ...p, code: '' }));
         toast.success('OTP dikirim ke WhatsApp baru');
       } else {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/phone/verify-new`, { code: phoneForm.code, newPhoneNumber: phoneForm.newPhone }, { headers: { Authorization: `Bearer ${token}` } });
+        await api.post('/user/phone/verify-new', { code: phoneForm.code, newPhoneNumber: phoneForm.newPhone });
         toast.success('Nomor WhatsApp berhasil disimpan!');
         setShowPhone(false);
         fetchProfile();
