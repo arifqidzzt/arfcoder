@@ -34,6 +34,7 @@ ChartJS.register(
 export default function AdminDashboard() {
   const router = useRouter();
   const { user, logout, token } = useAuthStore();
+  const [showFullSales, setShowFullSales] = useState(false);
   const [stats, setStats] = useState({ 
     totalSales: 0, 
     totalOrders: 0, 
@@ -155,8 +156,11 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <h3 className="text-gray-500 text-sm font-medium">Total Penjualan</h3>
-              {/* Fix Angka Jebol: truncate dan tooltip */}
-              <p className="text-2xl font-bold mt-1 truncate" title={`Rp ${stats.totalSales.toLocaleString('id-ID')}`}>
+              <p 
+                onClick={() => setShowFullSales(!showFullSales)}
+                className={`text-2xl font-bold mt-1 transition-all cursor-pointer ${showFullSales ? 'break-words' : 'truncate'}`} 
+                title={showFullSales ? 'Klik untuk menyembunyikan' : `Rp ${stats.totalSales.toLocaleString('id-ID')}`}
+              >
                 Rp {stats.totalSales.toLocaleString('id-ID')}
               </p>
             </div>
