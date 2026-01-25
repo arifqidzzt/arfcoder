@@ -15,6 +15,7 @@ export default function AdminChatPage() {
   const [input, setInput] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [tab, setTab] = useState('UNREAD');
 
   // 1. Inisialisasi Socket Global
   useEffect(() => {
@@ -24,9 +25,8 @@ export default function AdminChatPage() {
     s.on('connect', () => setIsConnected(true));
     s.on('disconnect', () => setIsConnected(false));
 
+    // GUNAKAN 's' (variable lokal), JANGAN 'socket' (state)
     s.on('receiveMessage', (msg) => {
-      // Hanya masukkan ke layar jika pesan milik user yang sedang dibuka
-      // atau pesan dari admin sendiri yang ditujukan ke user tersebut
       setMessages((prev) => {
         const isFromActiveUser = msg.senderId === activeChat?.id;
         const isFromAdminToActiveUser = msg.isAdmin && msg.targetUserId === activeChat?.id;
@@ -39,14 +39,13 @@ export default function AdminChatPage() {
       fetchConversations();
     });
 
-    // Cleanup function yang sangat penting!
     return () => { 
       s.off('receiveMessage');
       s.off('connect');
       s.off('disconnect');
       s.disconnect(); 
     };
-  }, [activeChat?.id]); // Re-subscribe when activeChat changes
+  }, [activeChat?.id]); 
 
   const fetchConversations = async () => {
     try {
@@ -61,11 +60,10 @@ export default function AdminChatPage() {
     fetchConversations();
   }, []);
 
-  // 2. Fungsi Load Chat (Wajib dibungkus useCallback agar stabil)
   const loadChat = useCallback(async (targetUser: any) => {
     if (!targetUser) return;
     setActiveChat(targetUser);
-    setMessages([]); // Hapus pesan lama seketika!
+    setMessages([]); 
     
     try {
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/chat/${targetUser.id}`, {
@@ -91,6 +89,9 @@ export default function AdminChatPage() {
     setInput('');
   };
 
+  // Filter Logic (Sederhana dulu)
+  const filteredConversations = conversations; 
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
@@ -98,13 +99,16 @@ export default function AdminChatPage() {
         {/* Sidebar */}
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
           <div className="p-4 border-b">
-            <h2 className="font-bold flex items-center gap-2">
+            <h2 className="font-bold flex items-center gap-2 mb-4">
               <Inbox size={18}/> Pesan Masuk 
-              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} title={isConnected ? "Terhubung" : "Terputus"}></span>
             </h2>
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+              <button onClick={() => setTab('UNREAD')} className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all ${tab === 'UNREAD' ? 'bg-white shadow-sm' : 'text-gray-500'}`}>SEMUA</button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {conversations.map(u => (
+            {filteredConversations.map(u => (
               <div key={u.id} onClick={() => loadChat(u)} className={`p-4 flex items-center gap-3 cursor-pointer border-b border-gray-50 hover:bg-gray-50 ${activeChat?.id === u.id ? 'bg-black text-white' : ''}`}>
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${activeChat?.id === u.id ? 'bg-white text-black' : 'bg-gray-200 text-gray-500'}`}>
                   {u.name.substring(0, 2).toUpperCase()}
@@ -118,7 +122,7 @@ export default function AdminChatPage() {
           </div>
         </div>
 
-        {/* Chat Area - Menggunakan KEY agar dipaksa render ulang saat ganti user */}
+        {/* Chat Area */}
         <div className="flex-1 flex flex-col bg-white" key={activeChat?.id || 'empty'}>
           {activeChat ? (
             <>
