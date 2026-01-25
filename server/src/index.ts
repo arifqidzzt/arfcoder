@@ -16,6 +16,9 @@ dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
+import { waService } from './services/whatsappService';
+
+// ...
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
@@ -23,12 +26,21 @@ const io = new Server(httpServer, {
   },
 });
 
+// Inject IO to WA Service
+waService.setSocketIo(io);
+waService.connect(); // Start bot on server start
+
 app.use(cors());
+// ...
 app.use(express.json());
 
 app.post('/api/midtrans-webhook', handleMidtransWebhook);
 
+import userRoutes from './routes/userRoutes';
+
+// ...
 app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes); // New Route
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);

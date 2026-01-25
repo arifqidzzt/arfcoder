@@ -156,14 +156,61 @@ export const googleLogin = async (req: Request, res: Response) => {
     const token = generateToken(user.id, user.role);
     const refreshToken = generateRefreshToken(user.id);
 
-    res.status(200).json({
-      token,
-      refreshToken,
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+// ... existing imports ...
+import crypto from 'crypto'; // Native node module
+
+// ... existing functions (register, login, etc) ...
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ message: 'Email tidak terdaftar' });
+
+    // Generate Reset Token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 Hour
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken, resetTokenExpiry }
     });
 
-  } catch (error) {
-    console.error('Google Login Error:', error);
-    res.status(500).json({ message: 'Google login failed', error });
-  }
+    // Send Email (Resend)
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+    console.log(`Reset Link for ${email}: ${resetUrl}`); // Log for dev
+    
+    // TODO: Uncomment for real email
+    // await resend.emails.send({
+    //   from: process.env.EMAIL_FROM!,
+    //   to: email,
+    //   subject: 'Reset Password ArfCoder',
+    //   html: `<p>Klik link ini untuk reset password: <a href="${resetUrl}">${resetUrl}</a></p>`
+    // });
+
+    res.json({ message: 'Link reset dikirim ke email' });
+  } catch (error) { res.status(500).json({ message: 'Error', error }); }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    const user = await prisma.user.findFirst({
+      where: { 
+        resetToken: token, 
+        resetTokenExpiry: { gt: new Date() } 
+      }
+    });
+
+    if (!user) return res.status(400).json({ message: 'Token invalid atau expired' });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null }
+    });
+
+    res.json({ message: 'Password berhasil direset' });
+  } catch (error) { res.status(500).json({ message: 'Error', error }); }
 };

@@ -132,22 +132,21 @@ export const getAdminServices = async (req: Request, res: Response) => {
   } catch (error) { res.status(500).json({ message: 'Error', error }); }
 };
 
-export const upsertService = async (req: Request, res: Response) => {
-  try {
-    const { id, title, description, price, icon } = req.body;
-    const service = await prisma.service.upsert({
-      where: { id: id || 'new' },
-      update: { title, description, price, icon },
-      create: { title, description, price, icon }
-    });
-    res.json(service);
-  } catch (error) { res.status(500).json({ message: 'Error', error }); }
+import { waService } from '../services/whatsappService';
+
+// ... existing exports ...
+
+// --- WHATSAPP BOT CONTROL ---
+export const getWaStatus = async (req: Request, res: Response) => {
+  res.json(waService.getStatus());
 };
 
-export const deleteService = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    await prisma.service.delete({ where: { id: id as string } });
-    res.json({ message: 'Service deleted' });
-  } catch (error) { res.status(500).json({ message: 'Error', error }); }
+export const logoutWa = async (req: Request, res: Response) => {
+  await waService.logout();
+  res.json({ message: 'WA Logged out' });
+};
+
+export const startWa = async (req: Request, res: Response) => {
+  waService.connect();
+  res.json({ message: 'Starting WA...' });
 };

@@ -23,9 +23,9 @@ enum ProductType {
 enum OrderStatus {
   PENDING
   PAID
-  PROCESSING    // Admin sedang memproses/mengirim
-  SHIPPED       // Barang dikirim/Info diberikan (Menunggu User Klik Selesai)
-  COMPLETED     // Selesai
+  PROCESSING
+  SHIPPED
+  COMPLETED
   CANCELLED
   REFUND_REQUESTED
   REFUND_APPROVED
@@ -41,6 +41,15 @@ model User {
   role          Role      @default(USER)
   isVerified    Boolean   @default(false)
   googleId      String?   @unique
+  
+  // Profile Additions
+  avatar        String?
+  phoneNumber   String?
+  
+  // Security
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   otps          Otp[]
@@ -87,7 +96,7 @@ model Service {
   title       String
   description String
   price       String
-  icon        String   // Nama icon lucide (misal: "Code", "Globe")
+  icon        String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -115,13 +124,12 @@ model Order {
   paymentType   String?
   snapToken     String?
   snapUrl       String?
-  address       String?     // Alamat/Catatan dari User
+  address       String?
   
-  // Kolom Baru untuk Sistem Pengiriman Digital & Refund
-  deliveryInfo  String?     // Diisi Admin: Link Download / Credentials / Resi
-  refundReason  String?     // Diisi User: Alasan Refund
-  refundAccount String?     // Diisi User: No Rekening/E-Wallet tujuan refund
-  refundProof   String?     // Diisi Admin: URL Bukti Transfer Refund
+  deliveryInfo  String?
+  refundReason  String?
+  refundAccount String?
+  refundProof   String?
   
   items         OrderItem[]
   createdAt     DateTime    @default(now())
@@ -145,5 +153,6 @@ model Message {
   sender    User     @relation("SentMessages", fields: [senderId], references: [id])
   isAdmin   Boolean  @default(false)
   isRead    Boolean  @default(false)
+  targetUserId String? // Optional: Untuk tracking admin balas ke siapa
   createdAt DateTime @default(now())
 }
