@@ -34,7 +34,13 @@ ChartJS.register(
 export default function AdminDashboard() {
   const router = useRouter();
   const { user, logout, token } = useAuthStore();
-  const [stats, setStats] = useState({ totalSales: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 });
+  const [stats, setStats] = useState({ 
+    totalSales: 0, 
+    totalOrders: 0, 
+    totalProducts: 0, 
+    totalUsers: 0,
+    chart: { labels: [], data: [] } 
+  });
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -48,13 +54,13 @@ export default function AdminDashboard() {
     if(token) fetchStats();
   }, [token]);
 
-  // Chart Data (Simulasi Grafik Naik Turun ala MyBCA)
+  // Chart Data (Real Data)
   const chartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: stats.chart?.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
     datasets: [
       {
-        label: 'Pemasukan (Juta)',
-        data: [12, 19, 15, 25, 22, 30],
+        label: 'Pemasukan (Rupiah)',
+        data: stats.chart?.data || [0, 0, 0, 0, 0, 0],
         borderColor: 'rgb(0, 0, 0)',
         backgroundColor: 'rgba(0, 0, 0, 0.05)',
         tension: 0.4,

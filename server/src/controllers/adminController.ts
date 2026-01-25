@@ -9,15 +9,69 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const totalOrders = await prisma.order.count();
     const totalProducts = await prisma.product.count();
     const totalUsers = await prisma.user.count();
+    
+    // Total Sales (All Time)
     const salesData = await prisma.order.aggregate({
       _sum: { totalAmount: true },
       where: { status: 'PAID' },
     });
+
+    // Chart Data (Last 6 Months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1); // Start from the 1st of that month
+
+    const recentOrders = await prisma.order.findMany({
+      where: {
+        status: 'PAID',
+        createdAt: { gte: sixMonthsAgo }
+      },
+      select: { createdAt: true, totalAmount: true }
+    });
+
+    // Group by Month
+    const monthlyStats: Record<string, number> = {};
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    
+    // Initialize last 6 months with 0
+    for (let i = 0; i < 6; i++) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const key = monthNames[d.getMonth()];
+      monthlyStats[key] = 0;
+    }
+
+    recentOrders.forEach(order => {
+      const monthIndex = new Date(order.createdAt).getMonth();
+      const key = monthNames[monthIndex];
+      if (monthlyStats[key] !== undefined) {
+        monthlyStats[key] += order.totalAmount;
+      }
+    });
+
+    // Sort labels to be chronological (oldest to newest)
+    const chartLabels = Object.keys(monthlyStats).reverse(); // This simple reverse might not be enough if crossing years, but acceptable for simple dash.
+    // Better sorting: reconstruct array based on calculated months
+    const labels = [];
+    const data = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const key = monthNames[d.getMonth()];
+      labels.push(key);
+      data.push(monthlyStats[key] || 0); // Use 0 if no sales
+    }
+
     res.json({
       totalOrders,
       totalProducts,
       totalUsers,
       totalSales: salesData._sum.totalAmount || 0,
+      chart: {
+        labels: labels,
+        data: data
+      }
     });
   } catch (error) { res.status(500).json({ message: 'Error', error }); }
 };
