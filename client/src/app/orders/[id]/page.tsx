@@ -90,19 +90,31 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleCancel = async () => {
-    // Custom Confirmation Toast instead of Browser Alert
     toast((t) => (
-      <div className="flex flex-col gap-2">
-        <span className="font-bold">Yakin batalkan pesanan?</span>
-        <div className="flex gap-2 justify-end">
-          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1 bg-gray-200 rounded text-xs">Tidak</button>
+      <div className="flex flex-col gap-3 min-w-[250px] text-center">
+        <div className="mx-auto bg-red-100 p-2 rounded-full text-red-600">
+          <AlertCircle size={24}/>
+        </div>
+        <span className="font-bold">Yakin ingin membatalkan pesanan?</span>
+        <p className="text-xs text-gray-500">Tindakan ini tidak dapat dibatalkan.</p>
+        <div className="flex gap-2 justify-center mt-2">
+          <button onClick={() => toast.dismiss(t.id)} className="px-4 py-2 bg-gray-100 rounded-lg text-xs font-bold hover:bg-gray-200 w-full">Kembali</button>
           <button onClick={() => {
             confirmCancel();
             toast.dismiss(t.id);
-          }} className="px-3 py-1 bg-red-600 text-white rounded text-xs font-bold">Ya, Batalkan</button>
+          }} className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 w-full">Batalkan</button>
         </div>
       </div>
-    ), { duration: 5000 });
+    ), { 
+      duration: Infinity, // Biar gak hilang sendiri sebelum diklik
+      position: 'top-center',
+      style: {
+        background: '#fff',
+        padding: '24px',
+        borderRadius: '16px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+      }
+    });
   };
 
   const confirmCancel = async () => {

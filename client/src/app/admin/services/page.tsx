@@ -29,13 +29,35 @@ export default function AdminServicesPage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if(!window.confirm('Hapus layanan ini?')) return;
+  const handleDelete = (id: string) => {
+    toast((t) => (
+      <div className="flex flex-col gap-2 min-w-[200px]">
+        <span className="font-bold text-sm">Hapus layanan ini?</span>
+        <div className="flex gap-2 justify-end mt-2">
+          <button 
+            onClick={() => toast.dismiss(t.id)} 
+            className="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-bold hover:bg-gray-200"
+          >
+            Batal
+          </button>
+          <button 
+            onClick={() => confirmDelete(id, t.id)} 
+            className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700"
+          >
+            Hapus
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000, position: 'top-center' });
+  };
+
+  const confirmDelete = async (id: string, toastId: string) => {
+    toast.dismiss(toastId);
     try {
       await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/services/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Layanan dihapus');
+      toast.success('Layanan berhasil dihapus');
       fetchServices();
     } catch (err) { toast.error('Gagal menghapus'); }
   };

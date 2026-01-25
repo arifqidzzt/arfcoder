@@ -35,17 +35,27 @@ export default function AdminUsersPage() {
     if (token) fetchUsers();
   }, [token]);
 
-  const handleDelete = async (id: string) => {
-    if(!confirm('Hapus user ini?')) return;
+  const handleDelete = (id: string) => {
+    toast((t) => (
+      <div className="flex flex-col gap-2 min-w-[200px]">
+        <span className="font-bold text-sm">Hapus user ini?</span>
+        <div className="flex gap-2 justify-end mt-2">
+          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-bold">Batal</button>
+          <button onClick={() => confirmDelete(id, t.id)} className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold">Hapus</button>
+        </div>
+      </div>
+    ), { position: 'top-center' });
+  };
+
+  const confirmDelete = async (id: string, toastId: string) => {
+    toast.dismiss(toastId);
     try {
       await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('User dihapus');
       fetchUsers();
-    } catch (error) {
-      toast.error('Gagal menghapus user');
-    }
+    } catch (error) { toast.error('Gagal menghapus'); }
   };
 
   return (
