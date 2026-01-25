@@ -1,17 +1,103 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Navbar from '@/components/Navbar';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { User, Mail, Phone, Lock, Edit, Camera, LogOut } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+export default function ProfilePage() {
+  const { user, token, logout } = useAuthStore();
+  const router = useRouter();
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // States for modals
+  const [showEdit, setShowEdit] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
+  
+  // Forms
+  const [newName, setNewName] = useState('');
+  const [newAvatar, setNewAvatar] = useState('');
+  
+  const [passData, setPassData] = useState({ old: '', new: '', confirm: '' });
+  
+  const [emailStep, setEmailStep] = useState(1);
+  const [emailForm, setEmailForm] = useState({ newEmail: '', code: '' });
+
   const [phoneStep, setPhoneStep] = useState(1);
   const [phoneForm, setPhoneForm] = useState({ newPhone: '', code: '' });
 
-  // ... (existing handlers)
+  useEffect(() => {
+    if (!token) { router.push('/login'); return; }
+    fetchProfile();
+  }, [token]);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setProfile(res.data);
+      setNewName(res.data.name);
+      setNewAvatar(res.data.avatar || '');
+    } catch (error) { toast.error('Gagal load profile'); } finally { setLoading(false); }
+  };
+
+  const handleUpdateProfile = async () => {
+    try {
+      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/profile`, { name: newName, avatar: newAvatar }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Profil diperbarui');
+      setShowEdit(false);
+      fetchProfile();
+    } catch (error) { toast.error('Gagal update'); }
+  };
+
+  const handleChangePassword = async () => {
+    if (passData.new !== passData.confirm) return toast.error('Password tidak cocok');
+    try {
+      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/password`, { oldPassword: passData.old, newPassword: passData.new }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Password diubah');
+      setShowPass(false);
+    } catch (error: any) { toast.error(error.response?.data?.message || 'Gagal'); }
+  };
+
+  const handleEmailChange = async () => {
+    try {
+      if (emailStep === 1) {
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/email/request`, {}, { headers: { Authorization: `Bearer ${token}` } });
+        setEmailStep(2);
+        toast.success('OTP dikirim ke email lama');
+      } else if (emailStep === 2) {
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/email/verify-old`, { code: emailForm.code, newEmail: emailForm.newEmail }, { headers: { Authorization: `Bearer ${token}` } });
+        setEmailStep(3);
+        setEmailForm(p => ({ ...p, code: '' }));
+        toast.success('OTP dikirim ke email baru');
+      } else {
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/email/verify-new`, { code: emailForm.code, newEmail: emailForm.newEmail }, { headers: { Authorization: `Bearer ${token}` } });
+        toast.success('Email berhasil diganti! Login ulang.');
+        logout();
+        router.push('/login');
+      }
+    } catch (error: any) { toast.error(error.response?.data?.message || 'Gagal'); }
+  };
 
   const handlePhoneChange = async () => {
     try {
       if (phoneStep === 1) {
         const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/phone/request`, {}, { headers: { Authorization: `Bearer ${token}` } });
         if (res.data.skipOld) {
-          setPhoneStep(3); // Langsung ke input nomor baru
+          setPhoneStep(3);
         } else {
-          setPhoneStep(2); // Verifikasi nomor lama
+          setPhoneStep(2);
           toast.success('OTP dikirim ke WhatsApp lama');
         }
       } else if (phoneStep === 2) {
@@ -20,13 +106,11 @@
         setPhoneForm(p => ({ ...p, code: '' }));
         toast.success('Verifikasi berhasil. Masukkan nomor baru.');
       } else if (phoneStep === 3) {
-        // Request OTP ke nomor baru
         await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/phone/request-new`, { newPhoneNumber: phoneForm.newPhone }, { headers: { Authorization: `Bearer ${token}` } });
         setPhoneStep(4);
         setPhoneForm(p => ({ ...p, code: '' }));
         toast.success('OTP dikirim ke WhatsApp baru');
       } else {
-        // Final Verify
         await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/phone/verify-new`, { code: phoneForm.code, newPhoneNumber: phoneForm.newPhone }, { headers: { Authorization: `Bearer ${token}` } });
         toast.success('Nomor WhatsApp berhasil disimpan!');
         setShowPhone(false);
@@ -42,8 +126,6 @@
       <Navbar />
       <main className="max-w-4xl mx-auto px-4 pt-24">
         
-        {/* ... (Header Profile remains same) ... */}
-        {/* INI KODE LAMA, SAYA HANYA TULIS ULANG BAGIAN YANG DIUBAH AGAR REPLACE SUKSES */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 mb-8">
           <div className="relative">
             <img src={profile?.avatar || `https://ui-avatars.com/api/?name=${profile?.name}`} className="w-32 h-32 rounded-full object-cover border-4 border-gray-50" />
@@ -63,9 +145,7 @@
           </div>
         </div>
 
-        {/* Settings Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Account Info */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="font-bold mb-4 flex items-center gap-2"><User size={18}/> Informasi Akun</h3>
             <div className="space-y-4">
@@ -88,7 +168,6 @@
             </div>
           </div>
 
-          {/* Security */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="font-bold mb-4 flex items-center gap-2"><Lock size={18}/> Keamanan</h3>
             <div className="space-y-4">
@@ -104,8 +183,6 @@
           </div>
         </div>
 
-        {/* MODALS */}
-        {/* ... (Edit Profile & Pass Modal same as before) ... */}
         {showEdit && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
@@ -135,7 +212,6 @@
           </div>
         )}
 
-        {/* 3. Change Email Modal (Existing) */}
         {showEmail && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
@@ -165,13 +241,10 @@
           </div>
         )}
 
-        {/* 4. Phone Change Modal (NEW) */}
         {showPhone && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
               <h3 className="font-bold mb-4">Hubungkan WhatsApp</h3>
-              
-              {/* Step 1: Request Old */}
               {phoneStep === 1 && (
                 <div className="text-center">
                   <p className="text-sm text-gray-500 mb-4">
@@ -184,8 +257,6 @@
                   </button>
                 </div>
               )}
-
-              {/* Step 2: Verify Old */}
               {phoneStep === 2 && (
                 <>
                   <p className="text-sm text-gray-500 mb-2">Masukkan OTP dari WhatsApp lama:</p>
@@ -193,8 +264,6 @@
                   <button onClick={handlePhoneChange} className="w-full py-2 bg-black text-white rounded-lg font-bold">Verifikasi</button>
                 </>
               )}
-
-              {/* Step 3: Input New Number */}
               {phoneStep === 3 && (
                 <>
                   <p className="text-sm text-gray-500 mb-2">Masukkan Nomor WhatsApp Baru (cth: 08123...)</p>
@@ -202,8 +271,6 @@
                   <button onClick={handlePhoneChange} className="w-full py-2 bg-black text-white rounded-lg font-bold">Kirim OTP</button>
                 </>
               )}
-
-              {/* Step 4: Verify New */}
               {phoneStep === 4 && (
                 <>
                   <p className="text-sm text-gray-500 mb-2">OTP dikirim ke <strong>{phoneForm.newPhone}</strong></p>
@@ -211,7 +278,6 @@
                   <button onClick={handlePhoneChange} className="w-full py-2 bg-black text-white rounded-lg font-bold">Simpan Nomor</button>
                 </>
               )}
-
               <button onClick={() => setShowPhone(false)} className="mt-4 text-xs text-gray-400 hover:text-black w-full text-center">Batal</button>
             </div>
           </div>
