@@ -17,7 +17,7 @@ export default function Home() {
     const fetchFeatured = async () => {
       try {
         const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products`);
-        setFeaturedProducts(res.data.slice(0, 3)); // Ambil 3 produk terbaru
+        setFeaturedProducts(res.data.slice(0, 3)); 
       } catch (error) {
         console.error("Failed to fetch products");
       }
@@ -39,7 +39,6 @@ export default function Home() {
 
           <div className="container-custom relative z-10 w-full">
             <div className="max-w-4xl mx-auto text-center px-4">
-              {/* Badge */}
               <div data-aos="fade-down" className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full mb-8 border border-border shadow-sm">
                 <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
                 <span className="text-xs md:text-sm font-medium text-muted-foreground">
@@ -47,18 +46,15 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* Heading */}
               <h1 data-aos="fade-up" data-aos-delay="100" className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-[1.1]">
                 Solusi Digital untuk<br />
                 <span className="text-gradient block mt-2 pb-2">Pertumbuhan Bisnis</span>
               </h1>
 
-              {/* Description */}
               <p data-aos="fade-up" data-aos-delay="200" className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
                 Kami mengubah ide kompleks menjadi produk digital yang simpel, elegan, dan berdampak besar bagi bisnis Anda.
               </p>
 
-              {/* CTA Buttons */}
               <div data-aos="fade-up" data-aos-delay="300" className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 w-full px-4">
                 <Link href="/products" className="btn-hero-primary group w-full sm:w-auto">
                   <span>Belanja Produk</span>
@@ -79,8 +75,8 @@ export default function Home() {
                     Optimasi performa maksimal untuk load time di bawah 1 detik.
                   </p>
                 </div>
-                {/* ... (sisa fitur lainnya) */}
-                <div className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
+
+                <div data-aos="fade-up" data-aos-delay="500" className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
                   <div className="w-10 h-10 rounded-lg bg-black text-white flex items-center justify-center mb-4">
                     <CheckCircle className="w-5 h-5" />
                   </div>
@@ -90,7 +86,7 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
+                <div data-aos="fade-up" data-aos-delay="600" className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
                   <div className="w-10 h-10 rounded-lg bg-black text-white flex items-center justify-center mb-4">
                     <Code className="w-5 h-5" />
                   </div>
@@ -114,10 +110,10 @@ export default function Home() {
           </div>
         </section>
 
-        {/* PREVIEW PRODUCTS SECTION (ASLI) */}
+        {/* PREVIEW PRODUCTS SECTION */}
         <section className="py-24 bg-secondary/20">
           <div className="container-custom">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+            <div data-aos="fade-right" className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
               <div>
                 <span className="text-accent font-bold tracking-wider uppercase text-sm mb-2 block">Katalog</span>
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Produk Terbaru</h2>
@@ -131,8 +127,8 @@ export default function Home() {
               {featuredProducts.length === 0 ? (
                 <div className="col-span-3 text-center py-10 text-gray-400 italic">Belum ada produk di database.</div>
               ) : (
-                featuredProducts.map((product: any) => (
-                  <Link href={`/products/${product.id}`} key={product.id} className="group cursor-pointer bg-white rounded-2xl p-4 border border-border hover:border-accent/30 transition-all hover:shadow-lg">
+                featuredProducts.map((product: any, idx) => (
+                  <Link href={`/products/${product.id}`} key={product.id} data-aos="fade-up" data-aos-delay={idx * 100} className="group cursor-pointer bg-white rounded-2xl p-4 border border-border hover:border-accent/30 transition-all hover:shadow-lg">
                     <div className="bg-gray-100 rounded-xl aspect-[16/10] mb-5 overflow-hidden relative">
                       <img src={product.images[0] || 'https://placehold.co/600x400'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     </div>
@@ -151,11 +147,10 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ... (Sisa Section Services & CTA tetap sama) */}
         {/* SERVICES SECTION */}
         <section className="py-24 bg-white">
           <div className="container-custom">
-            <div className="text-center max-w-2xl mx-auto mb-16">
+            <div data-aos="fade-up" className="text-center max-w-2xl mx-auto mb-16">
               <span className="text-accent font-bold tracking-wider uppercase text-sm mb-2 block">Layanan Kami</span>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Apa yang Bisa Kami Bantu?</h2>
               <p className="text-muted-foreground">
@@ -169,7 +164,7 @@ export default function Home() {
                 { icon: <Smartphone />, title: "Mobile Apps", desc: "Aplikasi Android & iOS yang responsif." },
                 { icon: <Database />, title: "Backend System", desc: "Arsitektur server yang aman dan scalable." }
               ].map((s, i) => (
-                <div key={i} className="p-8 rounded-2xl border border-border bg-secondary/10 hover:bg-white hover:shadow-xl transition-all">
+                <div key={i} data-aos="fade-up" data-aos-delay={i * 100} className="p-8 rounded-2xl border border-border bg-secondary/10 hover:bg-white hover:shadow-xl transition-all">
                   <div className="w-12 h-12 mb-6 bg-black text-white flex items-center justify-center rounded-xl">{s.icon}</div>
                   <h3 className="text-xl font-bold mb-3">{s.title}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">{s.desc}</p>
@@ -181,8 +176,8 @@ export default function Home() {
 
         <section className="py-24 relative overflow-hidden bg-black text-white">
           <div className="container-custom relative z-10 text-center">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">Mulai Transformasi Digital Anda</h2>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
+            <h2 data-aos="zoom-in" className="text-3xl md:text-5xl font-bold mb-6">Mulai Transformasi Digital Anda</h2>
+            <div data-aos="fade-up" data-aos-delay="200" className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <Link href="/register" className="px-8 py-4 bg-white text-black rounded-xl font-bold hover:bg-gray-100 transition-colors">Daftar Sekarang</Link>
               <Link href="/contact" className="px-8 py-4 bg-transparent border border-white/20 text-white rounded-xl font-bold hover:bg-white/10 transition-colors">Hubungi Sales</Link>
             </div>
@@ -208,7 +203,7 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-6 text-foreground">Dukungan</h4>
+              <h4 className="font-bold mb-6">Dukungan</h4>
               <ul className="space-y-4 text-sm text-muted-foreground">
                 <li><Link href="/terms" className="hover:text-accent">Syarat & Ketentuan</Link></li>
                 <li><Link href="/privacy" className="hover:text-accent">Kebijakan Privasi</Link></li>

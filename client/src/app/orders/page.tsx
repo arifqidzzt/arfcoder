@@ -99,10 +99,38 @@ export default function MyOrdersPage() {
                     <p className="text-xs text-gray-400 mt-2">{new Date(order.createdAt).toLocaleDateString('id-ID')}</p>
                   </div>
                   
-                  {/* Status Indicator Only */}
+// Helper component for Countdown
+const CountdownTimer = ({ dateString }: { dateString: string }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const target = new Date(dateString).getTime() + 24 * 60 * 60 * 1000;
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = target - now;
+      if (distance < 0) {
+        setTimeLeft('Expired');
+        clearInterval(interval);
+      } else {
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        setTimeLeft(`${hours}j ${minutes}m`);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [dateString]);
+
+  return <span className="text-red-500 font-bold text-xs">{timeLeft}</span>;
+};
+
+// ... inside render ...
+                  {/* Status Indicator */}
                   {order.status === 'PENDING' && (
-                    <div className="flex items-center gap-1 text-orange-600 text-xs font-bold animate-pulse">
-                      <AlertCircle size={14}/> Menunggu Pembayaran
+                    <div className="flex items-center gap-2 text-orange-600 text-xs font-bold animate-pulse">
+                      <AlertCircle size={14}/> Menunggu Bayar
+                      <div className="bg-orange-100 px-2 py-0.5 rounded ml-1">
+                        <CountdownTimer dateString={order.createdAt} />
+                      </div>
                     </div>
                   )}
                 </div>
