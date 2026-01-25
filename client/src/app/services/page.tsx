@@ -1,10 +1,16 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import api from '@/lib/api';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Code, Globe, Laptop, Database, Search, Layout } from 'lucide-react';
+
+const Icons = { Code, Globe, Laptop, Database, Search, Layout, ArrowRight };
 
 export default function ServicesPage() {
   const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -13,6 +19,8 @@ export default function ServicesPage() {
         setServices(res.data);
       } catch (error) {
         console.error('Failed to fetch services');
+      } finally {
+        setLoading(false);
       }
     };
     fetchServices();
