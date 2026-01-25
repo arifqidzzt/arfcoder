@@ -80,8 +80,8 @@ export default function FAQPage() {
         <div className="mt-16 text-center bg-blue-50 p-8 rounded-3xl border border-blue-100">
           <h3 className="font-bold text-xl mb-2">Masih butuh bantuan?</h3>
           <p className="text-gray-500 mb-6">Tim support kami siap membantu Anda 24/7.</p>
-          <a href="/contact" className="bg-black text-white px-8 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors inline-flex items-center gap-2">
-            <MessageCircle size={18} /> Hubungi Kami
+          <a href="/contact/support" className="bg-black text-white px-8 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors inline-flex items-center gap-2">
+            <MessageCircle size={18} /> Hubungi Support
           </a>
         </div>
       </main>

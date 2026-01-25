@@ -1,28 +1,7 @@
-'use client';
-
-import { GoogleOAuthProvider } from "@react-oauth/google";
-import { Toaster } from "react-hot-toast";
-import ChatWidget from "@/components/ChatWidget";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { useEffect } from "react";
-import "aos/dist/aos.css"; // Import CSS Global di sini!
-
-// Helper component to init AOS
-const AOSInit = () => {
-  useEffect(() => {
-    // Import JS hanya di client
-    if (typeof window !== 'undefined') {
-      const AOS = require('aos');
-      AOS.init({
-        duration: 800,
-        once: true,
-        easing: 'ease-out-cubic',
-      });
-    }
-  }, []);
-  return null;
-};
+import Providers from "@/components/Providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +13,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const metadata: Metadata = {
+  title: "ArfCoder | Digital Services & Product Store",
+  description: "Modern Minimalist E-commerce for Digital Services and Products",
+  icons: {
+    icon: '/app_ico.ico', // Pastikan file ini ada di folder public
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -42,12 +29,9 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-black selection:text-white`}>
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
-          <AOSInit />
-          <Toaster position="bottom-right" />
+        <Providers>
           {children}
-          <ChatWidget />
-        </GoogleOAuthProvider>
+        </Providers>
       </body>
     </html>
   );

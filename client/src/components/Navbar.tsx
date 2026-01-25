@@ -11,8 +11,13 @@ export default function Navbar() {
 
   return (
     <nav className="flex items-center justify-between px-8 py-4 border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50 transition-all">
-      <Link href="/" className="text-2xl font-bold tracking-tighter">
-        ARFCODER
+      <Link href="/" className="flex items-center gap-3 group">
+        <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg group-hover:scale-105 transition-transform overflow-hidden">
+          {/* Ganti src ini dengan path logo Anda nanti, misal '/logo.png' */}
+          <span className="group-hover:hidden">A</span>
+          <img src="/app_ico.ico" alt="Logo" className="w-full h-full object-cover hidden group-hover:block" />
+        </div>
+        <span className="text-xl font-bold tracking-tighter">ARFCODER</span>
       </Link>
       <div className="hidden md:flex space-x-8 text-sm font-medium">
         <Link href="/" className="hover:text-gray-600 transition-colors">Beranda</Link>

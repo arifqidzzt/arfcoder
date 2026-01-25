@@ -211,6 +211,29 @@ export const forgotPassword = async (req: Request, res: Response) => {
     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
     console.log(`Reset Link for ${email}: ${resetUrl}`); 
     
+    // Kirim Email Asli
+    try {
+      const { data, error } = await resend.emails.send({
+        from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+        to: email,
+        subject: 'Reset Password ArfCoder',
+        html: `
+          <h3>Permintaan Reset Password</h3>
+          <p>Seseorang baru saja meminta reset password untuk akun ArfCoder Anda.</p>
+          <p>Klik tombol di bawah ini untuk mengganti password:</p>
+          <a href="${resetUrl}" style="background:#000;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;">Reset Password</a>
+          <p style="margin-top:20px;font-size:12px;color:#888;">Jika bukan Anda, abaikan email ini.</p>
+        `
+      });
+      
+      if (error) {
+        console.error('Resend Error:', error);
+        return res.status(500).json({ message: 'Gagal mengirim email provider' });
+      }
+    } catch (e) {
+      console.error('Email Send Exception:', e);
+    }
+
     res.json({ message: 'Link reset dikirim ke email' });
   } catch (error) { res.status(500).json({ message: 'Error', error }); }
 };
