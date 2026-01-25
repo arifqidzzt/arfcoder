@@ -32,6 +32,7 @@ ChartJS.register(
 );
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const { user, logout, token } = useAuthStore();
   const [stats, setStats] = useState({ totalSales: 0, totalOrders: 0, totalProducts: 0, totalUsers: 0 });
 
