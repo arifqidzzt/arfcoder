@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Navbar from '@/components/Navbar';
-import axios from 'axios';
+import api from '@/lib/api';
 import { io } from 'socket.io-client';
 import { Smartphone, RefreshCcw, LogOut } from 'lucide-react';
 import QRCode from 'react-qr-code';
@@ -32,20 +32,18 @@ export default function AdminWhatsAppPage() {
 
   const fetchStatus = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/wa/status`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get('/admin/wa/status');
       setStatus(res.data.status);
       if (res.data.qr) setQr(res.data.qr);
     } catch (err) { console.error(err); }
   };
 
   const handleStart = async () => {
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/wa/start`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    await api.post('/admin/wa/start', {});
   };
 
   const handleLogout = async () => {
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/wa/logout`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    await api.post('/admin/wa/logout', {});
     setStatus('DISCONNECTED');
   };
 

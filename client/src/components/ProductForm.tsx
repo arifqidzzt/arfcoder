@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import axios from 'axios';
+import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
@@ -57,14 +57,10 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
 
     try {
       if (isEdit) {
-        await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/products/${initialData.id}`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.put(`/products/${initialData.id}`, payload);
         toast.success('Produk berhasil diperbarui');
       } else {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/products`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.post('/products', payload);
         toast.success('Produk berhasil ditambahkan');
       }
       router.push('/admin/products');

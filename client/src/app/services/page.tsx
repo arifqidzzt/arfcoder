@@ -1,24 +1,18 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
-import axios from 'axios';
-import * as Icons from 'lucide-react';
+import Link from 'next/link';
+import api from '@/lib/api';
+import { CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function ServicesPage() {
   const [services, setServices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        // Panggil endpoint publik (tanpa token admin)
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/services`);
+        const res = await api.get('/products/services');
         setServices(res.data);
       } catch (error) {
-        console.error("Failed to fetch services");
-      } finally {
-        setLoading(false);
+        console.error('Failed to fetch services');
       }
     };
     fetchServices();

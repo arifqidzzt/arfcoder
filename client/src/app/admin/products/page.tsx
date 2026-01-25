@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
 import { Plus, Edit, Trash2, Search, ArrowLeft } from 'lucide-react';
-import axios from 'axios';
+import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface Product {
@@ -34,7 +34,7 @@ export default function AdminProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products`);
+      const res = await api.get('/products');
       setProducts(res.data);
     } catch (error) {
       toast.error('Gagal memuat produk');
@@ -58,9 +58,7 @@ export default function AdminProductsPage() {
   const confirmDelete = async (id: string, toastId: string) => {
     toast.dismiss(toastId);
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/products/${id}`);
       toast.success('Produk dihapus');
       fetchProducts();
     } catch (error) { toast.error('Gagal menghapus'); }

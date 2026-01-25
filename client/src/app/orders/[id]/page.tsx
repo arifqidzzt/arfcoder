@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react';
 import Navbar from '@/components/Navbar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import { ArrowLeft, Copy, Download, AlertCircle, CheckCircle, XCircle, CreditCard, RefreshCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -70,9 +70,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   const fetchOrder = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/orders/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get(`/orders/${id}`);
       setOrder(res.data);
     } catch (error) {
       toast.error('Gagal memuat pesanan');
@@ -86,9 +84,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
     try {
       // Minta token baru (fresh) agar tidak expired
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/orders/${id}/pay`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.post(`/orders/${id}/pay`, {});
       
       const { snapToken } = res.data;
 
@@ -139,9 +135,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   const confirmCancel = async () => {
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/orders/${id}/cancel`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put(`/orders/${id}/cancel`, {});
       toast.success('Pesanan dibatalkan');
       fetchOrder();
     } catch (error) {
@@ -152,11 +146,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const handleSubmitRefund = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/orders/${id}/refund`, {
+      await api.post(`/orders/${id}/refund`, {
         reason: refundReason,
         account: refundAccount
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Pengajuan refund dikirim');
       setShowRefundForm(false);

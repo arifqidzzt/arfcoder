@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Navbar from '@/components/Navbar';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Plus, Edit, Trash2, Globe, Laptop, Code, Database, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -17,9 +17,7 @@ export default function AdminServicesPage() {
 
   const fetchServices = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/services`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get('/admin/services');
       setServices(res.data);
     } catch (err) { console.error(err); }
   };
@@ -54,9 +52,7 @@ export default function AdminServicesPage() {
   const confirmDelete = async (id: string, toastId: string) => {
     toast.dismiss(toastId);
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/services/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/admin/services/${id}`);
       toast.success('Layanan berhasil dihapus');
       fetchServices();
     } catch (err) { toast.error('Gagal menghapus'); }
@@ -64,9 +60,7 @@ export default function AdminServicesPage() {
 
   const handleSave = async () => {
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/services`, form, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.post('/admin/services', form);
       toast.success('Layanan disimpan');
       setShowModal(false);
       setForm({ id: '', title: '', description: '', price: '', icon: 'Code' }); // Reset

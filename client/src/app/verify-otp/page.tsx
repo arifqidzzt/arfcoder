@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Navbar from '@/components/Navbar';
 import { useRouter, useSearchParams } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
 function VerifyOtpContent() {
@@ -26,7 +26,7 @@ function VerifyOtpContent() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-otp`, { userId, code });
+      await api.post('/auth/verify-otp', { userId, code });
       toast.success('Email berhasil diverifikasi! Silakan login.');
       router.push('/login');
     } catch (error: any) {
@@ -39,7 +39,7 @@ function VerifyOtpContent() {
   const handleResend = async () => {
     setLoading(true);
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/resend-otp`, { userId, email });
+      await api.post('/auth/resend-otp', { userId, email });
       setTimer(60);
       toast.success('Kode OTP baru telah dikirim ke email Anda'); 
     } catch (e) { toast.error('Gagal mengirim ulang kode'); }

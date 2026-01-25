@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
 import { ArrowLeft, RefreshCcw } from 'lucide-react';
@@ -23,9 +23,7 @@ export default function AdminOrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/orders`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get('/admin/orders');
       setOrders(res.data);
     } catch (error) {
       console.error('Failed to fetch orders');

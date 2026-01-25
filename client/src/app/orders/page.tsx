@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Package, ChevronRight, CreditCard, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
@@ -63,9 +63,7 @@ export default function MyOrdersPage() {
     
     const fetchOrders = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/orders/my`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get('/orders/my');
         setOrders(res.data);
       } catch (error) { console.error(error); } finally { setLoading(false); }
     };

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { ArrowRight, Code, Palette, Rocket, CheckCircle, Mail, Phone, MapPin, Zap, Globe, Database, Smartphone } from 'lucide-react';
-import axios from 'axios';
+import api from '@/lib/api';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -16,7 +16,7 @@ export default function Home() {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products`);
+        const res = await api.get('/products');
         setFeaturedProducts(res.data.slice(0, 3)); 
       } catch (error) {
         console.error("Failed to fetch products");

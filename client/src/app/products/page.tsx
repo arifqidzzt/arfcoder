@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
 import { ShoppingCart, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import api from '@/lib/api';
 
 interface Product {
   id: string;
@@ -25,7 +25,7 @@ export default function ProductList() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products?search=${search}`);
+        const res = await api.get(`/products?search=${search}`);
         setProducts(res.data);
       } catch (error) {
         console.error('Failed to fetch products');

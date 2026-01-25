@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react';
 import Navbar from '@/components/Navbar';
 import { useCartStore } from '@/store/useCartStore';
 import { ShoppingCart, Heart, Share2, ArrowLeft, Minus, Plus, Truck, ShieldCheck } from 'lucide-react';
-import axios from 'axios';
+import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -32,7 +32,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`);
+        const res = await api.get(`/products/${id}`);
         setProduct(res.data);
       } catch (error) {
         toast.error('Produk tidak ditemukan');

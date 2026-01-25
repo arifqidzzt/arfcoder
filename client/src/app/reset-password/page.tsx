@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import Navbar from '@/components/Navbar';
-import axios from 'axios';
+import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -16,7 +16,7 @@ function ResetPasswordContent() {
     e.preventDefault();
     if (pass.new !== pass.confirm) return toast.error('Password tidak sama');
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/reset-password`, { token, newPassword: pass.new });
+      await api.post('/auth/reset-password', { token, newPassword: pass.new });
       toast.success('Password berhasil direset! Silakan login.');
       router.push('/login');
     } catch (error) { toast.error('Token invalid/expired'); }

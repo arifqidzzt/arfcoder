@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
 import { Package, ShoppingBag, Users, BarChart3, LogOut } from 'lucide-react';
-import axios from 'axios';
+import api from '@/lib/api';
 import AuthGuard from '@/components/AuthGuard';
 import { Line } from 'react-chartjs-2';
 import {
@@ -46,9 +46,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get('/admin/stats');
         setStats(res.data);
       } catch (error) { console.error('Failed to fetch stats'); }
     };

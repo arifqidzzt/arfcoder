@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
 import { ArrowLeft, Trash2, Shield } from 'lucide-react';
@@ -22,9 +22,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/users`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get('/admin/users');
       setUsers(res.data);
     } catch (error) {
       console.error('Failed to fetch users');
@@ -50,9 +48,7 @@ export default function AdminUsersPage() {
   const confirmDelete = async (id: string, toastId: string) => {
     toast.dismiss(toastId);
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/admin/users/${id}`);
       toast.success('User dihapus');
       fetchUsers();
     } catch (error) { toast.error('Gagal menghapus'); }

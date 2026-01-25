@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react';
 import ProductForm from '@/components/ProductForm';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +17,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`);
+        const res = await api.get(`/products/${id}`);
         setProduct(res.data);
       } catch (error) {
         console.error('Error fetching product:', error);

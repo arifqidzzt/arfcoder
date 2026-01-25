@@ -1,7 +1,5 @@
-'use client';
-
 import { useEffect, useState, use } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -20,9 +18,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
   const fetchOrder = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/orders/${id}`, { // Re-use public endpoint or create specific admin one
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get(`/orders/${id}`); 
       setOrder(res.data);
       setDeliveryInfo(res.data.deliveryInfo || '');
     } catch (error) {
@@ -34,9 +30,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
   const updateStatus = async (newStatus: string) => {
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/orders/${id}`, { status: newStatus }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put(`/admin/orders/${id}`, { status: newStatus });
       toast.success(`Status diubah ke ${newStatus}`);
       fetchOrder();
     } catch (error) {
@@ -46,9 +40,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
   const saveDeliveryInfo = async () => {
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/orders/${id}/delivery`, { deliveryInfo }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put(`/admin/orders/${id}/delivery`, { deliveryInfo });
       toast.success('Info pengiriman disimpan');
       updateStatus('SHIPPED'); // Auto update to SHIPPED
     } catch (error) {
@@ -138,10 +130,10 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                         const proof = (document.getElementById('refundProofInput') as HTMLInputElement).value;
                         if(!proof) return toast.error('Bukti harus diisi');
                         try {
-                          await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/orders/${id}`, { 
+                          await api.put(`/admin/orders/${id}`, { 
                             status: 'REFUND_COMPLETED',
                             refundProof: proof 
-                          }, { headers: { Authorization: `Bearer ${token}` } });
+                          });
                           toast.success('Refund Selesai!');
                           fetchOrder();
                         } catch (err) { toast.error('Gagal'); }

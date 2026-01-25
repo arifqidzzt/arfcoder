@@ -5,9 +5,6 @@ export const secureMiddleware = (req: Request, res: Response, next: NextFunction
   // 1. Check Custom Header
   const secureHeader = req.headers['x-arf-secure-token'] as string;
   
-  // DEBUG LOG (REMOVE IN PRODUCTION)
-  // console.log(`[SEC] Header: ${secureHeader} | Valid: ${verifySecureHeader(secureHeader)}`);
-
   if (!verifySecureHeader(secureHeader)) {
     console.error(`[SEC-FAIL] Invalid Header: ${secureHeader}`);
     return res.status(403).json({ message: 'Access Denied: Invalid Security Header' });

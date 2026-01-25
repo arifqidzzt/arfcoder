@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import Navbar from '@/components/Navbar';
-import axios from 'axios';
+import api from '@/lib/api';
 import { MessageSquare, User, Send, Inbox } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 
@@ -49,9 +49,7 @@ export default function AdminChatPage() {
 
   const fetchConversations = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/users`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get('/admin/users');
       setConversations(res.data);
     } catch (err) { console.error(err); }
   };
@@ -66,9 +64,7 @@ export default function AdminChatPage() {
     setMessages([]); 
     
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/chat/${targetUser.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get(`/admin/chat/${targetUser.id}`);
       setMessages(res.data);
     } catch (err) {
       console.error("Gagal load history:", err);
