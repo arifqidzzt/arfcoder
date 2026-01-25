@@ -77,6 +77,10 @@ export default function AdminDashboard() {
             <div className="w-5 h-5 flex items-center justify-center"><div className="w-4 h-4 border-2 border-gray-400 rounded-full"/></div>
             <span className="font-medium">Live Chat</span>
           </Link>
+          <Link href="/admin/whatsapp" className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <div className="w-5 h-5 flex items-center justify-center">📱</div>
+            <span className="font-medium">WhatsApp Bot</span>
+          </Link>
           <div className="border-t border-gray-100 my-2"></div>
           <Link href="/" target="_blank" className="flex items-center space-x-3 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
             <div className="w-5 h-5 flex items-center justify-center">🌐</div>

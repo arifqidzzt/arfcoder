@@ -26,8 +26,13 @@ export default function Navbar() {
       <div className="flex items-center space-x-4">
         {user ? (
           <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium hidden sm:inline">{user.name}</span>
-            <button onClick={logout} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <Link href="/profile" className="flex items-center gap-2 hover:bg-gray-50 px-3 py-2 rounded-full transition-colors group">
+              <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-bold text-xs">
+                {user.name?.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-medium hidden sm:inline group-hover:text-black">{user.name}</span>
+            </Link>
+            <button onClick={logout} className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-colors" title="Keluar">
               <LogOut size={18} />
             </button>
           </div>
