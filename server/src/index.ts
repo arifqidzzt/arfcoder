@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 import authRoutes from './routes/authRoutes';
 import productRoutes from './routes/productRoutes';
@@ -17,6 +19,31 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 import { waService } from './services/whatsappService';
+
+// --- SECURITY MIDDLEWARES ---
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" } // Allow images to be loaded from other domains if needed
+}));
+
+// Trust Proxy (Required for Nginx/VPS to get real user IP)
+app.set('trust proxy', 1);
+
+// Rate Limiters
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // Limit each IP to 500 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Terlalu banyak request, coba lagi nanti.' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 60, // Limit each IP to 60 login/register attempts per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Terlalu banyak percobaan login/daftar, coba lagi dalam 1 jam.' }
+});
 
 // ...
 const io = new Server(httpServer, {
@@ -33,13 +60,18 @@ waService.connect(); // Start bot on server start
 app.use(cors());
 // ...
 app.use(express.json());
+// Global API Limiter
+app.use('/api', apiLimiter);
 
 app.post('/api/midtrans-webhook', handleMidtransWebhook);
 
 import userRoutes from './routes/userRoutes';
 
 // ...
+// Apply stricter limiter to Auth routes
+app.use('/api/auth', authLimiter);
 app.use('/api/auth', authRoutes);
+
 app.use('/api/user', userRoutes); // New Route
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
