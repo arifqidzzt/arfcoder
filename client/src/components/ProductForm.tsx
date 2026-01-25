@@ -24,7 +24,7 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
     stock: initialData?.stock || 0,
     type: initialData?.type || 'BARANG',
     discount: initialData?.discount || 0,
-    images: initialData?.images?.[0] || '', // Simple single image input for now
+    images: initialData?.images?.[0] || '', 
   });
 
   const handleChange = (e: any) => {
@@ -35,13 +35,24 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
     }));
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, images: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     const payload = {
       ...formData,
-      images: [formData.images], // Convert back to array
+      images: [formData.images], 
     };
 
     try {
@@ -68,7 +79,6 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
     <div className="max-w-3xl mx-auto">
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 space-y-6">
         
-        {/* Basic Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-2">Nama Produk</label>
@@ -141,22 +151,6 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
             </select>
           </div>
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, images: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  return (
-    <div className="max-w-3xl mx-auto">
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 space-y-6">
-        {/* ... form fields ... */}
-          
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-2">Gambar Produk</label>
             

@@ -16,7 +16,7 @@ interface OrderDetail {
   snapToken?: string;
   deliveryInfo?: string;
   refundReason?: string;
-  refundAccount?: string; // Added this line
+  refundAccount?: string; 
   refundStatus?: string; 
   createdAt: string;
   items: {
@@ -25,6 +25,26 @@ interface OrderDetail {
     price: number;
   }[];
 }
+
+// Helper Countdown (Moved outside to fix build error)
+const CountdownTimer = ({ dateString }: { dateString: string }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+  useEffect(() => {
+    const target = new Date(dateString).getTime() + 24 * 60 * 60 * 1000;
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = target - now;
+      if (distance < 0) { setTimeLeft('Expired'); clearInterval(interval); }
+      else {
+        const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        setTimeLeft(`${h}j ${m}m`);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [dateString]);
+  return <span className="ml-2 text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">Batas: {timeLeft}</span>;
+};
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -106,7 +126,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
     ), { 
-      duration: Infinity, // Biar gak hilang sendiri sebelum diklik
+      duration: Infinity, 
       position: 'top-center',
       style: {
         background: '#fff',
@@ -167,27 +187,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
         {/* Status Card */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
-// Helper Countdown (Copied from list page)
-const CountdownTimer = ({ dateString }: { dateString: string }) => {
-  const [timeLeft, setTimeLeft] = useState('');
-  useEffect(() => {
-    const target = new Date(dateString).getTime() + 24 * 60 * 60 * 1000;
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = target - now;
-      if (distance < 0) { setTimeLeft('Expired'); clearInterval(interval); }
-      else {
-        const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        setTimeLeft(`${h}j ${m}m`);
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [dateString]);
-  return <span className="ml-2 text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">Batas: {timeLeft}</span>;
-};
-
-// ... inside component ...
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
               <span className="text-sm text-gray-500 mr-2">Status Pesanan</span>
