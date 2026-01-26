@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import AuthGuard from '@/components/AuthGuard';
 
 export default function ProfilePage() {
-  const { user, token, logout } = useAuthStore();
+  const { user, token, logout, login } = useAuthStore();
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -49,8 +49,14 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async () => {
     try {
-      await api.put('/user/profile', { name: newName, avatar: newAvatar });
+      const res = await api.put('/user/profile', { name: newName, avatar: newAvatar });
       toast.success('Profil diperbarui');
+      
+      // Update Global Store (Navbar)
+      if (user && token) {
+        login({ ...user, name: newName, avatar: newAvatar } as any, token);
+      }
+
       setShowEdit(false);
       fetchProfile();
     } catch (error) { toast.error('Gagal update'); }

@@ -30,8 +30,12 @@ export default function Navbar() {
         {user ? (
           <div className="flex items-center space-x-4">
             <Link href="/profile" className="flex items-center gap-2 hover:bg-gray-50 px-3 py-2 rounded-full transition-colors group">
-              <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-bold text-xs">
-                {user.name?.charAt(0).toUpperCase()}
+              <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-bold text-xs overflow-hidden border border-gray-200">
+                {user.avatar ? (
+                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  user.name?.charAt(0).toUpperCase()
+                )}
               </div>
               <span className="text-sm font-medium hidden sm:inline group-hover:text-black">{user.name}</span>
             </Link>
