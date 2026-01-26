@@ -27,7 +27,8 @@ func RequestPhoneChange(c *fiber.Ctx) error {
 	userId := userToken.Claims.(jwt.MapClaims)["userId"].(string)
 
 	var user models.User
-	config.DB.First(&user, ""id" = ?", userId)
+	// Fix query syntax: use backticks or escape quotes
+	config.DB.First(&user, "\"id\" = ?", userId)
 
 	if user.PhoneNumber == nil || *user.PhoneNumber == "" {
 		return c.JSON(fiber.Map{"skipOld": true})
@@ -60,7 +61,8 @@ func VerifyOldPhone(c *fiber.Ctx) error {
 	userId := userToken.Claims.(jwt.MapClaims)["userId"].(string)
 
 	var otp models.Otp
-	if err := config.DB.Where(""userId" = ? AND ""code" = ? AND ""expiresAt" > ?", userId, req.Code, time.Now()).First(&otp).Error; err != nil {
+	// Fix query syntax
+	if err := config.DB.Where("\"userId\" = ? AND \"code\" = ? AND \"expiresAt\" > ?", userId, req.Code, time.Now()).First(&otp).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Kode salah atau kadaluarsa"})
 	}
 
@@ -104,11 +106,12 @@ func VerifyNewPhone(c *fiber.Ctx) error {
 	userId := userToken.Claims.(jwt.MapClaims)["userId"].(string)
 
 	var otp models.Otp
-	if err := config.DB.Where(""userId" = ? AND ""code" = ? AND ""expiresAt" > ?", userId, req.Code, time.Now()).First(&otp).Error; err != nil {
+	// Fix query syntax
+	if err := config.DB.Where("\"userId\" = ? AND \"code\" = ? AND \"expiresAt\" > ?", userId, req.Code, time.Now()).First(&otp).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Kode salah"})
 	}
 
-	config.DB.Model(&models.User{}).Where(""id" = ?", userId).Update("phoneNumber", req.PhoneNumber)
+	config.DB.Model(&models.User{}).Where("\"id\" = ?", userId).Update("phoneNumber", req.PhoneNumber)
 	config.DB.Delete(&otp)
 
 	return c.JSON(fiber.Map{"message": "Phone updated"})
@@ -119,7 +122,7 @@ func RequestEmailChange(c *fiber.Ctx) error {
 	userId := userToken.Claims.(jwt.MapClaims)["userId"].(string)
 
 	var user models.User
-	config.DB.First(&user, ""id" = ?", userId)
+	config.DB.First(&user, "\"id\" = ?", userId)
 
 	otp := generateOTP()
 	config.DB.Create(&models.Otp{
@@ -143,7 +146,8 @@ func VerifyOldEmail(c *fiber.Ctx) error {
 	userId := userToken.Claims.(jwt.MapClaims)["userId"].(string)
 
 	var otp models.Otp
-	if err := config.DB.Where(""userId" = ? AND ""code" = ?", userId, req.Code).First(&otp).Error; err != nil {
+	// Fix query syntax
+	if err := config.DB.Where("\"userId\" = ? AND \"code\" = ?", userId, req.Code).First(&otp).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Kode salah"})
 	}
 
@@ -172,11 +176,11 @@ func VerifyNewEmail(c *fiber.Ctx) error {
 	userId := userToken.Claims.(jwt.MapClaims)["userId"].(string)
 
 	var otp models.Otp
-	if err := config.DB.Where(""userId" = ? AND ""code" = ?", userId, req.Code).First(&otp).Error; err != nil {
+	if err := config.DB.Where("\"userId\" = ? AND \"code\" = ?", userId, req.Code).First(&otp).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Kode salah"})
 	}
 
-	config.DB.Model(&models.User{}).Where(""id" = ?", userId).Update("email", req.NewEmail)
+	config.DB.Model(&models.User{}).Where("\"id\" = ?", userId).Update("email", req.NewEmail)
 	config.DB.Delete(&otp)
 
 	return c.JSON(fiber.Map{"message": "Email updated"})
