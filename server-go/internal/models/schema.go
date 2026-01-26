@@ -62,6 +62,13 @@ type Otp struct {
 }
 func (Otp) TableName() string { return "Otp" }
 
+// Category
+type Category struct {
+	ID   string `gorm:"primaryKey;type:text;column:id" json:"id"`
+	Name string `gorm:"unique;column:name" json:"name"`
+}
+func (Category) TableName() string { return "Category" }
+
 // Product
 type Product struct {
 	ID          string      `gorm:"primaryKey;type:text;column:id" json:"id"`
@@ -73,6 +80,7 @@ type Product struct {
 	Type        ProductType `gorm:"default:'BARANG';column:type" json:"type"`
 	Images      []string    `gorm:"type:text[];column:images" json:"images"`
 	CategoryId  *string     `gorm:"column:categoryId" json:"categoryId"`
+	Category    *Category   `gorm:"foreignKey:CategoryId;references:ID" json:"category"` // Added Relation
 	CreatedAt   time.Time   `gorm:"autoCreateTime;column:createdAt" json:"createdAt"`
 	UpdatedAt   time.Time   `gorm:"autoUpdateTime;column:updatedAt" json:"updatedAt"`
 }
