@@ -27,14 +27,14 @@ func InitWhatsApp() {
 
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
 	
-	// Create/Connect to SQLite store for session (Need Context in v0.0.0+)
-	container, err := sqlstore.New("sqlite3", "file:wa_session.db?_foreign_keys=on", dbLog)
+	// Create/Connect to SQLite store for session (Need Context in newer versions)
+	container, err := sqlstore.New(context.Background(), "sqlite3", "file:wa_session.db?_foreign_keys=on", dbLog)
 	if err != nil {
 		log.Fatal("Failed to connect to WA session DB:", err)
 	}
 
 	// Get first device (Need Context)
-	deviceStore, err := container.GetFirstDevice()
+	deviceStore, err := container.GetFirstDevice(context.Background())
 	if err != nil {
 		log.Fatal("Failed to get device store:", err)
 	}
@@ -107,8 +107,8 @@ func SendMessage(phone string, message string) error {
 
 func LogoutWhatsApp() error {
 	if WAClient != nil {
-		// Need context for Logout
-		WAClient.Logout()
+		// Need context for Logout in newer versions
+		WAClient.Logout(context.Background())
 		InitWhatsApp() 
 	}
 	return nil
