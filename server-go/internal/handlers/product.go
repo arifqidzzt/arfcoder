@@ -11,9 +11,9 @@ func GetAllProducts(c *fiber.Ctx) error {
 	var products []models.Product
 	search := c.Query("search")
 
-	query := config.DB.Order("created_at desc")
+	query := config.DB.Order("\"createdAt\" desc") // Fix column name
 	if search != "" {
-		query = query.Where("name ILIKE ?", "%"+search+"%")
+		query = query.Where("\"name\" ILIKE ?", "%"+search+"%")
 	}
 
 	query.Find(&products)
@@ -23,7 +23,7 @@ func GetAllProducts(c *fiber.Ctx) error {
 func GetProduct(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var product models.Product
-	if err := config.DB.First(&product, "id = ?", id).Error; err != nil {
+	if err := config.DB.First(&product, "\"id\" = ?", id).Error; err != nil { // Fix column name
 		return c.Status(404).JSON(fiber.Map{"message": "Product not found"})
 	}
 	return c.JSON(product)

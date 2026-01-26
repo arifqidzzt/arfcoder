@@ -23,7 +23,6 @@ type UpdateOrderRequest struct {
 	DeliveryInfo string             `json:"deliveryInfo"`
 }
 
-// User: Create Order
 func CreateOrder(c *fiber.Ctx) error {
 	userToken := c.Locals("user").(*jwt.Token)
 	claims := userToken.Claims.(jwt.MapClaims)
@@ -108,7 +107,6 @@ func CreateOrder(c *fiber.Ctx) error {
 	})
 }
 
-// User: Get My Orders
 func GetMyOrders(c *fiber.Ctx) error {
 	userToken := c.Locals("user").(*jwt.Token)
 	claims := userToken.Claims.(jwt.MapClaims)
@@ -119,7 +117,6 @@ func GetMyOrders(c *fiber.Ctx) error {
 	return c.JSON(orders)
 }
 
-// User & Admin: Get Order Detail
 func GetOrder(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var order models.Order
@@ -129,14 +126,12 @@ func GetOrder(c *fiber.Ctx) error {
 	return c.JSON(order)
 }
 
-// Admin: Get All Orders
 func GetAllOrders(c *fiber.Ctx) error {
 	var orders []models.Order
 	config.DB.Preload("User").Preload("Items.Product").Order("created_at desc").Find(&orders)
 	return c.JSON(orders)
 }
 
-// Admin: Update Order Status / Delivery
 func UpdateOrder(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var req UpdateOrderRequest
@@ -159,7 +154,6 @@ func UpdateOrder(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Order updated"})
 }
 
-// User: Pay (Re-snap)
 func PayOrder(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var order models.Order
@@ -173,14 +167,12 @@ func PayOrder(c *fiber.Ctx) error {
 	})
 }
 
-// User: Cancel Order
 func CancelOrder(c *fiber.Ctx) error {
 	id := c.Params("id")
 	config.DB.Model(&models.Order{}).Where("id = ?", id).Update("status", models.StatusCancelled)
 	return c.JSON(fiber.Map{"message": "Order cancelled"})
 }
 
-// User: Request Refund
 type RefundRequest struct {
 	Reason  string `json:"reason"`
 	Account string `json:"account"`

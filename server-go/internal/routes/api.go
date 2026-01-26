@@ -44,6 +44,15 @@ func SetupRoutes(app *fiber.App) {
 	user.Put("/profile", handlers.UpdateProfile)
 	user.Put("/password", handlers.UpdatePassword)
 
+	// Phone & Email Change
+	user.Post("/phone/request", handlers.RequestPhoneChange)
+	user.Post("/phone/verify-old", handlers.VerifyOldPhone)
+	user.Post("/phone/request-new", handlers.RequestNewPhone)
+	user.Post("/phone/verify-new", handlers.VerifyNewPhone)
+	user.Post("/email/request", handlers.RequestEmailChange)
+	user.Post("/email/verify-old", handlers.VerifyOldEmail)
+	user.Post("/email/verify-new", handlers.VerifyNewEmail)
+
 	// Orders (User)
 	api.Post("/orders", handlers.CreateOrder)
 	api.Get("/orders/my", handlers.GetMyOrders)
