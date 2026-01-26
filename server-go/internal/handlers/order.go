@@ -120,7 +120,8 @@ func GetMyOrders(c *fiber.Ctx) error {
 func GetOrder(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var order models.Order
-	if err := config.DB.Preload("User").Preload("Items.Product").First(&order, "id = ?", id).Error; err != nil {
+	// Preload nested relations
+	if err := config.DB.Preload("User").Preload("Items.Product.Category").First(&order, "\"id\" = ?", id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
 	}
 	return c.JSON(order)
