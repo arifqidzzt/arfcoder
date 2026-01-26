@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/big"
 	"os"
 	"time"
@@ -19,7 +18,6 @@ import (
 	"github.com/resend/resend-go/v2"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/api/idtoken"
-	"google.golang.org/api/option"
 )
 
 type EncryptedRequest struct {
@@ -223,7 +221,7 @@ func GoogleLogin(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid request"})
 	}
 
-	payload, err := idtoken.Validate(context.Background(), data.Token, os.Getenv("GOOGLE_CLIENT_ID"), option.WithHTTPClient(nil))
+	payload, err := idtoken.Validate(context.Background(), data.Token, os.Getenv("GOOGLE_CLIENT_ID"))
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid Google Token"})
 	}
