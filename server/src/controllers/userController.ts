@@ -4,19 +4,34 @@ import { AuthRequest } from '../middlewares/auth';
 import { waService } from '../services/whatsappService';
 import bcrypt from 'bcryptjs';
 
-// Get Profile & Stats
+// Get Profile & Stats (With Auto-Cancel Logic)
 export const getProfile = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
+
+    // 1. Lazy Auto-Cancel: Expire pending orders > 24 hours
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await prisma.order.updateMany({
+      where: { 
+        userId, 
+        status: 'PENDING', 
+        createdAt: { lt: yesterday } 
+      },
+      data: { status: 'CANCELLED' }
+    });
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, email: true, avatar: true, phoneNumber: true, role: true }
     });
 
-    // Calculate Spending
+    // 2. Calculate Spending (Include PAID, PROCESSING, SHIPPED, COMPLETED)
     const spending = await prisma.order.aggregate({
       _sum: { totalAmount: true },
-      where: { userId, status: 'COMPLETED' } // Only completed orders count
+      where: { 
+        userId, 
+        status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED'] } 
+      }
     });
 
     res.json({ ...user, totalSpent: spending._sum.totalAmount || 0 });
