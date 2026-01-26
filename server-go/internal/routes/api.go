@@ -29,8 +29,8 @@ func SetupRoutes(app *fiber.App) {
 
 	// Public Data
 	api.Get("/products", handlers.GetAllProducts)
-	api.Get("/products/:id", handlers.GetProduct)
-	api.Get("/products/services", handlers.GetServices)
+	api.Get("/products/services", handlers.GetServices) // Move specific route UP
+	api.Get("/products/:id", handlers.GetProduct)       // Catch-all ID comes LAST
 
 	// --- PROTECTED ROUTES (JWT) ---
 	app.Use(jwtware.New(jwtware.Config{
