@@ -13,7 +13,6 @@ func SecureHeaders(c *fiber.Ctx) error {
 
 	headerToken := c.Get("x-arf-secure-token")
 	if headerToken == "" {
-		// Temporary Allow for dev if needed, or strictly block
 		return c.Status(403).JSON(fiber.Map{"message": "Access Denied: Missing Security Header"})
 	}
 

@@ -38,24 +38,39 @@ func SetupRoutes(app *fiber.App) {
 	}))
 
 	// User Profile
-	api.Get("/auth/me", handlers.GetMe) // Legacy path support
+	api.Get("/auth/me", handlers.GetMe)
 	user := api.Group("/user")
 	user.Get("/profile", handlers.GetMe)
 	user.Put("/profile", handlers.UpdateProfile)
 	user.Put("/password", handlers.UpdatePassword)
 
-	// Orders
+	// Orders (User)
 	api.Post("/orders", handlers.CreateOrder)
 	api.Get("/orders/my", handlers.GetMyOrders)
+	api.Get("/orders/:id", handlers.GetOrder) // Detail Order
+	api.Post("/orders/:id/pay", handlers.PayOrder)
+	api.Put("/orders/:id/cancel", handlers.CancelOrder)
+	api.Post("/orders/:id/refund", handlers.RequestRefund)
 
 	// Admin
 	admin := api.Group("/admin")
 	admin.Get("/stats", handlers.GetDashboardStats)
 	
+	// Admin Orders
+	admin.Get("/orders", handlers.GetAllOrders)
+	admin.Put("/orders/:id", handlers.UpdateOrder)
+	admin.Put("/orders/:id/delivery", handlers.UpdateOrder) // Re-use update logic
+
 	// Admin Users
 	admin.Get("/users", handlers.GetAllUsers)
 	admin.Delete("/users/:id", handlers.DeleteUser)
 	admin.Get("/chat/:userId", handlers.GetUserChatHistory)
+
+	// Admin Products
+	prod := api.Group("/products") // Protected part of products
+	prod.Post("/", handlers.CreateProduct)
+	prod.Put("/:id", handlers.UpdateProduct)
+	prod.Delete("/:id", handlers.DeleteProduct)
 
 	// Admin Services
 	admin.Get("/services", handlers.GetServices)

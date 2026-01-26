@@ -17,14 +17,22 @@ type CreateOrderRequest struct {
 	Address string             `json:"address"`
 }
 
+type UpdateOrderRequest struct {
+	Status       models.OrderStatus `json:"status"`
+	RefundProof  string             `json:"refundProof"`
+	DeliveryInfo string             `json:"deliveryInfo"`
+}
+
+// User: Create Order
 func CreateOrder(c *fiber.Ctx) error {
 	userToken := c.Locals("user").(*jwt.Token)
 	claims := userToken.Claims.(jwt.MapClaims)
 	userId := claims["userId"].(string)
 
-	// Fetch User Data for Midtrans
 	var user models.User
-	config.DB.First(&user, "id = ?", userId)
+	if err := config.DB.First(&user, "id = ?", userId).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"message": "User not found"})
+	}
 
 	var req CreateOrderRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -100,6 +108,7 @@ func CreateOrder(c *fiber.Ctx) error {
 	})
 }
 
+// User: Get My Orders
 func GetMyOrders(c *fiber.Ctx) error {
 	userToken := c.Locals("user").(*jwt.Token)
 	claims := userToken.Claims.(jwt.MapClaims)
@@ -108,6 +117,87 @@ func GetMyOrders(c *fiber.Ctx) error {
 	var orders []models.Order
 	config.DB.Preload("Items.Product").Where("user_id = ?", userId).Order("created_at desc").Find(&orders)
 	return c.JSON(orders)
+}
+
+// User & Admin: Get Order Detail
+func GetOrder(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var order models.Order
+	if err := config.DB.Preload("User").Preload("Items.Product").First(&order, "id = ?", id).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
+	}
+	return c.JSON(order)
+}
+
+// Admin: Get All Orders
+func GetAllOrders(c *fiber.Ctx) error {
+	var orders []models.Order
+	config.DB.Preload("User").Preload("Items.Product").Order("created_at desc").Find(&orders)
+	return c.JSON(orders)
+}
+
+// Admin: Update Order Status / Delivery
+func UpdateOrder(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var req UpdateOrderRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "Invalid request"})
+	}
+
+	updates := map[string]interface{}{}
+	if req.Status != "" { updates["status"] = req.Status }
+	if req.RefundProof != "" { updates["refund_proof"] = req.RefundProof }
+	if req.DeliveryInfo != "" { 
+		updates["delivery_info"] = req.DeliveryInfo 
+		updates["status"] = models.StatusShipped
+	}
+
+	if err := config.DB.Model(&models.Order{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"message": "Failed to update"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Order updated"})
+}
+
+// User: Pay (Re-snap)
+func PayOrder(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var order models.Order
+	config.DB.Preload("User").First(&order, "id = ?", id)
+
+	// Re-generate snap token (simplified logic, reuse CreateOrder logic ideally)
+	// For now, return existing token
+	return c.JSON(fiber.Map{
+		"snapToken": order.SnapToken,
+		"snapUrl":   order.SnapUrl,
+	})
+}
+
+// User: Cancel Order
+func CancelOrder(c *fiber.Ctx) error {
+	id := c.Params("id")
+	config.DB.Model(&models.Order{}).Where("id = ?", id).Update("status", models.StatusCancelled)
+	return c.JSON(fiber.Map{"message": "Order cancelled"})
+}
+
+// User: Request Refund
+type RefundRequest struct {
+	Reason  string `json:"reason"`
+	Account string `json:"account"`
+}
+func RequestRefund(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var req RefundRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "Invalid"})
+	}
+	
+	config.DB.Model(&models.Order{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"status":         models.StatusRefundReq,
+		"refund_reason":  req.Reason,
+		"refund_account": req.Account,
+	})
+	return c.JSON(fiber.Map{"message": "Refund requested"})
 }
 
 func MidtransWebhook(c *fiber.Ctx) error {
