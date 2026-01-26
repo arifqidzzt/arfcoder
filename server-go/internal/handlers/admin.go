@@ -103,7 +103,7 @@ func StartWA(c *fiber.Ctx) error {
 	
 	go func() {
 		for qr := range qrChan {
-			services.Server.BroadcastToAll("wa_qr", map[string]interface{}{"qr": qr})
+			services.Server.BroadcastToNamespace("/", "wa_qr", map[string]interface{}{"qr": qr})
 		}
 	}()
 

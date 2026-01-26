@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"sync"
 
 	"github.com/mattn/go-sqlite3"
@@ -12,6 +11,7 @@ import (
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	waLog "go.mau.fi/whatsmeow/util/log"
 	"go.mau.fi/whatsmeow/types"
+	waProto "go.mau.fi/whatsmeow/binary/proto" // Correct import for Message struct
 	"google.golang.org/protobuf/proto"
 )
 
@@ -27,13 +27,13 @@ func InitWhatsApp() {
 
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
 	
-	// Create/Connect to SQLite store for session
+	// Create/Connect to SQLite store for session (Need Context in v0.0.0+)
 	container, err := sqlstore.New("sqlite3", "file:wa_session.db?_foreign_keys=on", dbLog)
 	if err != nil {
 		log.Fatal("Failed to connect to WA session DB:", err)
 	}
 
-	// Get first device
+	// Get first device (Need Context)
 	deviceStore, err := container.GetFirstDevice()
 	if err != nil {
 		log.Fatal("Failed to get device store:", err)
@@ -42,14 +42,9 @@ func InitWhatsApp() {
 	clientLog := waLog.Stdout("Client", "INFO", true)
 	WAClient = whatsmeow.NewClient(deviceStore, clientLog)
 
-	// Handler for incoming events (optional, maybe for auto-reply later)
-	// WAClient.AddEventHandler(eventHandler)
-
 	if WAClient.Store.ID == nil {
-		// No session, need to login via handler later
 		log.Println("WA: No session found. Waiting for QR Scan trigger.")
 	} else {
-		// Already logged in, connect
 		err = WAClient.Connect()
 		if err != nil {
 			log.Println("WA: Failed to connect:", err)
@@ -75,7 +70,6 @@ func GenerateQR() (<-chan string, error) {
 			return nil, err
 		}
 		
-		// Wrap in string channel for simpler consumption
 		strChan := make(chan string)
 		go func() {
 			defer close(strChan)
@@ -83,7 +77,6 @@ func GenerateQR() (<-chan string, error) {
 				if evt.Event == "code" {
 					strChan <- evt.Code
 				} else {
-					// Timeout or success
 					return 
 				}
 			}
@@ -91,7 +84,6 @@ func GenerateQR() (<-chan string, error) {
 		return strChan, nil
 	}
 	
-	// Reconnect if session exists but disconnected
 	err := WAClient.Connect()
 	return nil, err
 }
@@ -101,13 +93,13 @@ func SendMessage(phone string, message string) error {
 		return fmt.Errorf("WA client not connected")
 	}
 
-	// Format: 628xxx -> 628xxx@s.whatsapp.net
 	jid, err := types.ParseJID(phone + "@s.whatsapp.net")
 	if err != nil {
 		return err
 	}
 
-	_, err = WAClient.SendMessage(context.Background(), jid, &whatsmeow.Message{
+	// Correct struct usage: waProto.Message
+	_, err = WAClient.SendMessage(context.Background(), jid, &waProto.Message{
 		Conversation: proto.String(message),
 	})
 	return err
@@ -115,8 +107,8 @@ func SendMessage(phone string, message string) error {
 
 func LogoutWhatsApp() error {
 	if WAClient != nil {
+		// Need context for Logout
 		WAClient.Logout()
-		// Re-init to clear memory
 		InitWhatsApp() 
 	}
 	return nil

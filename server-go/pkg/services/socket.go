@@ -25,7 +25,7 @@ func InitSocket() *socketio.Server {
 		// Logika simpan pesan ke DB bisa dipanggil di sini via Handler
 		// Untuk sekarang kita broadcast saja
 		// server.BroadcastToRoom("/", "admin_room", "receiveMessage", msg)
-		server.BroadcastToAll("receiveMessage", msg)
+		server.BroadcastToNamespace("/", "receiveMessage", msg)
 	})
 
 	server.OnError("/", func(s socketio.Conn, e error) {

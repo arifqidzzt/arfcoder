@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"os"
 )
 
@@ -109,7 +108,6 @@ func pkcs7Unpad(data []byte) ([]byte, error) {
 
 // VerifyHeader checks x-arf-secure-token format
 func VerifyHeader(token string) bool {
-	secretKey := os.Getenv("APP_SECRET_KEY")
 	// Expected: TIMESTAMP.HASH
 	// We need to split and hash check. 
 	// For simplicity in this helper, we'll let middleware handle splitting logic
