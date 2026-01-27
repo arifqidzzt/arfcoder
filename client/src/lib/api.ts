@@ -7,7 +7,7 @@ const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
 });
 
-// Request Interceptor (ENCRYPTION V3 ENABLED)
+// Request Interceptor (ENCRYPTION V5 ULTIMATE ENABLED)
 api.interceptors.request.use(
   (config) => {
     // 1. Add Auth Token
@@ -16,16 +16,16 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // 2. Add Security Header
+    // 2. Add Security Header (Timestamp.Hash)
     config.headers['x-arf-secure-token'] = generateSecureHeader();
 
-    // 3. Encrypt Payload (POST/PUT/PATCH)
+    // 3. Encrypt Body into Obfuscated Array
     if (['post', 'put', 'patch'].includes(config.method?.toLowerCase() || '') && config.data) {
+      // Skip for File Uploads (FormData)
       if (!(config.data instanceof FormData)) {
-        console.log("Encrypting Payload V3..."); // Debug Log
         const secureBody = encryptPayload(config.data);
         if (secureBody) {
-          config.data = secureBody;
+          config.data = secureBody; // Body now becomes [A, B, C, D, E]
         }
       }
     }
@@ -35,7 +35,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor
+// Response Interceptor (Auto Logout on 401)
 api.interceptors.response.use(
   (response) => response,
   (error) => {

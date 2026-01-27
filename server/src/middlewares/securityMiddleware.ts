@@ -10,9 +10,9 @@ export const secureMiddleware = (req: Request, res: Response, next: NextFunction
   if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
     if (req.path.includes('midtrans-webhook')) return next();
 
-    // Check V3 Structure (Payload, Signature, Timestamp, Mode)
-    if (!req.body.payload || !req.body.signature || !req.body.timestamp || req.body._m === undefined) {
-      return res.status(400).json({ message: 'Access Denied: Invalid Payload Structure V3' });
+    // Check V5 Structure (Must be Array length 5)
+    if (!Array.isArray(req.body) || req.body.length !== 5) {
+      return res.status(400).json({ message: 'Access Denied: Invalid Obfuscated Payload' });
     }
 
     const decrypted = decryptPayload(req.body);

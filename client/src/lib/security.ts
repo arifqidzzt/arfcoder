@@ -3,13 +3,11 @@ import CryptoJS from 'crypto-js';
 const SECRET_KEY = process.env.NEXT_PUBLIC_APP_SECRET_KEY || 'default-secret-key-change-me';
 
 /**
- * ARFCODER SECURITY PROTOCOL V3 (POLYMORPHIC)
+ * ARFCODER SECURITY PROTOCOL V5 (OBFUSCATED ARRAY)
  * 
- * Fitur Ultimate:
- * 1. Polymorphic Encryption: Struktur berubah acak tiap request.
- * 2. Mode 0: Standard (Payload AES + Signature HMAC).
- * 3. Mode 1: Inverted (Signature masuk ke dalam AES, lalu di-Hash lagi luarnya).
- * 4. Junk Data Wajib & Random Length.
+ * Fitur:
+ * 1. Output bukan JSON Object, tapi Array String [ ... ].
+ * 2. Posisi Payload/Signature ditentukan oleh digit terakhir Timestamp.
  */
 
 const generateRandom = (length: number) => {
@@ -21,53 +19,51 @@ const generateRandom = (length: number) => {
   return result;
 };
 
+const getFingerprint = () => {
+  if (typeof window === 'undefined') return { _res: 'server', _ua: 'server', _tz: 'utc' };
+  return {
+    _res: `${window.screen.width}x${window.screen.height}`,
+    _ua: typeof navigator !== 'undefined' ? CryptoJS.MD5(navigator.userAgent).toString() : 'unknown',
+    _tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+  };
+};
+
 export const encryptPayload = (data: any) => {
   try {
     const timestamp = Date.now().toString();
-    const nonce = `${generateRandom(16)}:${timestamp}`;
+    const nonce = `${generateRandom(12)}:${timestamp}`;
     
-    // Pilih Mode Acak (0 atau 1)
-    const mode = Math.floor(Math.random() * 2);
-
-    // Siapkan Data + Junk
-    const payloadObj = {
+    // 1. Prepare Inner Data
+    const innerData = {
       ...data,
-      _j: generateRandom(Math.floor(Math.random() * 50) + 20), // Junk 20-70 chars
-      _n: nonce,
-      _t: timestamp
+      ...getFingerprint(),
+      _j: generateRandom(20),
+      _n: nonce
     };
 
-    const jsonString = JSON.stringify(payloadObj);
-    let finalPayload = '';
-    let finalSignature = '';
+    // 2. Encrypt (Double Layer)
+    const jsonString = JSON.stringify(innerData);
+    const layer1 = CryptoJS.AES.encrypt(jsonString, SECRET_KEY).toString();
+    const payload = CryptoJS.AES.encrypt(layer1, SECRET_KEY).toString();
 
-    if (mode === 0) {
-      // MODE 0: Standard Encrypt -> Sign
-      const encrypted = CryptoJS.AES.encrypt(jsonString, SECRET_KEY).toString();
-      const signature = CryptoJS.HmacSHA256(encrypted + nonce, SECRET_KEY).toString();
-      
-      finalPayload = encrypted;
-      finalSignature = signature;
+    // 3. Signature
+    const signature = CryptoJS.HmacSHA256(payload + timestamp, SECRET_KEY).toString();
+
+    // 4. OBFUSCATION (Array Shuffling)
+    const lastDigit = parseInt(timestamp.slice(-1));
+    const junk1 = generateRandom(10);
+    const junk2 = generateRandom(15);
+
+    if (lastDigit % 2 === 0) {
+      // Genap: [ PAYLOAD, SIGNATURE, TIMESTAMP, JUNK, JUNK ]
+      return [ payload, signature, timestamp, junk1, junk2 ];
     } else {
-      // MODE 1: Sign Inside -> Encrypt Everything
-      // Kita buat signature internal dulu
-      const innerSig = CryptoJS.HmacSHA256(jsonString, SECRET_KEY).toString();
-      const wrappedObj = { data: jsonString, sig: innerSig };
-      
-      // Encrypt bungkusan itu
-      finalPayload = CryptoJS.AES.encrypt(JSON.stringify(wrappedObj), SECRET_KEY).toString();
-      // Buat fake signature di luar biar format tetap konsisten (decoy)
-      finalSignature = CryptoJS.HmacSHA256("decoy" + timestamp, SECRET_KEY).toString();
+      // Ganjil: [ TIMESTAMP, JUNK, PAYLOAD, JUNK, SIGNATURE ]
+      return [ timestamp, junk1, payload, junk2, signature ];
     }
 
-    return {
-      payload: finalPayload,
-      signature: finalSignature,
-      timestamp: timestamp,
-      _m: mode // Kirim mode ke server
-    };
   } catch (error) {
-    console.error("Encryption V3 Failed:", error);
+    console.error("Encryption V5 Failed:", error);
     return null;
   }
 };
