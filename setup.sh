@@ -1,10 +1,9 @@
 #!/bin/bash
 
 # ==========================================
-# ARFCODER ULTIMATE INSTALLER (VPS) - V2.1 SECURE
+# ARFCODER ULTIMATE INSTALLER (VPS) - V3.0
 # ==========================================
 
-# Pastikan script dijalankan sebagai root
 if [ "$EUID" -ne 0 ]; then
   echo "❌ Mohon jalankan script ini sebagai root (sudo ./setup.sh)"
   exit
@@ -15,56 +14,67 @@ echo "   🚀  ARFCODER AUTO INSTALLER & SETUP  🚀"
 echo "=================================================="
 echo ""
 
-# --- 1. GATHER ALL INFORMATION ---
-echo "--- KONFIGURASI BASIC ---"
+# --- 1. GATHER INFO ---
 read -p "1. Masukkan Domain/IP VPS: " DOMAIN
 read -p "2. Nama Database Baru: " DB_NAME
 read -p "3. Password Database Baru: " DB_PASSWORD
 read -p "4. JWT Secret: " JWT_SECRET
 read -p "5. Refresh Token Secret: " REFRESH_TOKEN_SECRET
+read -p "6. APP SECRET KEY (Min 32 karakter): " APP_SECRET_KEY
 
 echo ""
 echo "--- KONFIGURASI PAYMENT & EMAIL ---"
-read -p "6. Midtrans SERVER Key: " MIDTRANS_SERVER_KEY
-read -p "7. Midtrans CLIENT Key: " MIDTRANS_CLIENT_KEY
-read -p "8. Apakah ini Production/Live? (y/n): " IS_PROD
-if [ "$IS_PROD" == "y" ]; then MIDTRANS_IS_PRODUCTION="true"; else MIDTRANS_IS_PRODUCTION="false"; fi
-
+read -p "7. Midtrans SERVER Key: " MIDTRANS_SERVER_KEY
+read -p "8. Midtrans CLIENT Key: " MIDTRANS_CLIENT_KEY
 read -p "9. Resend API Key: " RESEND_API_KEY
 read -p "10. Email Sender Name: " EMAIL_FROM
 read -p "11. Google Client ID: " GOOGLE_CLIENT_ID
-read -p "12. APP SECRET KEY (Min 32 karakter): " APP_SECRET_KEY
 
 echo ""
-echo "⏳ Memproses password dan memulai instalasi..."
-
-# --- AUTO URL ENCODE PASSWORD (Agar karakter @ # : dll tidak merusak DB_URL) ---
-# Menggunakan python3 (bawaan Ubuntu) untuk encoding
+echo "⏳ Memproses..."
 ENCODED_DB_PASSWORD=$(python3 -c "import sys, urllib.parse; print(urllib.parse.quote_plus('$DB_PASSWORD'))")
 
-# --- 2. SYSTEM UPDATE & DEPENDENCIES ---
+# --- 2. INSTALL DEPENDENCIES ---
 apt update && apt upgrade -y
-apt install -y curl git nginx postgresql postgresql-contrib build-essential ufw python3
+apt install -y curl git nginx postgresql postgresql-contrib build-essential ufw python3 unzip certbot python3-certbot-nginx
 
-# Install Node.js 20.x
+# Install Node.js
 if ! command -v node &> /dev/null; then
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
     apt install -y nodejs
 fi
 npm install -g pm2 typescript ts-node
 
+# Install Rclone (Backup)
+if ! command -v rclone &> /dev/null; then
+    curl https://rclone.org/install.sh | bash
+fi
+
 # --- 3. DATABASE SETUP ---
 sudo -u postgres psql -c "CREATE USER arfcoder_user WITH PASSWORD '$DB_PASSWORD';" || true
 sudo -u postgres psql -c "ALTER USER arfcoder_user WITH SUPERUSER;"
 sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER arfcoder_user;" || true
 
-# Gunakan password yang sudah di-encode di URL
 DATABASE_URL="postgresql://arfcoder_user:$ENCODED_DB_PASSWORD@localhost:5432/$DB_NAME?search_path=public"
 
-# --- 4. PROJECT SETUP ---
+# --- 4. RESTORE BACKUP OPTION ---
+echo ""
+read -p "❓ Apakah Anda punya file backup (.sql) yang ingin di-restore? (y/n): " DO_RESTORE
+if [ "$DO_RESTORE" == "y" ]; then
+    read -p "📂 Masukkan path file backup (contoh: /root/backup.sql): " BACKUP_PATH
+    if [ -f "$BACKUP_PATH" ]; then
+        echo "🔄 Merestore database..."
+        PGPASSWORD=$DB_PASSWORD psql -U arfcoder_user -h localhost -d $DB_NAME < $BACKUP_PATH
+        echo "✅ Restore berhasil!"
+    else
+        echo "❌ File tidak ditemukan. Lewati restore."
+    fi
+fi
+
+# --- 5. PROJECT SETUP ---
 PROJECT_DIR=$(pwd)
 
-# --- 5. BACKEND SETUP ---
+# Setup Backend
 cd $PROJECT_DIR/server
 cat > .env <<EOL
 DATABASE_URL="$DATABASE_URL"
@@ -75,7 +85,7 @@ APP_SECRET_KEY="$APP_SECRET_KEY"
 CLIENT_URL="http://$DOMAIN"
 MIDTRANS_SERVER_KEY="$MIDTRANS_SERVER_KEY"
 MIDTRANS_CLIENT_KEY="$MIDTRANS_CLIENT_KEY"
-MIDTRANS_IS_PRODUCTION="$MIDTRANS_IS_PRODUCTION"
+MIDTRANS_IS_PRODUCTION="true"
 RESEND_API_KEY="$RESEND_API_KEY"
 EMAIL_FROM="$EMAIL_FROM"
 GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID"
@@ -84,12 +94,14 @@ EOL
 
 npm install
 npx prisma generate
-npx prisma migrate deploy
+if [ "$DO_RESTORE" != "y" ]; then
+    npx prisma migrate deploy
+fi
 npm run build
 pm2 delete arfcoder-server 2>/dev/null || true
 pm2 start dist/index.js --name arfcoder-server
 
-# --- 6. FRONTEND SETUP ---
+# Setup Frontend
 cd $PROJECT_DIR/client
 cat > .env.local <<EOL
 NEXT_PUBLIC_API_URL="http://$DOMAIN/api"
@@ -106,12 +118,12 @@ pm2 start npm --name arfcoder-client -- start
 pm2 save
 pm2 startup | bash
 
-# --- 7. NGINX SETUP ---
+# --- 6. NGINX & SSL ---
 NGINX_CONF="/etc/nginx/sites-available/arfcoder"
 cat > $NGINX_CONF <<EOL
 server {
     listen 80;
-    server_name $DOMAIN;
+    server_name $DOMAIN www.$DOMAIN;
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -142,5 +154,37 @@ ln -sf $NGINX_CONF /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl restart nginx
 
-echo "✅ SETUP SELESAI TOTAL!"
-echo "Akses: http://$DOMAIN"
+# Auto SSL
+certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos -m admin@$DOMAIN --redirect || echo "⚠️ SSL Gagal. Cek DNS atau jalankan certbot manual nanti."
+
+# --- 7. CREATE ADMIN HELPER ---
+cd $PROJECT_DIR/server
+cat > create-admin-script.js <<EOL
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const prisma = new PrismaClient();
+const readline = require('readline').createInterface({ input: process.stdin, output: process.stdout });
+
+readline.question('Email Admin: ', email => {
+  readline.question('Password Admin: ', async password => {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    try {
+      await prisma.user.upsert({
+        where: { email: email },
+        update: { role: 'SUPER_ADMIN', password: hashedPassword },
+        create: { email, name: 'Super Admin', password: hashedPassword, role: 'SUPER_ADMIN', isVerified: true },
+      });
+      console.log('✅ Admin Created!');
+    } catch(e) { console.error(e); }
+    finally { await prisma.\$disconnect(); readline.close(); }
+  });
+});
+EOL
+
+echo ""
+echo "=================================================="
+echo "✅  INSTALASI SELESAI!"
+echo "=================================================="
+echo "1. Untuk buat admin: cd server && node create-admin-script.js"
+echo "2. Untuk setup backup Google Drive: rclone config"
+echo "=================================================="
