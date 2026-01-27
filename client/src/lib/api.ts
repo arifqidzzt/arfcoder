@@ -38,6 +38,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Handle Global Errors like 401 Logout
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout();
+      // Force redirect if not already on login page
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
     return Promise.reject(error);
   }
 );

@@ -13,7 +13,7 @@ export default function Navbar() {
     <nav className="flex items-center justify-between px-8 py-4 border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50 transition-all">
       <Link href="/" className="flex items-center gap-3 group">
         <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-          <img src="/app_icon.ico" alt="Logo" className="w-full h-full object-cover" />
+          <img src="/app_icon.png" alt="Logo" className="w-full h-full object-cover" />
         </div>
         <span className="text-xl font-bold tracking-tighter">ARFCODER</span>
       </Link>
@@ -30,11 +30,11 @@ export default function Navbar() {
         {user ? (
           <div className="flex items-center space-x-4">
             <Link href="/profile" className="flex items-center gap-2 hover:bg-gray-50 px-3 py-2 rounded-full transition-colors group">
-              <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-bold text-xs overflow-hidden border border-gray-200">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs overflow-hidden border border-gray-200">
                 {user.avatar ? (
                   <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
-                  user.name?.charAt(0).toUpperCase()
+                  <span className="text-black">{user.name?.charAt(0).toUpperCase()}</span>
                 )}
               </div>
               <span className="text-sm font-medium hidden sm:inline group-hover:text-black">{user.name}</span>

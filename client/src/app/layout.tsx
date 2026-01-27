@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "ArfCoder | Digital Services & Product Store",
   description: "Modern Minimalist E-commerce for Digital Services and Products",
   icons: {
-    icon: '/app_icon.ico', 
+    icon: '/app_icon.png', 
   },
 };
 

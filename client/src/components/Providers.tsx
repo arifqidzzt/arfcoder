@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import ChatWidget from "@/components/ChatWidget";
 import { useEffect } from "react";
 import "aos/dist/aos.css";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const AOSInit = () => {
   useEffect(() => {
@@ -17,6 +18,12 @@ const AOSInit = () => {
 };
 
 export default function Providers({ children }: { children: React.ReactNode }) {
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
       <AOSInit />
