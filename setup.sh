@@ -82,7 +82,7 @@ PORT=5000
 JWT_SECRET="$JWT_SECRET"
 REFRESH_TOKEN_SECRET="$REFRESH_TOKEN_SECRET"
 APP_SECRET_KEY="$APP_SECRET_KEY"
-CLIENT_URL="http://$DOMAIN"
+CLIENT_URL="https://$DOMAIN"
 MIDTRANS_SERVER_KEY="$MIDTRANS_SERVER_KEY"
 MIDTRANS_CLIENT_KEY="$MIDTRANS_CLIENT_KEY"
 MIDTRANS_IS_PRODUCTION="true"
@@ -104,8 +104,8 @@ pm2 start dist/index.js --name arfcoder-server
 # Setup Frontend
 cd $PROJECT_DIR/client
 cat > .env.local <<EOL
-NEXT_PUBLIC_API_URL="http://$DOMAIN/api"
-NEXT_PUBLIC_SOCKET_URL="http://$DOMAIN"
+NEXT_PUBLIC_API_URL="https://$DOMAIN/api"
+NEXT_PUBLIC_SOCKET_URL="https://$DOMAIN"
 NEXT_PUBLIC_MIDTRANS_CLIENT_KEY="$MIDTRANS_CLIENT_KEY"
 NEXT_PUBLIC_GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID"
 NEXT_PUBLIC_APP_SECRET_KEY="$APP_SECRET_KEY"
@@ -157,7 +157,7 @@ nginx -t && systemctl restart nginx
 # Auto SSL
 certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos -m admin@$DOMAIN --redirect || echo "⚠️ SSL Gagal. Cek DNS atau jalankan certbot manual nanti."
 
-# --- 7. CREATE ADMIN HELPER ---
+# --- 7. CREATE ADMIN & BACKUP HELPER ---
 cd $PROJECT_DIR/server
 cat > create-admin-script.js <<EOL
 const { PrismaClient } = require('@prisma/client');
@@ -181,10 +181,43 @@ readline.question('Email Admin: ', email => {
 });
 EOL
 
+# Create Backup Script
+cd $PROJECT_DIR
+cat > backup.sh <<EOL
+#!/bin/bash
+# Auto Backup by Setup Script
+DB_NAME="$DB_NAME"
+DB_USER="arfcoder_user"
+REMOTE_NAME="gdrive"
+REMOTE_FOLDER="arfcoder_backups"
+BACKUP_DIR="/root/db_backups"
+TIMESTAMP=\$(date +%F-%H%M)
+
+mkdir -p \$BACKUP_DIR
+export PGPASSWORD='$DB_PASSWORD'
+
+echo "📦 Backup starting..."
+pg_dump -U \$DB_USER -h localhost \$DB_NAME > \$BACKUP_DIR/backup-\$TIMESTAMP.sql
+
+if command -v rclone &> /dev/null; then
+    rclone copy \$BACKUP_DIR/backup-\$TIMESTAMP.sql \$REMOTE_NAME:\$REMOTE_FOLDER
+    echo "✅ Uploaded to Drive."
+else
+    echo "❌ Rclone not configured."
+fi
+
+find \$BACKUP_DIR -type f -mtime +3 -name "*.sql" -delete
+EOL
+chmod +x backup.sh
+
+# Setup Cron Job (Auto Backup 2 AM)
+(crontab -l 2>/dev/null; echo "0 2 * * * /bin/bash $PROJECT_DIR/backup.sh >> /var/log/backup.log 2>&1") | crontab -
+
 echo ""
 echo "=================================================="
 echo "✅  INSTALASI SELESAI!"
 echo "=================================================="
-echo "1. Untuk buat admin: cd server && node create-admin-script.js"
-echo "2. Untuk setup backup Google Drive: rclone config"
+echo "1. Buat Admin: cd server && node create-admin-script.js"
+echo "2. Aktifkan Backup: Ketik 'rclone config' -> New -> gdrive -> Google Drive"
+echo "   (Backup otomatis jam 2 pagi sudah dijadwalkan!)"
 echo "=================================================="
