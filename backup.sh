@@ -5,12 +5,15 @@
 # ==========================================
 
 # Konfigurasi - SESUAIKAN DENGAN SETUP ANDA
-DB_NAME="arfcoder_db"
+DB_NAME="arfcoder"
 DB_USER="arfcoder_user"
-REMOTE_NAME="gdrive" # Nama remote saat rclone config
-REMOTE_FOLDER="arfcoder_backups" # Folder di Google Drive
+REMOTE_NAME="gdrive" 
+REMOTE_FOLDER="arfcoder_backups" 
 BACKUP_DIR="/root/db_backups"
 TIMESTAMP=$(date +%F-%H%M)
+
+# Password Database (Akan diisi otomatis oleh setup.sh atau isi manual di sini)
+export PGPASSWORD=''
 
 mkdir -p $BACKUP_DIR
 
