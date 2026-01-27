@@ -3,11 +3,11 @@ import CryptoJS from 'crypto-js';
 const SECRET_KEY = process.env.NEXT_PUBLIC_APP_SECRET_KEY || 'default-secret-key-change-me';
 
 /**
- * ARFCODER SECURITY PROTOCOL V5 (OBFUSCATED ARRAY)
+ * ARFCODER SECURITY PROTOCOL V6 (TOTAL LOCK)
  * 
- * Fitur:
- * 1. Output bukan JSON Object, tapi Array String [ ... ].
- * 2. Posisi Payload/Signature ditentukan oleh digit terakhir Timestamp.
+ * Features:
+ * 1. Global Nonce in Header: EVERY request (GET/POST/etc) is One-Time Use.
+ * 2. V5 Array Obfuscation for Body.
  */
 
 const generateRandom = (length: number) => {
@@ -33,7 +33,6 @@ export const encryptPayload = (data: any) => {
     const timestamp = Date.now().toString();
     const nonce = `${generateRandom(12)}:${timestamp}`;
     
-    // 1. Prepare Inner Data
     const innerData = {
       ...data,
       ...getFingerprint(),
@@ -41,35 +40,31 @@ export const encryptPayload = (data: any) => {
       _n: nonce
     };
 
-    // 2. Encrypt (Double Layer)
     const jsonString = JSON.stringify(innerData);
     const layer1 = CryptoJS.AES.encrypt(jsonString, SECRET_KEY).toString();
     const payload = CryptoJS.AES.encrypt(layer1, SECRET_KEY).toString();
-
-    // 3. Signature
     const signature = CryptoJS.HmacSHA256(payload + timestamp, SECRET_KEY).toString();
 
-    // 4. OBFUSCATION (Array Shuffling)
     const lastDigit = parseInt(timestamp.slice(-1));
-    const junk1 = generateRandom(10);
-    const junk2 = generateRandom(15);
-
     if (lastDigit % 2 === 0) {
-      // Genap: [ PAYLOAD, SIGNATURE, TIMESTAMP, JUNK, JUNK ]
-      return [ payload, signature, timestamp, junk1, junk2 ];
+      return [ payload, signature, timestamp, generateRandom(10), generateRandom(15) ];
     } else {
-      // Ganjil: [ TIMESTAMP, JUNK, PAYLOAD, JUNK, SIGNATURE ]
-      return [ timestamp, junk1, payload, junk2, signature ];
+      return [ timestamp, generateRandom(10), payload, generateRandom(12), signature ];
     }
-
   } catch (error) {
-    console.error("Encryption V5 Failed:", error);
+    console.error("Encryption V6 Failed:", error);
     return null;
   }
 };
 
 export const generateSecureHeader = () => {
   const timestamp = Date.now().toString();
-  const hash = CryptoJS.SHA256(SECRET_KEY + timestamp).toString();
-  return `${timestamp}.${hash}`;
+  const nonce = generateRandom(16);
+  // Encrypt Nonce for Header
+  const encryptedNonce = CryptoJS.AES.encrypt(nonce + ":" + timestamp, SECRET_KEY).toString();
+  // Hash = SHA256(Key + Timestamp + Nonce)
+  const hash = CryptoJS.SHA256(SECRET_KEY + timestamp + nonce).toString();
+  
+  // Format: TIMESTAMP . HASH . ENCRYPTED_NONCE
+  return `${timestamp}.${hash}.${encryptedNonce}`;
 };
