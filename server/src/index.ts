@@ -72,11 +72,11 @@ import userRoutes from './routes/userRoutes';
 
 // Apply Security Middleware to all protected routes
 // This ensures that only our Frontend can talk to these APIs
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authLimiter, secureMiddleware, authRoutes);
+app.use('/api/user', secureMiddleware, userRoutes);
+app.use('/api/products', secureMiddleware, productRoutes);
+app.use('/api/orders', secureMiddleware, orderRoutes);
+app.use('/api/admin', secureMiddleware, adminRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('ArfCoder API is running...');
