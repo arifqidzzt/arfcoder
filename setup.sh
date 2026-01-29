@@ -34,6 +34,23 @@ echo ""
 echo "⏳ Memproses..."
 ENCODED_DB_PASSWORD=$(python3 -c "import sys, urllib.parse; print(urllib.parse.quote_plus('$DB_PASSWORD'))")
 
+# --- ADD SWAP (For Low RAM VPS) ---
+# Cek apakah swapfile sudah ada, jika belum buat 4GB
+if [ ! -f /swapfile ]; then
+    echo "💾 Creating 4GB Swap file (Agar tidak stuck saat build)..."
+    fallocate -l 4G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    # Buat permanen di fstab
+    if ! grep -q "/swapfile" /etc/fstab; then
+        echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
+    fi
+    echo "✅ Swap 4GB berhasil dibuat."
+else
+    echo "ℹ️ Swap file sudah ada. Skip."
+fi
+
 # --- 2. INSTALL DEPENDENCIES ---
 apt update && apt upgrade -y
 apt install -y curl git nginx postgresql postgresql-contrib build-essential ufw python3 unzip certbot python3-certbot-nginx
