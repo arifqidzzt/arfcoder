@@ -26,9 +26,15 @@ echo ""
 echo "--- KONFIGURASI PAYMENT & EMAIL ---"
 read -p "7. Midtrans SERVER Key: " MIDTRANS_SERVER_KEY
 read -p "8. Midtrans CLIENT Key: " MIDTRANS_CLIENT_KEY
-read -p "9. Resend API Key: " RESEND_API_KEY
-read -p "10. Email Sender Name: " EMAIL_FROM
-read -p "11. Google Client ID: " GOOGLE_CLIENT_ID
+read -p "9. Midtrans Production Mode? (y/n, default n): " MT_PROD_INPUT
+if [[ "$MT_PROD_INPUT" == "y" || "$MT_PROD_INPUT" == "Y" ]]; then
+    MIDTRANS_IS_PRODUCTION="true"
+else
+    MIDTRANS_IS_PRODUCTION="false"
+fi
+read -p "10. Resend API Key: " RESEND_API_KEY
+read -p "11. Email Sender Name: " EMAIL_FROM
+read -p "12. Google Client ID: " GOOGLE_CLIENT_ID
 
 echo ""
 echo "⏳ Memproses..."
@@ -102,7 +108,7 @@ APP_SECRET_KEY="$APP_SECRET_KEY"
 CLIENT_URL="https://$DOMAIN"
 MIDTRANS_SERVER_KEY="$MIDTRANS_SERVER_KEY"
 MIDTRANS_CLIENT_KEY="$MIDTRANS_CLIENT_KEY"
-MIDTRANS_IS_PRODUCTION="true"
+MIDTRANS_IS_PRODUCTION="$MIDTRANS_IS_PRODUCTION"
 RESEND_API_KEY="$RESEND_API_KEY"
 EMAIL_FROM="$EMAIL_FROM"
 GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID"
@@ -228,7 +234,10 @@ EOL
 chmod +x backup.sh
 
 # Setup Cron Job (Auto Backup 2 AM)
-(crontab -l 2>/dev/null; echo "0 2 * * * /bin/bash $PROJECT_DIR/backup.sh >> /var/log/backup.log 2>&1") | crontab -
+CRON_CMD="0 2 * * * /bin/bash $PROJECT_DIR/backup.sh >> /var/log/backup.log 2>&1"
+# Remove old entry if exists to avoid duplicates, then add new
+(crontab -l 2>/dev/null | grep -v "backup.sh"; echo "$CRON_CMD") | crontab -
+echo "✅ Cronjob for backup configured (Daily 2 AM)."
 
 echo ""
 echo "=================================================="
