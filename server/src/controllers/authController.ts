@@ -100,6 +100,49 @@ export const login = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Please verify your email first', userId: user.id });
     }
 
+    // --- ADMIN 2FA CHECK ---
+    if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Clear old OTPs
+      await prisma.otp.deleteMany({ where: { userId: user.id } });
+
+      await prisma.otp.create({
+        data: {
+          code: otpCode,
+          email: user.email,
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 Minutes
+        },
+      });
+
+      try {
+        await resend.emails.send({
+          from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+          to: user.email,
+          subject: '🔐 Admin Login OTP - ArfCoder',
+          html: `
+            <h3>Login Admin Verification</h3>
+            <p>Halo Admin ${user.name},</p>
+            <p>Gunakan kode OTP berikut untuk masuk:</p>
+            <h1 style="letter-spacing: 5px;">${otpCode}</h1>
+            <p>Jangan berikan kode ini kepada siapapun.</p>
+          `,
+        });
+      } catch (e) {
+        console.error('Failed to send Admin OTP:', e);
+        // Fallback or Log
+      }
+
+      return res.status(202).json({ 
+        require2fa: true, 
+        userId: user.id, 
+        email: user.email,
+        message: 'OTP sent to admin email'
+      });
+    }
+    // -----------------------
+
     const token = generateToken(user.id, user.role);
     const refreshToken = generateRefreshToken(user.id);
 
@@ -265,4 +308,36 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     res.json({ message: 'Password berhasil direset' });
   } catch (error) { res.status(500).json({ message: 'Error', error }); }
+};
+
+export const verifyLoginOtp = async (req: Request, res: Response) => {
+  try {
+    const { userId, code } = req.body;
+
+    const otp = await prisma.otp.findFirst({
+      where: { userId, code, expiresAt: { gt: new Date() } },
+    });
+
+    if (!otp) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Generate Tokens
+    const token = generateToken(user.id, user.role);
+    const refreshToken = generateRefreshToken(user.id);
+
+    // Clean up OTP
+    await prisma.otp.delete({ where: { id: otp.id } });
+
+    res.status(200).json({
+      token,
+      refreshToken,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error });
+  }
 };

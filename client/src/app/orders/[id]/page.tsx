@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { ArrowLeft, Copy, Download, AlertCircle, CheckCircle, XCircle, CreditCard, RefreshCcw } from 'lucide-react';
+import { ArrowLeft, Copy, Download, AlertCircle, CheckCircle, XCircle, CreditCard, RefreshCcw, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface OrderDetail {
@@ -24,9 +24,14 @@ interface OrderDetail {
     quantity: number;
     price: number;
   }[];
+  timeline?: {
+    title: string;
+    description: string;
+    timestamp: string;
+  }[];
 }
 
-// Helper Countdown (Moved outside to fix build error)
+// Helper Countdown
 const CountdownTimer = ({ dateString }: { dateString: string }) => {
   const [timeLeft, setTimeLeft] = useState('');
   useEffect(() => {
@@ -59,9 +64,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [showRefundForm, setShowRefundForm] = useState(false);
 
   useEffect(() => {
-    // Load Midtrans Snap script
     const script = document.createElement('script');
-    script.src = "https://app.sandbox.midtrans.com/snap/snap.js"; // Change to production URL if needed
+    script.src = "https://app.sandbox.midtrans.com/snap/snap.js"; 
     script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '');
     document.body.appendChild(script);
 
@@ -83,9 +87,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     if (!window.snap) return toast.error("Sistem pembayaran sedang memuat...");
 
     try {
-      // Minta token baru (fresh) agar tidak expired
       const res = await api.post(`/orders/${id}/pay`, {});
-      
       const { snapToken } = res.data;
 
       window.snap.pay(snapToken, {
@@ -106,34 +108,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleCancel = async () => {
-    toast((t) => (
-      <div className="flex flex-col gap-3 min-w-[250px] text-center">
-        <div className="mx-auto bg-red-100 p-2 rounded-full text-red-600">
-          <AlertCircle size={24}/>
-        </div>
-        <span className="font-bold">Yakin ingin membatalkan pesanan?</span>
-        <p className="text-xs text-gray-500">Tindakan ini tidak dapat dibatalkan.</p>
-        <div className="flex gap-2 justify-center mt-2">
-          <button onClick={() => toast.dismiss(t.id)} className="px-4 py-2 bg-gray-100 rounded-lg text-xs font-bold hover:bg-gray-200 w-full">Kembali</button>
-          <button onClick={() => {
-            confirmCancel();
-            toast.dismiss(t.id);
-          }} className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 w-full">Batalkan</button>
-        </div>
-      </div>
-    ), { 
-      duration: Infinity, 
-      position: 'top-center',
-      style: {
-        background: '#fff',
-        padding: '24px',
-        borderRadius: '16px',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-      }
-    });
-  };
-
-  const confirmCancel = async () => {
+    if (!confirm('Yakin batalkan pesanan?')) return;
     try {
       await api.put(`/orders/${id}/cancel`, {});
       toast.success('Pesanan dibatalkan');
@@ -192,7 +167,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </span>
           </div>
           
-          {/* Action Buttons based on Status */}
           {order.status === 'PENDING' && (
             <div className="flex gap-3">
               <button onClick={handlePay} className="flex-1 bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors">
@@ -204,7 +178,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
 
-          {/* Refund Button if Paid */}
           {order.status === 'PAID' && !showRefundForm && !order.refundReason && (
             <button onClick={() => setShowRefundForm(true)} className="w-full mt-4 text-sm text-gray-500 underline hover:text-red-500">
               Ajukan Pengembalian Dana (Refund)
@@ -212,7 +185,30 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
 
-        {/* Delivery Info (Digital Product) */}
+        {/* PROGRESS TRACKER (TIMELINE) */}
+        {order.timeline && order.timeline.length > 0 && (
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+            <h3 className="font-bold mb-6 flex items-center gap-2">
+              <Activity size={20} className="text-accent" /> Timeline Pengerjaan
+            </h3>
+            <div className="relative pl-4 border-l-2 border-gray-100 space-y-8">
+              {order.timeline.map((step, idx) => (
+                <div key={idx} className="relative">
+                  <div className="absolute -left-[21px] top-0 w-4 h-4 bg-accent rounded-full border-4 border-white shadow-sm"></div>
+                  <h4 className="font-bold text-sm">{step.title}</h4>
+                  <p className="text-xs text-gray-500 mt-1">{new Date(step.timestamp).toLocaleString()}</p>
+                  {step.description && (
+                    <p className="text-sm text-gray-600 mt-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      {step.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Delivery Info */}
         {(order.status === 'PAID' || order.status === 'COMPLETED' || order.status === 'SHIPPED') && (
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-100 mb-6">
             <h3 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
@@ -261,26 +257,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <button type="submit" className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700">Kirim Pengajuan</button>
               </div>
             </form>
-          </div>
-        )}
-
-        {/* Refund Status Info */}
-        {order.refundReason && (
-          <div className="bg-yellow-50 rounded-xl p-6 border border-yellow-100 mb-6">
-            <h3 className="font-bold text-yellow-800 mb-2 flex items-center gap-2">
-              <RefreshCcw size={18} /> Status Refund
-            </h3>
-            <p className="text-sm text-yellow-700 mb-2">Anda telah mengajukan refund.</p>
-            <div className="bg-white/50 p-3 rounded text-xs text-gray-600">
-              <strong>Alasan:</strong> {order.refundReason}<br/>
-              <strong>Rekening:</strong> {order.refundAccount}
-            </div>
-            {order.status === 'REFUND_APPROVED' && (
-              <p className="mt-3 text-sm font-bold text-green-600">Refund disetujui. Dana sedang diproses.</p>
-            )}
-            {order.status === 'REFUND_REJECTED' && (
-              <p className="mt-3 text-sm font-bold text-red-600">Refund ditolak oleh Admin.</p>
-            )}
           </div>
         )}
 

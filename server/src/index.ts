@@ -10,6 +10,9 @@ import authRoutes from './routes/authRoutes';
 import productRoutes from './routes/productRoutes';
 import orderRoutes from './routes/orderRoutes';
 import adminRoutes from './routes/adminRoutes';
+import voucherRoutes from './routes/voucherRoutes';
+import flashSaleRoutes from './routes/flashSaleRoutes';
+import reviewRoutes from './routes/reviewRoutes';
 import { saveMessage } from './services/chatService';
 import { handleMidtransWebhook } from './controllers/orderController';
 import { prisma } from './lib/prisma';
@@ -77,6 +80,9 @@ app.use('/api/user', secureMiddleware, userRoutes);
 app.use('/api/products', secureMiddleware, productRoutes);
 app.use('/api/orders', secureMiddleware, orderRoutes);
 app.use('/api/admin', secureMiddleware, adminRoutes);
+app.use('/api/vouchers', secureMiddleware, voucherRoutes);
+app.use('/api/flash-sales', secureMiddleware, flashSaleRoutes);
+app.use('/api/reviews', secureMiddleware, reviewRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('ArfCoder API is running...');

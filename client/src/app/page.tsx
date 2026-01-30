@@ -8,21 +8,26 @@ import api from '@/lib/api';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [flashSales, setFlashSales] = useState<any[]>([]);
   
   const languages = [
     "JavaScript", "TypeScript", "Python", "Go", "Java", "PHP", "Rust", "C++", "Swift", "Kotlin", "Ruby", "Dart"
   ];
 
   useEffect(() => {
-    const fetchFeatured = async () => {
+    const fetchData = async () => {
       try {
-        const res = await api.get('/products');
-        setFeaturedProducts(res.data.slice(0, 3)); 
+        const [pRes, fsRes] = await Promise.all([
+          api.get('/products'),
+          api.get('/flash-sales/active')
+        ]);
+        setFeaturedProducts(pRes.data.slice(0, 3)); 
+        setFlashSales(fsRes.data);
       } catch (error) {
-        console.error("Failed to fetch products");
+        console.error("Failed to fetch data");
       }
     };
-    fetchFeatured();
+    fetchData();
   }, []);
 
   return (
@@ -32,6 +37,7 @@ export default function Home() {
       <main className="flex-grow w-full">
         {/* HERO SECTION */}
         <section className="relative min-h-[90vh] flex items-center pt-24 pb-20 bg-grid-pattern">
+          {/* ... existing hero content ... */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-1/4 -right-20 md:-right-32 w-64 h-64 md:w-96 md:h-96 bg-accent/5 rounded-full blur-3xl animate-pulse opacity-70" />
             <div className="absolute bottom-1/4 -left-20 md:-left-32 w-64 h-64 md:w-96 md:h-96 bg-accent/5 rounded-full blur-3xl animate-pulse opacity-70" style={{ animationDelay: '1s' }} />
@@ -109,6 +115,43 @@ export default function Home() {
             </ul>
           </div>
         </section>
+
+        {/* FLASH SALE SECTION */}
+        {flashSales.length > 0 && (
+          <section className="py-12 bg-black text-white">
+            <div className="container-custom">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-2 bg-yellow-500 rounded-lg animate-pulse">
+                  <Zap className="text-black fill-black" size={24} />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold tracking-tight">FLASH SALE</h2>
+                  <p className="text-gray-400">Penawaran terbatas, segera habiskan!</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {flashSales.map((fs) => (
+                  <Link href={`/products/${fs.productId}`} key={fs.id} className="bg-white/10 border border-white/20 p-6 rounded-2xl hover:bg-white/20 transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                      <span className="bg-red-600 px-3 py-1 rounded-full text-xs font-bold animate-bounce">
+                        -{Math.round((1 - fs.discountPrice / fs.product.price) * 100)}%
+                      </span>
+                      <span className="text-xs font-mono text-gray-400">
+                        Berakhir: {new Date(fs.endTime).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-bold mb-2 group-hover:text-yellow-400 transition-colors">{fs.product.name}</h3>
+                    <div className="flex items-end gap-3">
+                      <span className="text-2xl font-bold text-yellow-400">Rp {fs.discountPrice.toLocaleString()}</span>
+                      <span className="text-sm text-gray-500 line-through mb-1">Rp {fs.product.price.toLocaleString()}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* PREVIEW PRODUCTS SECTION */}
         <section className="py-24 bg-secondary/20">

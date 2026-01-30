@@ -13,7 +13,7 @@ let snap = new midtransClient.Snap({
 
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
-    const { items, address } = req.body;
+    const { items, address, voucherCode } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
@@ -34,13 +34,41 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // --- APPLY VOUCHER (Backend Validation) ---
+    let discountApplied = 0;
+    if (voucherCode) {
+      const voucher = await prisma.voucher.findUnique({ where: { code: voucherCode } });
+      if (voucher && voucher.isActive && new Date() <= voucher.expiresAt) {
+        if (voucher.usageLimit === 0 || voucher.usedCount < voucher.usageLimit) {
+          if (totalAmount >= voucher.minPurchase) {
+            if (voucher.type === 'FIXED') {
+              discountApplied = voucher.value;
+            } else {
+              discountApplied = (totalAmount * voucher.value) / 100;
+              if (voucher.maxDiscount && discountApplied > voucher.maxDiscount) {
+                discountApplied = voucher.maxDiscount;
+              }
+            }
+            // Update Voucher Usage
+            await prisma.voucher.update({
+              where: { id: voucher.id },
+              data: { usedCount: { increment: 1 } }
+            });
+          }
+        }
+      }
+    }
+
+    const finalAmount = Math.max(0, totalAmount - discountApplied);
     const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const order = await prisma.order.create({
       data: {
         userId,
         invoiceNumber,
-        totalAmount,
+        totalAmount: finalAmount,
+        discountApplied,
+        voucherCode,
         address,
         items: {
           create: orderItemsData,
@@ -60,7 +88,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     const parameter = {
       transaction_details: {
         order_id: order.id,
-        gross_amount: Math.round(totalAmount),
+        gross_amount: Math.round(finalAmount),
       },
       customer_details: {
         first_name: req.user?.userId, 
@@ -115,7 +143,8 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
       where: whereClause,
       include: { 
         items: { include: { product: true } },
-        user: { select: { name: true, email: true } }
+        user: { select: { name: true, email: true } },
+        timeline: { orderBy: { timestamp: 'desc' } }
       }
     });
 

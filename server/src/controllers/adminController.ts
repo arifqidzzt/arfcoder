@@ -19,7 +19,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     // Chart Data (Last 6 Months)
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-    sixMonthsAgo.setDate(1); // Start from the 1st of that month
+    sixMonthsAgo.setDate(1); 
 
     const recentOrders = await prisma.order.findMany({
       where: {
@@ -29,11 +29,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       select: { createdAt: true, totalAmount: true }
     });
 
-    // Group by Month
     const monthlyStats: Record<string, number> = {};
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
     
-    // Initialize last 6 months with 0
     for (let i = 0; i < 6; i++) {
       const d = new Date();
       d.setMonth(d.getMonth() - i);
@@ -49,9 +47,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }
     });
 
-    // Sort labels to be chronological (oldest to newest)
-    const chartLabels = Object.keys(monthlyStats).reverse(); // This simple reverse might not be enough if crossing years, but acceptable for simple dash.
-    // Better sorting: reconstruct array based on calculated months
     const labels = [];
     const data = [];
     
@@ -60,7 +55,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       d.setMonth(d.getMonth() - i);
       const key = monthNames[d.getMonth()];
       labels.push(key);
-      data.push(monthlyStats[key] || 0); // Use 0 if no sales
+      data.push(monthlyStats[key] || 0);
     }
 
     res.json({
@@ -68,10 +63,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       totalProducts,
       totalUsers,
       totalSales: salesData._sum.totalAmount || 0,
-      chart: {
-        labels: labels,
-        data: data
-      }
+      chart: { labels, data }
     });
   } catch (error) { res.status(500).json({ message: 'Error', error }); }
 };
@@ -190,5 +182,34 @@ export const logoutWa = async (req: Request, res: Response) => {
 
 export const startWa = async (req: Request, res: Response) => {
   waService.connect();
-  res.json({ message: 'Starting WA...' });
+  res.json({ message: 'WA Connection initiated' });
+};
+
+// --- TIMELINE ---
+export const updateOrderTimeline = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { title, description } = req.body;
+
+    const timeline = await prisma.orderTimeline.create({
+      data: {
+        orderId: id,
+        title,
+        description
+      }
+    });
+
+    res.json(timeline);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating timeline' });
+  }
+};
+
+export const deleteOrderTimeline = async (req: Request, res: Response) => {
+  try {
+    await prisma.orderTimeline.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error' });
+  }
 };

@@ -33,6 +33,11 @@ enum OrderStatus {
   REFUND_REJECTED
 }
 
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -46,9 +51,11 @@ model User {
   avatar        String?
   phoneNumber   String?
   
-  // Security
+  // Security (2FA)
   resetToken        String?
   resetTokenExpiry  DateTime?
+  twoFactorSecret   String?   // Stores base32 secret for Google Auth
+  twoFactorEnabled  Boolean   @default(false)
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -56,6 +63,7 @@ model User {
   orders        Order[]
   cartItems     CartItem[]
   messagesSent  Message[] @relation("SentMessages")
+  reviews       Review[]
 }
 
 model Otp {
@@ -89,6 +97,8 @@ model Product {
   updatedAt   DateTime    @updatedAt
   cartItems   CartItem[]
   orderItems  OrderItem[]
+  reviews     Review[]
+  flashSales  FlashSale[]
 }
 
 model Service {
@@ -131,7 +141,12 @@ model Order {
   refundAccount String?
   refundProof   String?
   
+  // Feature: Vouchers
+  discountApplied Float     @default(0)
+  voucherCode     String?
+
   items         OrderItem[]
+  timeline      OrderTimeline[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
@@ -146,6 +161,15 @@ model OrderItem {
   price     Float
 }
 
+model OrderTimeline {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  title       String   // e.g. "Desain Selesai"
+  description String?
+  timestamp   DateTime @default(now())
+}
+
 model Message {
   id        String   @id @default(cuid())
   content   String
@@ -153,6 +177,46 @@ model Message {
   sender    User     @relation("SentMessages", fields: [senderId], references: [id])
   isAdmin   Boolean  @default(false)
   isRead    Boolean  @default(false)
-  targetUserId String? // Optional: Untuk tracking admin balas ke siapa
+  targetUserId String? 
+  createdAt DateTime @default(now())
+}
+
+// --- NEW FEATURES ---
+
+model Voucher {
+  id          String       @id @default(cuid())
+  code        String       @unique
+  type        DiscountType @default(FIXED)
+  value       Float
+  minPurchase Float        @default(0)
+  maxDiscount Float?
+  startDate   DateTime     @default(now())
+  expiresAt   DateTime
+  usageLimit  Int          @default(0) // 0 = Unlimited
+  usedCount   Int          @default(0)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+}
+
+model FlashSale {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  discountPrice Float
+  startTime     DateTime
+  endTime       DateTime
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  rating    Int      // 1-5
+  comment   String?
+  isVisible Boolean  @default(true)
   createdAt DateTime @default(now())
 }
