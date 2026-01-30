@@ -83,17 +83,24 @@ export default function AdminProfilePage() {
             <h3 className="font-bold mb-4">Langkah 1: Scan QR Code</h3>
             <p className="text-sm text-gray-600 mb-4">Buka aplikasi Google Authenticator di HP Anda, lalu scan kode ini:</p>
             
-            <div className="flex flex-col md:flex-row gap-8 items-center">
-              <div className="bg-white p-4 rounded-xl shadow-sm">
-                <img src={qrCode} alt="2FA QR" className="w-48 h-48" />
+            <div className="flex flex-col md:flex-row gap-8 items-center bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="bg-white p-4 rounded-xl border border-gray-200">
+                <img src={qrCode} alt="2FA QR" className="w-48 h-48 mx-auto" />
               </div>
-              <div className="flex-1 space-y-4">
+              <div className="flex-1 space-y-4 w-full">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase">Atau masukkan kode manual:</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <code className="bg-white px-4 py-2 rounded-lg border font-mono font-bold tracking-widest text-lg">{secret}</code>
-                    <button onClick={() => {navigator.clipboard.writeText(secret); toast.success('Disalin!')}} className="p-2 hover:bg-gray-200 rounded-lg">
-                      <Copy size={18} />
+                  <div className="flex items-center gap-2 mt-1 w-full">
+                    <div className="relative flex-1 group cursor-pointer" onClick={() => {navigator.clipboard.writeText(secret); toast.success('Disalin!')}}>
+                      <code className="block w-full bg-gray-50 px-4 py-3 rounded-lg border font-mono font-bold tracking-widest text-lg break-all text-center md:text-left hover:bg-gray-100 transition-colors">
+                        {secret}
+                      </code>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/5 transition-opacity rounded-lg">
+                        <span className="text-xs font-bold text-black bg-white px-2 py-1 rounded shadow">Klik Salin</span>
+                      </div>
+                    </div>
+                    <button onClick={() => {navigator.clipboard.writeText(secret); toast.success('Disalin!')}} className="p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition-colors shrink-0">
+                      <Copy size={20} />
                     </button>
                   </div>
                 </div>
@@ -107,14 +114,14 @@ export default function AdminProfilePage() {
                       value={token}
                       onChange={e => setToken(e.target.value.replace(/\D/g,''))}
                       placeholder="000000"
-                      className="w-32 text-center font-bold tracking-widest p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-32 text-center font-bold tracking-widest p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-black"
                       maxLength={6}
                     />
                     <button 
                       onClick={handleEnable}
-                      className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800"
+                      className="flex-1 px-4 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 flex items-center justify-center gap-2"
                     >
-                      Verifikasi & Aktifkan
+                      <Check size={18} /> Aktifkan
                     </button>
                   </div>
                 </div>

@@ -13,6 +13,7 @@ import adminRoutes from './routes/adminRoutes';
 import voucherRoutes from './routes/voucherRoutes';
 import flashSaleRoutes from './routes/flashSaleRoutes';
 import reviewRoutes from './routes/reviewRoutes';
+import logRoutes from './routes/logRoutes';
 import { saveMessage } from './services/chatService';
 import { handleMidtransWebhook } from './controllers/orderController';
 import { prisma } from './lib/prisma';
@@ -83,6 +84,7 @@ app.use('/api/admin', secureMiddleware, adminRoutes);
 app.use('/api/vouchers', secureMiddleware, voucherRoutes);
 app.use('/api/flash-sales', secureMiddleware, flashSaleRoutes);
 app.use('/api/reviews', secureMiddleware, reviewRoutes);
+app.use('/api/logs', secureMiddleware, logRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('ArfCoder API is running...');

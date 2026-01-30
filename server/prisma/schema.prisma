@@ -1,43 +1,17 @@
-// This is your Prisma schema file
+// ... (Existing content)
 
-generator client {
-  provider = "prisma-client-js"
+// --- AUDIT LOG ---
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String   // e.g. "LOGIN", "DELETE_PRODUCT", "UPDATE_ORDER"
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-enum Role {
-  USER
-  ADMIN
-  SUPER_ADMIN
-}
-
-enum ProductType {
-  BARANG
-  JASA
-}
-
-enum OrderStatus {
-  PENDING
-  PAID
-  PROCESSING
-  SHIPPED
-  COMPLETED
-  CANCELLED
-  REFUND_REQUESTED
-  REFUND_APPROVED
-  REFUND_COMPLETED
-  REFUND_REJECTED
-}
-
-enum DiscountType {
-  PERCENT
-  FIXED
-}
-
+// ... (Existing Voucher, FlashSale, Review models)
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -46,17 +20,12 @@ model User {
   role          Role      @default(USER)
   isVerified    Boolean   @default(false)
   googleId      String?   @unique
-  
-  // Profile Additions
   avatar        String?
   phoneNumber   String?
-  
-  // Security (2FA)
   resetToken        String?
   resetTokenExpiry  DateTime?
-  twoFactorSecret   String?   // Stores base32 secret for Google Auth
+  twoFactorSecret   String?
   twoFactorEnabled  Boolean   @default(false)
-
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   otps          Otp[]
@@ -64,6 +33,7 @@ model User {
   cartItems     CartItem[]
   messagesSent  Message[] @relation("SentMessages")
   reviews       Review[]
+  activityLogs  ActivityLog[] // Relation
 }
 
 model Otp {
@@ -135,16 +105,12 @@ model Order {
   snapToken     String?
   snapUrl       String?
   address       String?
-  
   deliveryInfo  String?
   refundReason  String?
   refundAccount String?
   refundProof   String?
-  
-  // Feature: Vouchers
   discountApplied Float     @default(0)
   voucherCode     String?
-
   items         OrderItem[]
   timeline      OrderTimeline[]
   createdAt     DateTime    @default(now())
@@ -165,7 +131,7 @@ model OrderTimeline {
   id          String   @id @default(cuid())
   orderId     String
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  title       String   // e.g. "Desain Selesai"
+  title       String   
   description String?
   timestamp   DateTime @default(now())
 }
@@ -181,8 +147,6 @@ model Message {
   createdAt DateTime @default(now())
 }
 
-// --- NEW FEATURES ---
-
 model Voucher {
   id          String       @id @default(cuid())
   code        String       @unique
@@ -192,7 +156,7 @@ model Voucher {
   maxDiscount Float?
   startDate   DateTime     @default(now())
   expiresAt   DateTime
-  usageLimit  Int          @default(0) // 0 = Unlimited
+  usageLimit  Int          @default(0) 
   usedCount   Int          @default(0)
   isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
@@ -215,8 +179,37 @@ model Review {
   user      User     @relation(fields: [userId], references: [id])
   productId String
   product   Product  @relation(fields: [productId], references: [id])
-  rating    Int      // 1-5
+  rating    Int      
   comment   String?
   isVisible Boolean  @default(true)
   createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ProductType {
+  BARANG
+  JASA
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  COMPLETED
+  CANCELLED
+  REFUND_REQUESTED
+  REFUND_APPROVED
+  REFUND_COMPLETED
+  REFUND_REJECTED
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
 }

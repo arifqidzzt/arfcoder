@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma';
 import { generateToken, generateRefreshToken } from '../utils/jwt';
 import { Resend } from 'resend';
 import { waService } from '../services/whatsappService';
+import { logActivity } from '../services/logService';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -100,6 +101,8 @@ export const verifyLogin2FA = async (req: Request, res: Response) => {
       const token = generateToken(user.id, user.role);
       const refreshToken = generateRefreshToken(user.id);
       
+      await logActivity(user.id, 'LOGIN', `Login via 2FA (${method})`);
+
       res.json({
         token,
         refreshToken,

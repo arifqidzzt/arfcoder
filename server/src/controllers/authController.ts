@@ -5,6 +5,7 @@ import { generateToken, generateRefreshToken } from '../utils/jwt';
 import { Resend } from 'resend';
 import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
+import { logActivity } from '../services/logService';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -141,10 +142,10 @@ export const login = async (req: Request, res: Response) => {
         message: 'OTP sent to admin email'
       });
     }
-    // -----------------------
-
     const token = generateToken(user.id, user.role);
     const refreshToken = generateRefreshToken(user.id);
+
+    await logActivity(user.id, 'LOGIN', 'Login via Password');
 
     res.status(200).json({
       token,
@@ -331,6 +332,8 @@ export const verifyLoginOtp = async (req: Request, res: Response) => {
 
     // Clean up OTP
     await prisma.otp.delete({ where: { id: otp.id } });
+
+    await logActivity(user.id, 'LOGIN', 'Login via OTP (Legacy)');
 
     res.status(200).json({
       token,
