@@ -3,14 +3,24 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare, Settings, History } from 'lucide-react';
+import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare, Settings, History, Layers } from 'lucide-react';
 import AuthGuard from '@/components/AuthGuard';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // ...
-  // ...
-    { href: '/admin/whatsapp', icon: <div className="w-5 h-5 flex items-center justify-center">📱</div>, label: 'WhatsApp Bot' },
+  const router = useRouter();
+  const { logout } = useAuthStore();
+
+  const menuItems = [
+    { href: '/admin', icon: <BarChart3 size={20} />, label: 'Dashboard' },
+    { href: '/admin/products', icon: <Package size={20} />, label: 'Produk' },
+    { href: '/admin/orders', icon: <ShoppingBag size={20} />, label: 'Pesanan' },
+    { href: '/admin/users', icon: <Users size={20} />, label: 'Pengguna' },
+    { href: '/admin/vouchers', icon: <Ticket size={20} />, label: 'Vouchers' },
+    { href: '/admin/flash-sale', icon: <Zap size={20} />, label: 'Flash Sale' },
+    { href: '/admin/services', icon: <Layers size={20} />, label: 'Layanan' },
+    { href: '/admin/chat', icon: <MessageSquare size={20} />, label: 'Live Chat' },
+    { href: '/admin/whatsapp', icon: <div className="w-5 h-5 flex items-center justify-center font-bold text-lg">📱</div>, label: 'WhatsApp Bot' },
     { href: '/admin/logs', icon: <History size={20} />, label: 'Audit Logs' },
   ];
 
