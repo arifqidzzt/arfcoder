@@ -193,7 +193,7 @@ export const updateOrderTimeline = async (req: Request, res: Response) => {
 
     const timeline = await prisma.orderTimeline.create({
       data: {
-        orderId: id,
+        orderId: id as string,
         title,
         description
       }
@@ -207,7 +207,7 @@ export const updateOrderTimeline = async (req: Request, res: Response) => {
 
 export const deleteOrderTimeline = async (req: Request, res: Response) => {
   try {
-    await prisma.orderTimeline.delete({ where: { id: req.params.id } });
+    await prisma.orderTimeline.delete({ where: { id: req.params.id as string } });
     res.json({ message: 'Deleted' });
   } catch (error) {
     res.status(500).json({ message: 'Error' });

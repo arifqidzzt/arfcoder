@@ -44,7 +44,7 @@ export const getAllVouchers = async (req: Request, res: Response) => {
 export const deleteVoucher = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.voucher.delete({ where: { id } });
+    await prisma.voucher.delete({ where: { id: id as string } });
     res.json({ message: 'Voucher deleted' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting voucher' });

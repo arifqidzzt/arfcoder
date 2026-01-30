@@ -72,6 +72,20 @@ class WhatsAppService {
     return { status: this.status, qr: this.qr };
   }
 
+  public async sendMessage(jid: string, content: string) {
+    if (this.status !== 'CONNECTED' || !this.sock) {
+      console.warn('WA Bot not connected, skipping message.');
+      return false;
+    }
+    try {
+      await this.sock.sendMessage(jid, { text: content });
+      return true;
+    } catch (error) {
+      console.error('WA Send Message Error:', error);
+      return false;
+    }
+  }
+
   public async sendOTP(phoneNumber: string, otp: string) {
     if (this.status !== 'CONNECTED' || !this.sock) {
       throw new Error('WhatsApp bot is not connected');

@@ -22,8 +22,3 @@ router.post('/2fa/setup', authenticate, setupTwoFactor);
 router.post('/2fa/enable', authenticate, enableTwoFactor);
 
 export default router;
-router.post('/google', googleLogin);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
-
-export default router;
