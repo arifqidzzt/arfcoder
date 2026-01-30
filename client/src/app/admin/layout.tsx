@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare } from 'lucide-react';
+import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare, Settings } from 'lucide-react';
 import AuthGuard from '@/components/AuthGuard';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -50,6 +50,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
             
             <div className="border-t border-gray-100 my-2"></div>
+            <Link href="/admin/profile" className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${pathname === '/admin/profile' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+              <Settings size={20} />
+              <span className="font-medium">Pengaturan & 2FA</span>
+            </Link>
             <Link href="/" target="_blank" className="flex items-center space-x-3 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
               <div className="w-5 h-5 flex items-center justify-center">🌐</div>
               <span className="font-medium">Lihat Website</span>
