@@ -126,56 +126,6 @@ export default function LoginPage() {
               <span className="px-2 bg-white/0 backdrop-blur-xl">Atau Lanjutkan Dengan</span>
             </div>
           </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium ml-1">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-3.5 text-gray-400" size={18} />
-                <input 
-                  type="email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
-                  placeholder="nama@email.com"
-                  required
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-medium ml-1">Password</label>
-                <Link href="/forgot-password" className="text-xs font-bold text-accent hover:underline">
-                  Lupa Password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-4 top-3.5 text-gray-400" size={18} />
-                <input 
-                  type="password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-            </div>
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full py-3.5 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              {loading ? 'Memproses...' : 'Masuk Sekarang'} <ArrowRight size={18} />
-            </button>
-          </form>
-
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase tracking-wider font-bold text-gray-400">
-              <span className="px-2 bg-white/0 backdrop-blur-xl">Atau Lanjutkan Dengan</span>
-            </div>
-          </div>
 
           <div className="flex justify-center">
              <GoogleLogin
