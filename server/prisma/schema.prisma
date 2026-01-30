@@ -1,17 +1,43 @@
-// ... (Existing content)
+// This is your Prisma schema file
 
-// --- AUDIT LOG ---
-model ActivityLog {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  action    String   // e.g. "LOGIN", "DELETE_PRODUCT", "UPDATE_ORDER"
-  details   String?
-  ipAddress String?
-  createdAt DateTime @default(now())
+generator client {
+  provider = "prisma-client-js"
 }
 
-// ... (Existing Voucher, FlashSale, Review models)
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ProductType {
+  BARANG
+  JASA
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  COMPLETED
+  CANCELLED
+  REFUND_REQUESTED
+  REFUND_APPROVED
+  REFUND_COMPLETED
+  REFUND_REJECTED
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -20,12 +46,17 @@ model User {
   role          Role      @default(USER)
   isVerified    Boolean   @default(false)
   googleId      String?   @unique
+  
+  // Profile Additions
   avatar        String?
   phoneNumber   String?
+  
+  // Security (2FA)
   resetToken        String?
   resetTokenExpiry  DateTime?
-  twoFactorSecret   String?
+  twoFactorSecret   String?   
   twoFactorEnabled  Boolean   @default(false)
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   otps          Otp[]
@@ -33,7 +64,17 @@ model User {
   cartItems     CartItem[]
   messagesSent  Message[] @relation("SentMessages")
   reviews       Review[]
-  activityLogs  ActivityLog[] // Relation
+  activityLogs  ActivityLog[]
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String   
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
 }
 
 model Otp {
@@ -105,12 +146,15 @@ model Order {
   snapToken     String?
   snapUrl       String?
   address       String?
+  
   deliveryInfo  String?
   refundReason  String?
   refundAccount String?
   refundProof   String?
+  
   discountApplied Float     @default(0)
   voucherCode     String?
+
   items         OrderItem[]
   timeline      OrderTimeline[]
   createdAt     DateTime    @default(now())
@@ -183,33 +227,4 @@ model Review {
   comment   String?
   isVisible Boolean  @default(true)
   createdAt DateTime @default(now())
-}
-
-enum Role {
-  USER
-  ADMIN
-  SUPER_ADMIN
-}
-
-enum ProductType {
-  BARANG
-  JASA
-}
-
-enum OrderStatus {
-  PENDING
-  PAID
-  PROCESSING
-  SHIPPED
-  COMPLETED
-  CANCELLED
-  REFUND_REQUESTED
-  REFUND_APPROVED
-  REFUND_COMPLETED
-  REFUND_REJECTED
-}
-
-enum DiscountType {
-  PERCENT
-  FIXED
 }
