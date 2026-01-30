@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuthStore } '@/store/useAuthStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare, Settings, History } from 'lucide-react';
 import AuthGuard from '@/components/AuthGuard';
 
