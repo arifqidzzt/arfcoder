@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { ShieldCheck, Mail, Smartphone, ArrowRight, RefreshCw } from 'lucide-react';
+import { ShieldCheck, Mail, Smartphone, ArrowRight, RefreshCw, ChevronLeft } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 function VerifyContent() {
@@ -39,19 +39,18 @@ function VerifyContent() {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  const handleSelectMethod = async (selected: 'authenticator' | 'email' | 'whatsapp') => {
-    setMethod(selected);
-    
-    if (selected === 'authenticator') {
-      setStep('input');
-      return;
-    }
+  const handleChooseAuthenticator = () => {
+    setMethod('authenticator');
+    setStep('input');
+    setCountdown(0); // No countdown for TOTP
+  };
 
-    // Send OTP for Email/WA
+  const handleChooseOtp = async (channel: 'email' | 'whatsapp') => {
+    setMethod(channel);
     setLoading(true);
     try {
-      await api.post('/auth/2fa/send', { userId, method: selected });
-      toast.success(`OTP dikirim ke ${selected === 'email' ? 'Email' : 'WhatsApp'}`);
+      await api.post('/auth/2fa/send', { userId, method: channel });
+      toast.success(`Kode OTP dikirim ke ${channel === 'email' ? 'Email' : 'WhatsApp'}`);
       setStep('input');
       setCountdown(60);
     } catch (error: any) {
@@ -81,11 +80,6 @@ function VerifyContent() {
     }
   };
 
-  const handleResend = () => {
-    if (countdown > 0) return;
-    handleSelectMethod(method);
-  };
-
   return (
     <div className="w-full max-w-md bg-white border border-gray-200 p-8 rounded-3xl shadow-xl">
       <div className="text-center mb-8">
@@ -96,14 +90,14 @@ function VerifyContent() {
         <p className="text-muted-foreground text-sm">
           {step === 'select' 
             ? 'Pilih metode verifikasi untuk melanjutkan login Admin.' 
-            : `Masukkan kode yang dikirim via ${method === 'authenticator' ? 'Google Authenticator' : method}.`}
+            : `Masukkan kode dari ${method === 'authenticator' ? 'Aplikasi Google Auth' : method}.`}
         </p>
       </div>
 
       {step === 'select' ? (
         <div className="space-y-3">
           <button
-            onClick={() => handleSelectMethod('authenticator')}
+            onClick={handleChooseAuthenticator}
             className="w-full flex items-center p-4 border rounded-xl hover:bg-gray-50 transition-all group"
           >
             <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -117,7 +111,7 @@ function VerifyContent() {
           </button>
 
           <button
-            onClick={() => handleSelectMethod('email')}
+            onClick={() => handleChooseOtp('email')}
             className="w-full flex items-center p-4 border rounded-xl hover:bg-gray-50 transition-all group"
           >
             <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center mr-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
@@ -131,7 +125,7 @@ function VerifyContent() {
           </button>
 
           <button
-            onClick={() => handleSelectMethod('whatsapp')}
+            onClick={() => handleChooseOtp('whatsapp')}
             className="w-full flex items-center p-4 border rounded-xl hover:bg-gray-50 transition-all group"
           >
             <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mr-4 group-hover:bg-green-600 group-hover:text-white transition-colors">
@@ -147,12 +141,12 @@ function VerifyContent() {
       ) : (
         <form onSubmit={handleVerify} className="space-y-6">
           <div className="space-y-2">
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <label className="text-sm font-medium">Kode Verifikasi</label>
               {method !== 'authenticator' && (
                 <button 
                   type="button" 
-                  onClick={handleResend}
+                  onClick={() => handleChooseOtp(method as any)}
                   disabled={countdown > 0}
                   className={`text-xs font-bold flex items-center gap-1 ${countdown > 0 ? 'text-gray-400' : 'text-blue-600 hover:underline'}`}
                 >
@@ -177,9 +171,9 @@ function VerifyContent() {
             <button
               type="button"
               onClick={() => setStep('select')}
-              className="px-6 py-3 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition-all text-sm"
+              className="px-6 py-3 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition-all text-sm flex items-center justify-center text-gray-500 hover:text-black"
             >
-              Ganti Metode
+              <ChevronLeft size={20} />
             </button>
             <button 
               type="submit" 

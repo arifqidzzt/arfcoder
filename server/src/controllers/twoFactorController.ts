@@ -139,8 +139,22 @@ export const sendBackupOtp = async (req: Request, res: Response) => {
       await resend.emails.send({
         from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
         to: user.email,
-        subject: 'Login OTP - ArfCoder',
-        html: `<h1>${otpCode}</h1><p>Gunakan kode ini untuk login.</p>`
+        subject: '🔐 Kode Login Admin - ArfCoder',
+        html: `
+          <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+            <h2 style="color: #000; text-align: center;">Verifikasi Login</h2>
+            <p style="color: #666; text-align: center;">Gunakan kode OTP berikut untuk masuk ke dashboard admin.</p>
+            
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #000;">${otpCode}</span>
+            </div>
+            
+            <p style="font-size: 12px; color: #999; text-align: center;">
+              Kode ini berlaku selama 5 menit. Jangan berikan kepada siapapun.<br/>
+              Jika Anda tidak merasa melakukan login, abaikan pesan ini.
+            </p>
+          </div>
+        `
       });
     } else if (method === 'whatsapp') {
       // Check if user has phone number
