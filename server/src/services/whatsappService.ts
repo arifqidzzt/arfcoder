@@ -5,7 +5,8 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import fs from 'fs';
-import os from 'os'; // Built-in OS module
+import os from 'os';
+import { exec } from 'child_process'; // Correctly placed at the top
 import { prisma } from '../lib/prisma';
 
 const AUTH_DIR = './wa_auth';
@@ -73,25 +74,19 @@ class WhatsAppService {
       const jid = msg.key.remoteJid!;
       const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || '').trim();
       
-      // 1. Identify User
-      const phoneNumber = jid.split('@')[0].replace(/^62/, '0'); // Convert 628... to 08...
-      // Also try +62 format just in case
+      const phoneNumber = jid.split('@')[0].replace(/^62/, '0');
       
       const user = await prisma.user.findFirst({
         where: { 
           OR: [
             { phoneNumber: phoneNumber },
-            { phoneNumber: jid.split('@')[0] }, // Match 628...
+            { phoneNumber: jid.split('@')[0] },
             { phoneNumber: `+${jid.split('@')[0]}` }
           ]
         }
       });
 
       const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
-
-import { exec } from 'child_process';
-
-// ... inside message handler ...
 
       // 2. Command: INFO VPS (Admin Only)
       if (text.toUpperCase() === 'INFO VPS') {
@@ -102,12 +97,11 @@ import { exec } from 'child_process';
         
         const cpus = os.cpus();
         const load = os.loadavg();
-        const totalMem = os.totalmem() / (1024 * 1024 * 1024); // GB
-        const freeMem = os.freemem() / (1024 * 1024 * 1024); // GB
-        const uptime = os.uptime() / 3600; // Hours
+        const totalMem = os.totalmem() / (1024 * 1024 * 1024);
+        const freeMem = os.freemem() / (1024 * 1024 * 1024);
+        const uptime = os.uptime() / 3600;
 
-        // Check Ping (Google DNS)
-        exec('ping -c 1 8.8.8.8', async (err, stdout, stderr) => {
+        exec('ping -c 1 8.8.8.8', async (err, stdout) => {
           let pingTime = 'N/A';
           if (stdout) {
             const match = stdout.match(/time=([\d.]+)\s*ms/);
@@ -137,15 +131,13 @@ import { exec } from 'child_process';
           return;
         }
 
-        // Jika Admin -> Show Summary Last 5 orders
-        // Jika User -> Show My Last 5 orders
         const whereClause = isAdmin ? {} : { userId: user.id };
         
         const orders = await prisma.order.findMany({
           where: whereClause,
           take: 5,
           orderBy: { createdAt: 'desc' },
-          include: { user: true } // Need user name if Admin
+          include: { user: true }
         });
 
         if (orders.length === 0) {
@@ -156,8 +148,7 @@ import { exec } from 'child_process';
         let reply = isAdmin ? '📦 *5 ORDER TERBARU (GLOBAL)*\n\n' : '📦 *5 PESANAN TERAKHIR ANDA*\n\n';
         
         orders.forEach(o => {
-          reply += `📄 *${o.invoiceNumber}*
-`;
+          reply += `📄 *${o.invoiceNumber}*\n`;
           if(isAdmin) reply += `👤 ${o.user?.name}\n`;
           reply += `💰 Rp ${o.totalAmount.toLocaleString('id-ID')}\n`;
           reply += `STATUS: ${o.status}\n\n`;
@@ -168,29 +159,20 @@ import { exec } from 'child_process';
       }
 
       // 4. Command: CEK #INV (Strict)
-      // Regex: CEK (space) #INV- (alphanumeric)
       const cekRegex = /^CEK\s+(#?INV-[\w-]+)$/i;
       const match = text.match(cekRegex);
 
       if (match) {
-        const invoiceNumber = match[1].replace('#', ''); // Remove # if present, backend stores "INV-..."
+        const invoiceNumber = match[1].replace('#', '');
         
-        const order = await prisma.order.findUnique({ // Use findUnique for strict match if invoice is unique
-          where: { invoiceNumber: invoiceNumber }, // Strict match!
+        const order = await prisma.order.findUnique({
+          where: { invoiceNumber: invoiceNumber },
           include: { items: { include: { product: true } }, user: true }
         });
 
         if (order) {
-          // Security: User can only check THEIR order (unless Admin)
           if (!isAdmin && order.userId !== user?.id) {
-             // Optional: Allow public check? Usually privacy matters.
-             // User requested: "user non admin cuman bisa cek inv diri sendiri"
-             if (user) { // If registered user but not owner
-                await this.sendMessage(jid, '⛔ Anda tidak memiliki akses ke pesanan ini.');
-                return;
-             }
-             // If guest (not registered), maybe allow minimal info? No, user said "nomor terkait akun".
-             await this.sendMessage(jid, '❌ Nomor Anda tidak terdaftar atau bukan pemilik pesanan ini.');
+             await this.sendMessage(jid, '⛔ Anda tidak memiliki akses ke pesanan ini.');
              return;
           }
 
@@ -228,7 +210,6 @@ ${order.deliveryInfo || '-'}
       await this.sock.sendMessage(jid, { text: content });
       return true;
     } catch (error) {
-      console.error('WA Send Message Error:', error);
       return false;
     }
   }
@@ -258,7 +239,6 @@ ${order.deliveryInfo || '-'}
         this.sock.end(undefined);
       }
     } catch (e) {
-      console.error("Logout Error:", e);
     } finally {
       if (fs.existsSync(AUTH_DIR)) {
         fs.rmSync(AUTH_DIR, { recursive: true, force: true });
