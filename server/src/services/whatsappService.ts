@@ -115,16 +115,20 @@ class WhatsAppService {
         });
 
         try {
-          const [disk, osDistro, ipInfoStr, dlSpeed] = await Promise.all([
+          const [disk, osDistro, ipInfoStr, speedTestOut] = await Promise.all([
             execPromise(`df -h / | tail -1 | awk '{print $3 " / " $2 " (" $5 ")"}'`), 
             execPromise(`grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"'`), 
             execPromise(`curl -s ipinfo.io/json`), 
-            execPromise(`curl -o /dev/null -s -w "%{speed_download}" http://speedtest.tele2.net/1MB.zip`) 
+            execPromise(`curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 - --simple`) 
           ]);
 
           const ipInfo = JSON.parse(ipInfoStr === 'N/A' ? '{}' : ipInfoStr);
-          const speedBps = parseFloat(dlSpeed) || 0;
-          const dlSpeedMbps = (speedBps * 8 / 1024 / 1024).toFixed(2); 
+          
+          // Parse speedtest simple output: "Download: 100.00 Mbit/s"
+          const dlMatch = speedTestOut.match(/Download:\s+([\d.]+)/);
+          const ulMatch = speedTestOut.match(/Upload:\s+([\d.]+)/);
+          const dlSpeed = dlMatch ? dlMatch[1] + ' Mbps' : 'N/A';
+          const ulSpeed = ulMatch ? ulMatch[1] + ' Mbps' : 'N/A';
 
           const reply = `
 🚀 *ARFCODER SERVER STATUS*
@@ -139,7 +143,8 @@ class WhatsAppService {
 • IP: ${ipInfo.ip || 'Hidden'}
 • Lokasi: ${ipInfo.city || '?'}, ${ipInfo.country || '?'}
 • ISP: ${ipInfo.org || '?'}
-• Speed (DL): ±${dlSpeedMbps} Mbps
+• Speed (DL): ${dlSpeed}
+• Speed (UL): ${ulSpeed}
 
 🧠 *RESOURCE*
 • CPU: ${cpus[0].model} (${cpus.length} Core)
