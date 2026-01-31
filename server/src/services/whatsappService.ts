@@ -71,7 +71,8 @@ class WhatsAppService {
       const msg = m.messages[0];
       if (!msg.message || msg.key.fromMe) return;
 
-      const jid = msg.key.remoteJid!;
+      // Prefer participant (real number) over remoteJid (might be LID)
+      const jid = msg.key.participant || msg.key.remoteJid!;
       const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || '').trim();
       
       // 1. Identify User
