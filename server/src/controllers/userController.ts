@@ -22,7 +22,7 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, email: true, avatar: true, phoneNumber: true, role: true }
+      select: { id: true, name: true, email: true, avatar: true, phoneNumber: true, role: true, twoFactorEnabled: true }
     });
 
     // 2. Calculate Spending (Include PAID, PROCESSING, SHIPPED, COMPLETED)

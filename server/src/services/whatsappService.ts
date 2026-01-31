@@ -5,11 +5,11 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import fs from 'fs';
-import { prisma } from '../lib/prisma'; // Import at top
+import os from 'os'; // Built-in OS module
+import { prisma } from '../lib/prisma';
 
 const AUTH_DIR = './wa_auth';
 
-// Singleton class for WhatsApp
 class WhatsAppService {
   private sock: any;
   private qr: string = '';
@@ -46,13 +46,11 @@ class WhatsAppService {
       if (qr) {
         this.qr = qr;
         this.status = 'DISCONNECTED';
-        console.log('WA QR Code Generated');
         if (this.io) this.io.emit('wa_qr', { qr });
       }
 
       if (connection === 'close') {
         const shouldReconnect = (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut;
-        console.log('WA Connection closed. Reconnecting:', shouldReconnect);
         this.status = 'DISCONNECTED';
         if (shouldReconnect) {
           this.connect();
@@ -60,45 +58,148 @@ class WhatsAppService {
           if (this.io) this.io.emit('wa_status', { status: 'LOGGED_OUT' });
         }
       } else if (connection === 'open') {
-        console.log('WA Connected!');
         this.status = 'CONNECTED';
         this.qr = '';
         if (this.io) this.io.emit('wa_status', { status: 'CONNECTED' });
       }
     });
 
-    // LISTENER PESAN MASUK
+    // --- MESSAGE HANDLER ---
     this.sock.ev.on('messages.upsert', async (m: any) => {
       if (m.type !== 'notify') return;
-      
       const msg = m.messages[0];
       if (!msg.message || msg.key.fromMe) return;
 
-      const jid = msg.key.remoteJid;
-      const text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
-
-      // LOGIC CEK STATUS ORDER
-      // Format: "CEK #INV-xxx"
-      if (text.toUpperCase().startsWith('CEK #')) {
-        const invoiceNumber = text.split('#')[1]?.trim();
-        if (invoiceNumber) {
-          try {
-            const order = await prisma.order.findFirst({
-              where: { invoiceNumber: { contains: invoiceNumber, mode: 'insensitive' } },
-              include: { items: { include: { product: true } } }
-            });
-
-            if (order) {
-              const itemsList = order.items.map((i: any) => `- ${i.product.name} (${i.quantity}x)`).join('\n');
-              const reply = `*STATUS PESANAN*\nInvoice: ${order.invoiceNumber}\nStatus: *${order.status}*\nTotal: Rp ${order.totalAmount.toLocaleString('id-ID')}\n\nItem:\n${itemsList}\n\nTerima kasih!`;
-              await this.sendMessage(jid, reply);
-            } else {
-              await this.sendMessage(jid, 'Pesanan tidak ditemukan. Pastikan nomor invoice benar.');
-            }
-          } catch (error) {
-            console.error('WA Auto Reply Error:', error);
-          }
+      const jid = msg.key.remoteJid!;
+      const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || '').trim();
+      
+      // 1. Identify User
+      const phoneNumber = jid.split('@')[0].replace(/^62/, '0'); // Convert 628... to 08...
+      // Also try +62 format just in case
+      
+      const user = await prisma.user.findFirst({
+        where: { 
+          OR: [
+            { phoneNumber: phoneNumber },
+            { phoneNumber: jid.split('@')[0] }, // Match 628...
+            { phoneNumber: `+${jid.split('@')[0]}` }
+          ]
         }
+      });
+
+      const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+
+      // 2. Command: INFO VPS (Admin Only)
+      if (text.toUpperCase() === 'INFO VPS') {
+        if (!isAdmin) {
+          await this.sendMessage(jid, '⛔ Akses Ditolak. Perintah ini hanya untuk Admin.');
+          return;
+        }
+        
+        const cpus = os.cpus();
+        const load = os.loadavg();
+        const totalMem = os.totalmem() / (1024 * 1024 * 1024); // GB
+        const freeMem = os.freemem() / (1024 * 1024 * 1024); // GB
+        const uptime = os.uptime() / 3600; // Hours
+
+        const reply = `
+🖥️ *STATUS VPS ARFCODER*
+
+*CPU:* ${cpus[0].model} (${cpus.length} Core)
+*Load:* ${load[0].toFixed(2)} / ${load[1].toFixed(2)}
+*RAM:* ${freeMem.toFixed(2)} GB Free / ${totalMem.toFixed(2)} GB Total
+*Uptime:* ${uptime.toFixed(1)} Jam
+*OS:* ${os.type()} ${os.release()}
+        `.trim();
+        
+        await this.sendMessage(jid, reply);
+        return;
+      }
+
+      // 3. Command: LIST ORDER
+      if (text.toUpperCase() === 'LIST ORDER') {
+        if (!user) {
+          await this.sendMessage(jid, '❌ Nomor Anda tidak terdaftar di sistem kami.');
+          return;
+        }
+
+        // Jika Admin -> Show Summary Last 5 orders
+        // Jika User -> Show My Last 5 orders
+        const whereClause = isAdmin ? {} : { userId: user.id };
+        
+        const orders = await prisma.order.findMany({
+          where: whereClause,
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+          include: { user: true } // Need user name if Admin
+        });
+
+        if (orders.length === 0) {
+          await this.sendMessage(jid, 'Belum ada pesanan terbaru.');
+          return;
+        }
+
+        let reply = isAdmin ? '📦 *5 ORDER TERBARU (GLOBAL)*\n\n' : '📦 *5 PESANAN TERAKHIR ANDA*\n\n';
+        
+        orders.forEach(o => {
+          reply += `📄 *${o.invoiceNumber}*
+`;
+          if(isAdmin) reply += `👤 ${o.user?.name}\n`;
+          reply += `💰 Rp ${o.totalAmount.toLocaleString('id-ID')}\n`;
+          reply += `STATUS: ${o.status}\n\n`;
+        });
+
+        await this.sendMessage(jid, reply);
+        return;
+      }
+
+      // 4. Command: CEK #INV (Strict)
+      // Regex: CEK (space) #INV- (alphanumeric)
+      const cekRegex = /^CEK\s+(#?INV-[\w-]+)$/i;
+      const match = text.match(cekRegex);
+
+      if (match) {
+        const invoiceNumber = match[1].replace('#', ''); // Remove # if present, backend stores "INV-..."
+        
+        const order = await prisma.order.findUnique({ // Use findUnique for strict match if invoice is unique
+          where: { invoiceNumber: invoiceNumber }, // Strict match!
+          include: { items: { include: { product: true } }, user: true }
+        });
+
+        if (order) {
+          // Security: User can only check THEIR order (unless Admin)
+          if (!isAdmin && order.userId !== user?.id) {
+             // Optional: Allow public check? Usually privacy matters.
+             // User requested: "user non admin cuman bisa cek inv diri sendiri"
+             if (user) { // If registered user but not owner
+                await this.sendMessage(jid, '⛔ Anda tidak memiliki akses ke pesanan ini.');
+                return;
+             }
+             // If guest (not registered), maybe allow minimal info? No, user said "nomor terkait akun".
+             await this.sendMessage(jid, '❌ Nomor Anda tidak terdaftar atau bukan pemilik pesanan ini.');
+             return;
+          }
+
+          const itemsList = order.items.map((i: any) => `- ${i.product.name} (${i.quantity}x)`).join('\n');
+          const reply = `
+*DETAIL PESANAN*
+---------------------------
+*Invoice:* ${order.invoiceNumber}
+*Tanggal:* ${new Date(order.createdAt).toLocaleDateString('id-ID')}
+*Status:* *${order.status}*
+*Total:* Rp ${order.totalAmount.toLocaleString('id-ID')}
+
+*Item:*
+${itemsList}
+
+*Akses/Info:*
+${order.deliveryInfo || '-'}
+          `.trim();
+          await this.sendMessage(jid, reply);
+        } else {
+          await this.sendMessage(jid, '❌ Pesanan tidak ditemukan. Periksa nomor invoice.');
+        }
+        return;
       }
     });
   }
@@ -108,10 +209,7 @@ class WhatsAppService {
   }
 
   public async sendMessage(jid: string, content: string) {
-    if (this.status !== 'CONNECTED' || !this.sock) {
-      console.warn('WA Bot not connected, skipping message.');
-      return false;
-    }
+    if (this.status !== 'CONNECTED' || !this.sock) return false;
     try {
       await this.sock.sendMessage(jid, { text: content });
       return true;
@@ -127,24 +225,15 @@ class WhatsAppService {
     }
 
     let formattedPhone = phoneNumber.replace(/\D/g, '');
-    
-    if (formattedPhone.startsWith('0')) {
-      formattedPhone = '62' + formattedPhone.slice(1);
-    }
-    
-    if (!formattedPhone.endsWith('@s.whatsapp.net')) {
-      formattedPhone += '@s.whatsapp.net';
-    }
-
-    console.log(`Sending WA OTP to: ${formattedPhone}`);
+    if (formattedPhone.startsWith('0')) formattedPhone = '62' + formattedPhone.slice(1);
+    if (!formattedPhone.endsWith('@s.whatsapp.net')) formattedPhone += '@s.whatsapp.net';
 
     try {
       await this.sock.sendMessage(formattedPhone, { 
-        text: `*Kode Verifikasi ArfCoder*\n\nKode Anda: *${otp}*\n\nJangan berikan kode ini kepada siapapun.` 
+        text: `*Kode Login Admin*\n\nKode: *${otp}*\n\nJangan berikan kepada siapapun.` 
       });
     } catch (error) {
-      console.error('WA Send Error:', error);
-      throw new Error('Gagal mengirim pesan WA');
+      throw new Error('Gagal kirim WA');
     }
   }
 
@@ -155,11 +244,10 @@ class WhatsAppService {
         this.sock.end(undefined);
       }
     } catch (e) {
-      console.error("Logout Error (Ignored):", e);
+      console.error("Logout Error:", e);
     } finally {
       if (fs.existsSync(AUTH_DIR)) {
         fs.rmSync(AUTH_DIR, { recursive: true, force: true });
-        console.log("WA Auth folder deleted.");
       }
       this.status = 'DISCONNECTED';
       this.qr = '';

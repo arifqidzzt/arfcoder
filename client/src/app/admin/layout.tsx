@@ -1,15 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare, Settings, History, Layers } from 'lucide-react';
+import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare, Settings, History, Layers, Menu, X } from 'lucide-react';
 import AuthGuard from '@/components/AuthGuard';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuthStore();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const menuItems = [
     { href: '/admin', icon: <BarChart3 size={20} />, label: 'Dashboard' },
@@ -26,10 +28,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <AuthGuard adminOnly>
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+        
+        {/* Mobile Header */}
+        <div className="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center z-30 sticky top-0">
+          <Link href="/" className="text-xl font-bold tracking-tighter">ARF ADMIN</Link>
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-gray-600">
+            {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
         {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 fixed h-full hidden md:block z-20 overflow-y-auto">
-          <div className="p-6 border-b border-gray-100">
+        <aside className={`
+          bg-white border-r border-gray-200 fixed md:sticky top-0 h-full z-20 overflow-y-auto transition-transform duration-300 w-64
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
+          <div className="p-6 border-b border-gray-100 hidden md:block">
             <Link href="/" className="text-xl font-bold tracking-tighter hover:text-gray-600 transition-colors">ARF ADMIN</Link>
             <p className="text-xs text-gray-400 mt-1">Management Console</p>
           </div>
@@ -39,7 +53,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               return (
                 <Link 
                   key={item.href}
-                  href={item.href} 
+                  href={item.href}
+                  onClick={() => setIsSidebarOpen(false)} 
                   className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive ? 'bg-black text-white font-medium shadow-md' : 'text-gray-600 hover:bg-gray-100'
                   }`}
@@ -51,7 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
             
             <div className="border-t border-gray-100 my-2"></div>
-            <Link href="/admin/profile" className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${pathname === '/admin/profile' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+            <Link href="/admin/profile" onClick={() => setIsSidebarOpen(false)} className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${pathname === '/admin/profile' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
               <Settings size={20} />
               <span className="font-medium">Pengaturan & 2FA</span>
             </Link>
@@ -71,8 +86,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </aside>
 
+        {/* Overlay for Mobile */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-10 md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Main Content Wrapper */}
-        <div className="flex-1 ml-0 md:ml-64 w-full">
+        <div className="flex-1 w-full md:w-auto">
             {children}
         </div>
       </div>

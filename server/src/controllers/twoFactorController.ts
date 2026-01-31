@@ -12,27 +12,35 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // 1. Generate Secret & QR Code (For Setup)
 export const setupTwoFactor = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.body; // In real app, get from req.user
+    const { userId } = req.body; 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const secret = speakeasy.generateSecret({
-      name: `ArfCoder (${user.email})`,
+    let secretBase32 = user.twoFactorSecret;
+
+    // If no secret exists, generate one
+    if (!secretBase32) {
+      const newSecret = speakeasy.generateSecret({
+        name: `ArfCoder (${user.email})`,
+      });
+      secretBase32 = newSecret.base32;
+      
+      await prisma.user.update({
+        where: { id: userId },
+        data: { twoFactorSecret: secretBase32 }
+      });
+    }
+
+    // Reconstruct OTPAuth URL for QR
+    const otpauthUrl = speakeasy.otpauthURL({
+      secret: secretBase32,
+      label: `ArfCoder (${user.email})`,
+      encoding: 'base32'
     });
 
-    // Save temporary secret to DB (or session) - Here we assume immediate verify
-    // For safety, we should verify before saving permanently. 
-    // But for simplicity, we send secret to frontend to verify.
-    
-    // Better flow: Save secret to user but set enabled=false
-    await prisma.user.update({
-      where: { id: userId },
-      data: { twoFactorSecret: secret.base32, twoFactorEnabled: false }
-    });
+    const qrCodeUrl = await QRCode.toDataURL(otpauthUrl);
 
-    const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url || '');
-
-    res.json({ secret: secret.base32, qrCode: qrCodeUrl });
+    res.json({ secret: secretBase32, qrCode: qrCodeUrl });
   } catch (error) {
     res.status(500).json({ message: 'Error setting up 2FA', error });
   }
