@@ -95,7 +95,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         )}
 
         {/* Main Content Wrapper */}
-        <div className="flex-1 w-full md:w-auto">
+        <div className="flex-1 w-full md:w-auto md:ml-64 pt-16 md:pt-0">
             {children}
         </div>
       </div>

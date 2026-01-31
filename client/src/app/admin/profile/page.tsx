@@ -18,10 +18,24 @@ export default function AdminProfilePage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [updatingPhone, setUpdatingPhone] = useState(false);
 
+  // Direct fetch to ensure fresh state
+  const refreshProfile = async () => {
+    try {
+      const res = await api.get('/user/profile');
+      if (res.data.twoFactorEnabled) setIsEnabled(true);
+      if (res.data.phoneNumber) setPhoneNumber(res.data.phoneNumber);
+      // Also update store
+      useAuthStore.setState({ user: res.data });
+    } catch (e) {
+      console.error("Failed to refresh profile");
+    }
+  };
+
   useEffect(() => {
-    checkAuth();
+    refreshProfile();
   }, []);
 
+  // Sync with store updates too
   useEffect(() => {
     if (user?.twoFactorEnabled) setIsEnabled(true);
     if (user?.phoneNumber) setPhoneNumber(user.phoneNumber);
@@ -33,7 +47,7 @@ export default function AdminProfilePage() {
     try {
       await api.put('/user/profile', { name: user?.name, phoneNumber });
       toast.success('Nomor WhatsApp diperbarui!');
-      checkAuth();
+      refreshProfile();
     } catch (error) {
       toast.error('Gagal memperbarui nomor');
     } finally {
@@ -58,7 +72,7 @@ export default function AdminProfilePage() {
       toast.success('Google Authenticator Berhasil Diaktifkan!');
       setIsEnabled(true);
       setSetupStep('idle');
-      checkAuth(); // Refresh state
+      refreshProfile(); // Refresh state
     } catch (error: any) {
       toast.error('Kode salah, coba lagi');
     }
