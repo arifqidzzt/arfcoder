@@ -74,25 +74,33 @@ class WhatsAppService {
       const jid = msg.key.remoteJid!;
       const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || '').trim();
       
-      const phoneNumber = jid.split('@')[0].replace(/^62/, '0');
+      // 1. Identify User
+      const rawNumber = jid.split('@')[0];
+      const phoneNumber = rawNumber.replace(/^62/, '0'); 
       
+      console.log(`[WA BOT] Msg from: ${jid} | Raw: ${rawNumber} | Parsed: ${phoneNumber}`);
+
+      // Try to find user with flexible matching
       const user = await prisma.user.findFirst({
         where: { 
           OR: [
-            { phoneNumber: phoneNumber },
-            { phoneNumber: jid.split('@')[0] },
-            { phoneNumber: `+${jid.split('@')[0]}` }
+            { phoneNumber: phoneNumber }, // 08xx
+            { phoneNumber: rawNumber },   // 628xx
+            { phoneNumber: `+${rawNumber}` }, // +628xx
+            { phoneNumber: phoneNumber.replace(/^0/, '62') } // Try explicit 62 replace
           ]
         }
       });
+
+      console.log(`[WA BOT] User Found: ${user ? user.email : 'NULL'} | Role: ${user?.role}`);
 
       const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
       // 2. Command: INFO VPS (Admin Only)
       if (text.toUpperCase() === 'INFO VPS') {
         if (!isAdmin) {
-          const status = user ? `User: ${user.name} (${user.role})` : 'Nomor tidak terdaftar';
-          await this.sendMessage(jid, `⛔ Akses Ditolak. Perintah ini hanya untuk Admin.\n\nInfo Deteksi:\n${status}`);
+          const debugInfo = user ? `Login sebagai: ${user.name} (${user.role})` : `Nomor ${phoneNumber} tidak terdaftar.`;
+          await this.sendMessage(jid, `⚠️ SECURITY CHECK FAILED\n\nBot tidak mengenali Anda sebagai Admin.\n\n${debugInfo}\n\nSilakan cek profil Admin di website.`);
           return;
         }
         
