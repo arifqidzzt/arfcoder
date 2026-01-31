@@ -6,7 +6,7 @@ import makeWASocket, {
 import pino from 'pino';
 import fs from 'fs';
 import os from 'os';
-import { exec } from 'child_process'; // Correctly placed at the top
+import { exec } from 'child_process';
 import { prisma } from '../lib/prisma';
 
 const AUTH_DIR = './wa_auth';
@@ -69,80 +69,101 @@ class WhatsAppService {
     this.sock.ev.on('messages.upsert', async (m: any) => {
       if (m.type !== 'notify') return;
       const msg = m.messages[0];
-      if (!msg.message || msg.key.fromMe) return;
-
-      // Prefer participant (real number) over remoteJid (might be LID)
-      const jid = msg.key.participant || msg.key.remoteJid!;
+      
+      // Allow Self-Chat but prevent infinite loop
+      if (!msg.message) return;
       const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || '').trim();
-      
-      // 1. Identify User
-      const rawNumber = jid.split('@')[0];
-      const phoneNumber = rawNumber.replace(/^62/, '0'); 
-      
-      console.log(`[WA BOT] Msg from: ${jid} | Raw: ${rawNumber} | Parsed: ${phoneNumber}`);
+      if (msg.key.fromMe && !text.startsWith('INFO') && !text.startsWith('CEK') && !text.startsWith('LIST')) {
+         return;
+      }
 
-      // Try to find user with flexible matching
+      const jid = msg.key.participant || msg.key.remoteJid!;
+      const rawNumber = jid.split('@')[0];
+      const phoneNumber = rawNumber.replace(/^62/, '0');
+      
       const user = await prisma.user.findFirst({
         where: { 
           OR: [
-            { phoneNumber: phoneNumber }, // 08xx
-            { phoneNumber: rawNumber },   // 628xx
-            { phoneNumber: `+${rawNumber}` }, // +628xx
-            { phoneNumber: phoneNumber.replace(/^0/, '62') } // Try explicit 62 replace
+            { phoneNumber: phoneNumber },
+            { phoneNumber: rawNumber },
+            { phoneNumber: `+${rawNumber}` },
+            { phoneNumber: phoneNumber.replace(/^0/, '62') }
           ]
         }
       });
-
-      console.log(`[WA BOT] User Found: ${user ? user.email : 'NULL'} | Role: ${user?.role}`);
 
       const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
       // 2. Command: INFO VPS (Admin Only)
       if (text.toUpperCase() === 'INFO VPS') {
         if (!isAdmin) {
-          const debugInfo = user ? `Login sebagai: ${user.name} (${user.role})` : `Nomor ${phoneNumber} tidak terdaftar.`;
-          await this.sendMessage(jid, `⚠️ SECURITY CHECK FAILED\n\nBot tidak mengenali Anda sebagai Admin.\n\n${debugInfo}\n\nSilakan cek profil Admin di website.`);
+          const debugInfo = user ? `Login: ${user.name} (${user.role})` : `Nomor ${rawNumber} tidak terdaftar.`;
+          await this.sendMessage(jid, `⚠️ SECURITY CHECK FAILED\n\nBot tidak mengenali Anda sebagai Admin.\n\n${debugInfo}\n\nSolusi: Masukkan nomor ${rawNumber} di Profile Admin.`);
           return;
         }
         
+        await this.sendMessage(jid, '⏳ Mengumpulkan data server... (Estimasi 5-10 detik)');
+
         const cpus = os.cpus();
-        const load = os.loadavg();
         const totalMem = os.totalmem() / (1024 * 1024 * 1024);
         const freeMem = os.freemem() / (1024 * 1024 * 1024);
         const uptime = os.uptime() / 3600;
 
-        exec('ping -c 1 8.8.8.8', async (err, stdout) => {
-          let pingTime = 'N/A';
-          if (stdout) {
-            const match = stdout.match(/time=([\d.]+)\s*ms/);
-            if (match) pingTime = match[1] + ' ms';
-          }
+        // Promisify helper
+        const execPromise = (cmd: string): Promise<string> => new Promise((resolve) => {
+          exec(cmd, (err, stdout) => resolve(stdout ? stdout.trim() : 'N/A'));
+        });
+
+        try {
+          const [disk, osDistro, ipInfoStr, dlSpeed] = await Promise.all([
+            execPromise("df -h / | tail -1 | awk '{print $3 " / " $2 " (" $5 ")"}'"), 
+            execPromise("grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"' "), 
+            execPromise("curl -s ipinfo.io/json"), 
+            execPromise("curl -o /dev/null -s -w '%{speed_download}' http://speedtest.tele2.net/1MB.zip") 
+          ]);
+
+          const ipInfo = JSON.parse(ipInfoStr === 'N/A' ? '{}' : ipInfoStr);
+          const dlSpeedMbps = (parseFloat(dlSpeed) * 8 / 1024 / 1024).toFixed(2); 
 
           const reply = `
-🖥️ *STATUS VPS ARFCODER*
+🚀 *ARFCODER SERVER STATUS*
+---------------------------
+💻 *SISTEM OPERASI*
+• Distro: ${osDistro === 'N/A' ? os.type() : osDistro}
+• Kernel: ${os.release()}
+• Uptime: ${uptime.toFixed(1)} Jam
+• Node.js: ${process.version}
 
-*CPU:* ${cpus[0].model} (${cpus.length} Core)
-*Load:* ${load[0].toFixed(2)} / ${load[1].toFixed(2)}
-*RAM:* ${freeMem.toFixed(2)} GB Free / ${totalMem.toFixed(2)} GB Total
-*Uptime:* ${uptime.toFixed(1)} Jam
-*OS:* ${os.type()} ${os.release()}
-*Ping (Google):* ${pingTime}
+🌍 *JARINGAN & LOKASI*
+• IP: ${ipInfo.ip || 'Hidden'}
+• Lokasi: ${ipInfo.city || 'Unknown'}, ${ipInfo.country || 'Unknown'}
+• ISP: ${ipInfo.org || 'Unknown'}
+• Speed (DL): ±${dlSpeedMbps} Mbps
+
+🧠 *RESOURCE*
+• CPU: ${cpus[0].model} (${cpus.length} Core)
+• RAM: ${freeMem.toFixed(2)}GB Free / ${totalMem.toFixed(2)}GB Total
+• Disk: ${disk}
+
+---------------------------
+Bot Active | ${new Date().toLocaleString('id-ID')}
           `.trim();
           
           await this.sendMessage(jid, reply);
-        });
+        } catch (e) {
+          await this.sendMessage(jid, 'Gagal mengambil data lengkap.');
+        }
         return;
       }
 
       // 3. Command: LIST ORDER
       if (text.toUpperCase() === 'LIST ORDER') {
         if (!user) {
-          await this.sendMessage(jid, '❌ Nomor Anda tidak terdaftar di sistem kami.');
+          await this.sendMessage(jid, '❌ Nomor Anda tidak terdaftar.');
           return;
         }
 
         const whereClause = isAdmin ? {} : { userId: user.id };
-        
         const orders = await prisma.order.findMany({
           where: whereClause,
           take: 5,
@@ -151,19 +172,17 @@ class WhatsAppService {
         });
 
         if (orders.length === 0) {
-          await this.sendMessage(jid, 'Belum ada pesanan terbaru.');
+          await this.sendMessage(jid, 'Belum ada pesanan.');
           return;
         }
 
         let reply = isAdmin ? '📦 *5 ORDER TERBARU (GLOBAL)*\n\n' : '📦 *5 PESANAN TERAKHIR ANDA*\n\n';
-        
         orders.forEach(o => {
           reply += `📄 *${o.invoiceNumber}*\n`;
           if(isAdmin) reply += `👤 ${o.user?.name}\n`;
           reply += `💰 Rp ${o.totalAmount.toLocaleString('id-ID')}\n`;
           reply += `STATUS: ${o.status}\n\n`;
         });
-
         await this.sendMessage(jid, reply);
         return;
       }
@@ -174,7 +193,6 @@ class WhatsAppService {
 
       if (match) {
         const invoiceNumber = match[1].replace('#', '');
-        
         const order = await prisma.order.findUnique({
           where: { invoiceNumber: invoiceNumber },
           include: { items: { include: { product: true } }, user: true }
@@ -182,28 +200,25 @@ class WhatsAppService {
 
         if (order) {
           if (!isAdmin && order.userId !== user?.id) {
-             await this.sendMessage(jid, '⛔ Anda tidak memiliki akses ke pesanan ini.');
+             await this.sendMessage(jid, '⛔ Akses Ditolak. Pesanan ini bukan milik Anda.');
              return;
           }
-
           const itemsList = order.items.map((i: any) => `- ${i.product.name} (${i.quantity}x)`).join('\n');
           const reply = `
 *DETAIL PESANAN*
 ---------------------------
 *Invoice:* ${order.invoiceNumber}
-*Tanggal:* ${new Date(order.createdAt).toLocaleDateString('id-ID')}
 *Status:* *${order.status}*
 *Total:* Rp ${order.totalAmount.toLocaleString('id-ID')}
 
 *Item:*
 ${itemsList}
 
-*Akses/Info:*
-${order.deliveryInfo || '-'}
+*Info:* ${order.deliveryInfo || '-'}
           `.trim();
           await this.sendMessage(jid, reply);
         } else {
-          await this.sendMessage(jid, '❌ Pesanan tidak ditemukan. Periksa nomor invoice.');
+          await this.sendMessage(jid, '❌ Pesanan tidak ditemukan.');
         }
         return;
       }
@@ -219,16 +234,12 @@ ${order.deliveryInfo || '-'}
     try {
       await this.sock.sendMessage(jid, { text: content });
       return true;
-    } catch (error) {
-      return false;
-    }
+    } catch (error) { return false; }
   }
 
   public async sendOTP(phoneNumber: string, otp: string) {
-    if (this.status !== 'CONNECTED' || !this.sock) {
-      throw new Error('WhatsApp bot is not connected');
-    }
-
+    if (this.status !== 'CONNECTED' || !this.sock) throw new Error('WhatsApp bot disconnected');
+    // Format Phone
     let formattedPhone = phoneNumber.replace(/\D/g, '');
     if (formattedPhone.startsWith('0')) formattedPhone = '62' + formattedPhone.slice(1);
     if (!formattedPhone.endsWith('@s.whatsapp.net')) formattedPhone += '@s.whatsapp.net';
@@ -237,9 +248,7 @@ ${order.deliveryInfo || '-'}
       await this.sock.sendMessage(formattedPhone, { 
         text: `*Kode Login Admin*\n\nKode: *${otp}*\n\nJangan berikan kepada siapapun.` 
       });
-    } catch (error) {
-      throw new Error('Gagal kirim WA');
-    }
+    } catch (error) { throw new Error('Gagal kirim WA'); }
   }
 
   public async logout() {
@@ -248,11 +257,8 @@ ${order.deliveryInfo || '-'}
         await this.sock.logout();
         this.sock.end(undefined);
       }
-    } catch (e) {
-    } finally {
-      if (fs.existsSync(AUTH_DIR)) {
-        fs.rmSync(AUTH_DIR, { recursive: true, force: true });
-      }
+    } catch (e) { } finally {
+      if (fs.existsSync(AUTH_DIR)) fs.rmSync(AUTH_DIR, { recursive: true, force: true });
       this.status = 'DISCONNECTED';
       this.qr = '';
       if (this.io) this.io.emit('wa_status', { status: 'DISCONNECTED' });
