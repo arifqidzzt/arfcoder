@@ -69,11 +69,12 @@ class WhatsAppService {
     this.sock.ev.on('messages.upsert', async (m: any) => {
       if (m.type !== 'notify') return;
       const msg = m.messages[0];
-      
-      // Allow Self-Chat but prevent infinite loop
       if (!msg.message) return;
+
       const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || '').trim();
-      if (msg.key.fromMe && !text.startsWith('INFO') && !text.startsWith('CEK') && !text.startsWith('LIST')) {
+      
+      // Infinite Loop Protection
+      if (msg.key.fromMe && !text.toUpperCase().startsWith('INFO') && !text.toUpperCase().startsWith('CEK') && !text.toUpperCase().startsWith('LIST')) {
          return;
       }
 
@@ -94,36 +95,36 @@ class WhatsAppService {
 
       const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
-      // 2. Command: INFO VPS (Admin Only)
+      // 2. Command: INFO VPS
       if (text.toUpperCase() === 'INFO VPS') {
         if (!isAdmin) {
           const debugInfo = user ? `Login: ${user.name} (${user.role})` : `Nomor ${rawNumber} tidak terdaftar.`;
-          await this.sendMessage(jid, `⚠️ SECURITY CHECK FAILED\n\nBot tidak mengenali Anda sebagai Admin.\n\n${debugInfo}\n\nSolusi: Masukkan nomor ${rawNumber} di Profile Admin.`);
+          await this.sendMessage(msg.key.remoteJid!, `⚠️ SECURITY CHECK FAILED\n\nBot tidak mengenali Anda sebagai Admin.\n\n${debugInfo}\n\nSolusi: Masukkan nomor ${rawNumber} di Profile Admin.`);
           return;
         }
         
-        await this.sendMessage(jid, '⏳ Mengumpulkan data server... (Estimasi 5-10 detik)');
+        await this.sendMessage(msg.key.remoteJid!, '⏳ Mengumpulkan data server... (Estimasi 5-10 detik)');
 
         const cpus = os.cpus();
         const totalMem = os.totalmem() / (1024 * 1024 * 1024);
         const freeMem = os.freemem() / (1024 * 1024 * 1024);
         const uptime = os.uptime() / 3600;
 
-        // Promisify helper
         const execPromise = (cmd: string): Promise<string> => new Promise((resolve) => {
           exec(cmd, (err, stdout) => resolve(stdout ? stdout.trim() : 'N/A'));
         });
 
         try {
           const [disk, osDistro, ipInfoStr, dlSpeed] = await Promise.all([
-            execPromise("df -h / | tail -1 | awk '{print $3 " / " $2 " (" $5 ")"}'"), 
-            execPromise("grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"' "), 
-            execPromise("curl -s ipinfo.io/json"), 
-            execPromise("curl -o /dev/null -s -w '%{speed_download}' http://speedtest.tele2.net/1MB.zip") 
+            execPromise(`df -h / | tail -1 | awk '{print $3 " / " $2 " (" $5 ")"}'`), 
+            execPromise(`grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"'`), 
+            execPromise(`curl -s ipinfo.io/json`), 
+            execPromise(`curl -o /dev/null -s -w "%{speed_download}" http://speedtest.tele2.net/1MB.zip`) 
           ]);
 
           const ipInfo = JSON.parse(ipInfoStr === 'N/A' ? '{}' : ipInfoStr);
-          const dlSpeedMbps = (parseFloat(dlSpeed) * 8 / 1024 / 1024).toFixed(2); 
+          const speedBps = parseFloat(dlSpeed) || 0;
+          const dlSpeedMbps = (speedBps * 8 / 1024 / 1024).toFixed(2); 
 
           const reply = `
 🚀 *ARFCODER SERVER STATUS*
@@ -136,8 +137,8 @@ class WhatsAppService {
 
 🌍 *JARINGAN & LOKASI*
 • IP: ${ipInfo.ip || 'Hidden'}
-• Lokasi: ${ipInfo.city || 'Unknown'}, ${ipInfo.country || 'Unknown'}
-• ISP: ${ipInfo.org || 'Unknown'}
+• Lokasi: ${ipInfo.city || '?'}, ${ipInfo.country || '?'}
+• ISP: ${ipInfo.org || '?'}
 • Speed (DL): ±${dlSpeedMbps} Mbps
 
 🧠 *RESOURCE*
@@ -149,9 +150,9 @@ class WhatsAppService {
 Bot Active | ${new Date().toLocaleString('id-ID')}
           `.trim();
           
-          await this.sendMessage(jid, reply);
+          await this.sendMessage(msg.key.remoteJid!, reply);
         } catch (e) {
-          await this.sendMessage(jid, 'Gagal mengambil data lengkap.');
+          await this.sendMessage(msg.key.remoteJid!, 'Gagal mengambil data lengkap.');
         }
         return;
       }
@@ -159,10 +160,9 @@ Bot Active | ${new Date().toLocaleString('id-ID')}
       // 3. Command: LIST ORDER
       if (text.toUpperCase() === 'LIST ORDER') {
         if (!user) {
-          await this.sendMessage(jid, '❌ Nomor Anda tidak terdaftar.');
+          await this.sendMessage(msg.key.remoteJid!, '❌ Nomor Anda tidak terdaftar.');
           return;
         }
-
         const whereClause = isAdmin ? {} : { userId: user.id };
         const orders = await prisma.order.findMany({
           where: whereClause,
@@ -170,12 +170,10 @@ Bot Active | ${new Date().toLocaleString('id-ID')}
           orderBy: { createdAt: 'desc' },
           include: { user: true }
         });
-
         if (orders.length === 0) {
-          await this.sendMessage(jid, 'Belum ada pesanan.');
+          await this.sendMessage(msg.key.remoteJid!, 'Belum ada pesanan.');
           return;
         }
-
         let reply = isAdmin ? '📦 *5 ORDER TERBARU (GLOBAL)*\n\n' : '📦 *5 PESANAN TERAKHIR ANDA*\n\n';
         orders.forEach(o => {
           reply += `📄 *${o.invoiceNumber}*\n`;
@@ -183,24 +181,22 @@ Bot Active | ${new Date().toLocaleString('id-ID')}
           reply += `💰 Rp ${o.totalAmount.toLocaleString('id-ID')}\n`;
           reply += `STATUS: ${o.status}\n\n`;
         });
-        await this.sendMessage(jid, reply);
+        await this.sendMessage(msg.key.remoteJid!, reply);
         return;
       }
 
-      // 4. Command: CEK #INV (Strict)
+      // 4. Command: CEK #INV
       const cekRegex = /^CEK\s+(#?INV-[\w-]+)$/i;
       const match = text.match(cekRegex);
-
       if (match) {
         const invoiceNumber = match[1].replace('#', '');
         const order = await prisma.order.findUnique({
           where: { invoiceNumber: invoiceNumber },
           include: { items: { include: { product: true } }, user: true }
         });
-
         if (order) {
           if (!isAdmin && order.userId !== user?.id) {
-             await this.sendMessage(jid, '⛔ Akses Ditolak. Pesanan ini bukan milik Anda.');
+             await this.sendMessage(msg.key.remoteJid!, '⛔ Akses Ditolak. Bukan pesanan Anda.');
              return;
           }
           const itemsList = order.items.map((i: any) => `- ${i.product.name} (${i.quantity}x)`).join('\n');
@@ -216,9 +212,9 @@ ${itemsList}
 
 *Info:* ${order.deliveryInfo || '-'}
           `.trim();
-          await this.sendMessage(jid, reply);
+          await this.sendMessage(msg.key.remoteJid!, reply);
         } else {
-          await this.sendMessage(jid, '❌ Pesanan tidak ditemukan.');
+          await this.sendMessage(msg.key.remoteJid!, '❌ Pesanan tidak ditemukan.');
         }
         return;
       }
@@ -239,11 +235,9 @@ ${itemsList}
 
   public async sendOTP(phoneNumber: string, otp: string) {
     if (this.status !== 'CONNECTED' || !this.sock) throw new Error('WhatsApp bot disconnected');
-    // Format Phone
     let formattedPhone = phoneNumber.replace(/\D/g, '');
     if (formattedPhone.startsWith('0')) formattedPhone = '62' + formattedPhone.slice(1);
     if (!formattedPhone.endsWith('@s.whatsapp.net')) formattedPhone += '@s.whatsapp.net';
-
     try {
       await this.sock.sendMessage(formattedPhone, { 
         text: `*Kode Login Admin*\n\nKode: *${otp}*\n\nJangan berikan kepada siapapun.` 
