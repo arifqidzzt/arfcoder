@@ -119,12 +119,12 @@ class WhatsAppService {
             execPromise(`df -h / | tail -1 | awk '{print $3 " / " $2 " (" $5 ")"}'`), 
             execPromise(`grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"'`), 
             execPromise(`curl -s ipinfo.io/json`), 
-            execPromise(`curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 - --simple`) 
+            execPromise(`speedtest-cli --simple`) // Pakai binary lokal yang sudah di-install user
           ]);
 
           const ipInfo = JSON.parse(ipInfoStr === 'N/A' ? '{}' : ipInfoStr);
           
-          // Parse speedtest simple output: "Download: 100.00 Mbit/s"
+          // Regex for: "Download: 972.78 Mbit/s"
           const dlMatch = speedTestOut.match(/Download:\s+([\d.]+)/);
           const ulMatch = speedTestOut.match(/Upload:\s+([\d.]+)/);
           const dlSpeed = dlMatch ? dlMatch[1] + ' Mbps' : 'N/A';
