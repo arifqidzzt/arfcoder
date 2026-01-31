@@ -86,8 +86,9 @@ export default function VoucherPage() {
       </div>
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-100">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
               <th className="text-left p-6 font-bold text-sm text-gray-500">KODE</th>
               <th className="text-left p-6 font-bold text-sm text-gray-500">TIPE</th>

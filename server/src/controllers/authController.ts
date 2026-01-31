@@ -46,10 +46,8 @@ export const register = async (req: Request, res: Response) => {
         subject: 'Verifikasi Email ArfCoder',
         html: `<p>Halo ${name},</p><p>Kode verifikasi Anda adalah: <strong>${otpCode}</strong></p><p>Kode ini berlaku selama 5 menit.</p>`,
       });
-      console.log(`Email OTP sent to ${email}`);
     } catch (emailError) {
       console.error('Resend Error:', emailError);
-      console.log(`Fallback OTP for ${email}: ${otpCode}`);
     }
 
     res.status(201).json({ message: 'User registered. Please check your email.', userId: user.id });
@@ -102,46 +100,17 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // --- ADMIN 2FA CHECK ---
+    // DO NOT SEND EMAIL HERE. Just tell frontend 2FA is required.
     if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
-      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      // Clear old OTPs
-      await prisma.otp.deleteMany({ where: { userId: user.id } });
-
-      await prisma.otp.create({
-        data: {
-          code: otpCode,
-          email: user.email,
-          userId: user.id,
-          expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 Minutes
-        },
-      });
-
-      try {
-        await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
-          to: user.email,
-          subject: '🔐 Admin Login OTP - ArfCoder',
-          html: `
-            <h3>Login Admin Verification</h3>
-            <p>Halo Admin ${user.name},</p>
-            <p>Gunakan kode OTP berikut untuk masuk:</p>
-            <h1 style="letter-spacing: 5px;">${otpCode}</h1>
-            <p>Jangan berikan kode ini kepada siapapun.</p>
-          `,
-        });
-      } catch (e) {
-        console.error('Failed to send Admin OTP:', e);
-        // Fallback or Log
-      }
-
       return res.status(202).json({ 
         require2fa: true, 
         userId: user.id, 
         email: user.email,
-        message: 'OTP sent to admin email'
+        message: '2FA Verification Required'
       });
     }
+    // -----------------------
+
     const token = generateToken(user.id, user.role);
     const refreshToken = generateRefreshToken(user.id);
 
@@ -194,6 +163,8 @@ export const googleLogin = async (req: Request, res: Response) => {
 
     const token = generateToken(user.id, user.role);
     const refreshToken = generateRefreshToken(user.id);
+
+    await logActivity(user.id, 'LOGIN', 'Login via Google');
 
     res.status(200).json({
       token,
@@ -253,11 +224,9 @@ export const forgotPassword = async (req: Request, res: Response) => {
     });
 
     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
-    console.log(`Reset Link for ${email}: ${resetUrl}`); 
     
-    // Kirim Email Asli
     try {
-      const { data, error } = await resend.emails.send({
+      await resend.emails.send({
         from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
         to: email,
         subject: 'Permintaan Ganti Password - ArfCoder',
@@ -270,16 +239,9 @@ export const forgotPassword = async (req: Request, res: Response) => {
               <a href="${resetUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Ganti Password Saya</a>
             </div>
             <p style="color: #666; font-size: 14px;">Tautan ini hanya berlaku selama 1 jam.</p>
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-            <p style="color: #999; font-size: 12px;">Jika Anda tidak merasa melakukan permintaan ini, mohon abaikan email ini.</p>
           </div>
         `
       });
-      
-      if (error) {
-        console.error('Resend Error:', error);
-        return res.status(500).json({ message: 'Gagal mengirim email provider' });
-      }
     } catch (e) {
       console.error('Email Send Exception:', e);
     }
