@@ -91,7 +91,8 @@ class WhatsAppService {
       // 2. Command: INFO VPS (Admin Only)
       if (text.toUpperCase() === 'INFO VPS') {
         if (!isAdmin) {
-          await this.sendMessage(jid, '⛔ Akses Ditolak. Perintah ini hanya untuk Admin.');
+          const status = user ? `User: ${user.name} (${user.role})` : 'Nomor tidak terdaftar';
+          await this.sendMessage(jid, `⛔ Akses Ditolak. Perintah ini hanya untuk Admin.\n\nInfo Deteksi:\n${status}`);
           return;
         }
         
