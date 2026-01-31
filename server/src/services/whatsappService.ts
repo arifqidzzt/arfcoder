@@ -119,7 +119,7 @@ class WhatsAppService {
             execPromise(`df -h / | tail -1 | awk '{print $3 " / " $2 " (" $5 ")"}'`), 
             execPromise(`grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"'`), 
             execPromise(`curl -s ipinfo.io/json`), 
-            execPromise(`speedtest-cli --simple`) // Pakai binary lokal yang sudah di-install user
+            execPromise(`speedtest-cli`) // Tanpa --simple sesuai request
           ]);
 
           const ipInfo = JSON.parse(ipInfoStr === 'N/A' ? '{}' : ipInfoStr);

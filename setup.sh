@@ -59,7 +59,7 @@ fi
 
 # --- 2. INSTALL DEPENDENCIES ---
 apt update && apt upgrade -y
-apt install -y curl git nginx postgresql postgresql-contrib build-essential ufw python3 unzip certbot python3-certbot-nginx
+apt install -y curl git nginx postgresql postgresql-contrib build-essential ufw python3 unzip certbot python3-certbot-nginx speedtest-cli
 
 # Install Node.js
 if ! command -v node &> /dev/null; then
