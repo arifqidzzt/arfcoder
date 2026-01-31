@@ -136,6 +136,7 @@ export default function VoucherPage() {
           </tbody>
         </table>
       </div>
+      </div>
 
       {/* MODAL */}
       {showModal && (
