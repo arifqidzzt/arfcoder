@@ -42,14 +42,33 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
 export const updateProfile = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const { name, avatar } = req.body;
+    const { name, avatar, phoneNumber } = req.body;
     
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { name, avatar }
+      data: { name, avatar, phoneNumber }
     });
     res.json(user);
   } catch (error) { res.status(500).json({ message: 'Error', error }); }
+};
+
+// Direct Phone Update (Bypass OTP for Admin Fix)
+export const updatePhoneDirect = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { phoneNumber } = req.body;
+    
+    console.log(`Force Updating Phone for ${userId} to ${phoneNumber}`);
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { phoneNumber }
+    });
+    res.json(user);
+  } catch (error) { 
+    console.error(error);
+    res.status(500).json({ message: 'Error updating phone', error }); 
+  }
 };
 
 // Change Password

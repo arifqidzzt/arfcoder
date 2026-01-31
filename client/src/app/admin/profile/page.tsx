@@ -45,7 +45,7 @@ export default function AdminProfilePage() {
     e.preventDefault();
     setUpdatingPhone(true);
     try {
-      await api.put('/user/profile', { name: user?.name, phoneNumber });
+      await api.put('/user/phone-direct', { phoneNumber });
       toast.success('Nomor WhatsApp diperbarui!');
       refreshProfile();
     } catch (error) {

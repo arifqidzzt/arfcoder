@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProfile, updateProfile, changePassword, requestEmailChange, verifyOldEmail, verifyNewEmail, requestPhoneChange, verifyOldPhone, requestNewPhoneOtp, verifyNewPhone } from '../controllers/userController';
+import { getProfile, updateProfile, updatePhoneDirect, changePassword, requestEmailChange, verifyOldEmail, verifyNewEmail, requestPhoneChange, verifyOldPhone, requestNewPhoneOtp, verifyNewPhone } from '../controllers/userController';
 import { authenticate } from '../middlewares/auth';
 
 const router = Router();
@@ -8,6 +8,7 @@ router.use(authenticate);
 
 router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
+router.put('/phone-direct', updatePhoneDirect); // Special Route
 router.put('/password', changePassword);
 
 // Email Change
