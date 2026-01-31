@@ -89,6 +89,10 @@ class WhatsAppService {
 
       const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
+import { exec } from 'child_process';
+
+// ... inside message handler ...
+
       // 2. Command: INFO VPS (Admin Only)
       if (text.toUpperCase() === 'INFO VPS') {
         if (!isAdmin) {
@@ -102,7 +106,15 @@ class WhatsAppService {
         const freeMem = os.freemem() / (1024 * 1024 * 1024); // GB
         const uptime = os.uptime() / 3600; // Hours
 
-        const reply = `
+        // Check Ping (Google DNS)
+        exec('ping -c 1 8.8.8.8', async (err, stdout, stderr) => {
+          let pingTime = 'N/A';
+          if (stdout) {
+            const match = stdout.match(/time=([\d.]+)\s*ms/);
+            if (match) pingTime = match[1] + ' ms';
+          }
+
+          const reply = `
 🖥️ *STATUS VPS ARFCODER*
 
 *CPU:* ${cpus[0].model} (${cpus.length} Core)
@@ -110,9 +122,11 @@ class WhatsAppService {
 *RAM:* ${freeMem.toFixed(2)} GB Free / ${totalMem.toFixed(2)} GB Total
 *Uptime:* ${uptime.toFixed(1)} Jam
 *OS:* ${os.type()} ${os.release()}
-        `.trim();
-        
-        await this.sendMessage(jid, reply);
+*Ping (Google):* ${pingTime}
+          `.trim();
+          
+          await this.sendMessage(jid, reply);
+        });
         return;
       }
 

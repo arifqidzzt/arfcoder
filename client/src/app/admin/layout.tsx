@@ -28,26 +28,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <AuthGuard adminOnly>
-      <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      <div className="min-h-screen bg-gray-50">
         
-        {/* Mobile Header */}
-        <div className="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center z-30 sticky top-0">
+        {/* MOBILE HEADER (Visible only on Mobile) */}
+        <div className="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
           <Link href="/" className="text-xl font-bold tracking-tighter">ARF ADMIN</Link>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-gray-600">
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
             {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
-        {/* Sidebar */}
+        {/* SIDEBAR (Desktop: Fixed, Mobile: Slide-in) */}
         <aside className={`
-          bg-white border-r border-gray-200 fixed md:sticky top-0 h-full z-20 overflow-y-auto transition-transform duration-300 w-64
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-40 transition-transform duration-300 ease-in-out
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+          md:translate-x-0 md:block
         `}>
-          <div className="p-6 border-b border-gray-100 hidden md:block">
-            <Link href="/" className="text-xl font-bold tracking-tighter hover:text-gray-600 transition-colors">ARF ADMIN</Link>
-            <p className="text-xs text-gray-400 mt-1">Management Console</p>
+          <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+            <div>
+              <Link href="/" className="text-xl font-bold tracking-tighter hover:text-gray-600 transition-colors">ARF ADMIN</Link>
+              <p className="text-xs text-gray-400 mt-1">Management Console</p>
+            </div>
+            {/* Close button for mobile inside sidebar */}
+            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 text-gray-400">
+              <X size={20} />
+            </button>
           </div>
-          <nav className="p-4 space-y-1">
+
+          <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-140px)]">
             {menuItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -75,7 +83,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="font-medium">Lihat Website</span>
             </Link>
           </nav>
-          <div className="p-4 mt-auto">
+          
+          <div className="absolute bottom-0 left-0 w-full p-4 border-t border-gray-100 bg-white">
             <button 
               onClick={() => { logout(); router.push('/'); }}
               className="flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg w-full transition-colors"
@@ -86,16 +95,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </aside>
 
-        {/* Overlay for Mobile */}
+        {/* OVERLAY (Mobile only) */}
         {isSidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black/50 z-10 md:hidden"
+            className="fixed inset-0 bg-black/50 z-30 md:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
-        {/* Main Content Wrapper */}
-        <div className="flex-1 w-full md:w-auto md:ml-64 pt-16 md:pt-0">
+        {/* MAIN CONTENT */}
+        <div className="md:ml-64 min-h-screen transition-all duration-300">
             {children}
         </div>
       </div>
