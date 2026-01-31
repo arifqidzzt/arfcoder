@@ -8,6 +8,8 @@ interface User {
   name: string;
   role: string;
   avatar?: string | null;
+  phoneNumber?: string | null;
+  twoFactorEnabled?: boolean;
 }
 
 interface AuthStore {
