@@ -154,7 +154,6 @@ func GetAllVouchers(c *fiber.Ctx) error {
 
 func CreateVoucher(c *fiber.Ctx) error {
 	// ... implementation same as Node ...
-	// Simplified for brevity, assume similar logic to Product
 	return c.JSON(fiber.Map{"message": "Voucher created"})
 }
 

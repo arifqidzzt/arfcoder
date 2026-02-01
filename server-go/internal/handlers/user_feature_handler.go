@@ -181,12 +181,6 @@ func CreateReview(c *fiber.Ctx) error {
 	c.BodyParser(&req)
 
 	// Check Purchase
-	var count int64
-	// Fix Join: orders table is "Order", items is "OrderItem"
-	// But in raw SQL joins, we must use quoted table names "Order" and "OrderItem"
-	// This raw query is tricky with Prisma casing.
-	// Safer: Query Order first, then check items.
-	
 	var orders []models.Order
 	database.DB.Preload("Items").Where("\"userId\" = ? AND status = ?", userClaims.UserID, models.OrderStatusCompleted).Find(&orders)
 	
@@ -208,7 +202,7 @@ hasPurchased := false
 	var existing int64
 	database.DB.Model(&models.Review{}).Where("\"userId\" = ? AND \"productId\" = ?", userClaims.UserID, req.ProductId).Count(&existing)
 	if existing > 0 {
-		return c.Status(400).JSON(fiber.Map{"message": "Anda sudah mengulas produk ini."})
+		return c.Status(400).JSON(fiber.Map{"message": "Anda sudah mengulas produk ini."}) 
 	}
 
 	review := models.Review{
