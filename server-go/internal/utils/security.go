@@ -247,46 +247,25 @@ func decryptAES(ciphertextB64 string, passphrase string) (string, error) {
 
 // evpBytesToKey derives key and IV from passphrase and salt using MD5 (OpenSSL legacy method)
 func evpBytesToKey(password, salt []byte) ([]byte, []byte) {
-	// Key length 32 (AES-256), IV length 16 (AES block)
 	const keyLen = 32
 	const ivLen = 16
+	const totalLen = keyLen + ivLen
 
-	var (
-		hashes [][]byte
-		key    []byte
-		iv     []byte
-	)
-
+	var derivedBytes []byte
 	var lastHash []byte
-	totalLen := keyLen + ivLen
 
-	for len(key)+len(iv) < totalLen {
+	for len(derivedBytes) < totalLen {
 		h := md5.New()
-		if lastHash != nil {
+		if len(lastHash) > 0 {
 			h.Write(lastHash)
 		}
 		h.Write(password)
 		h.Write(salt)
 		lastHash = h.Sum(nil)
-		hashes = append(hashes, lastHash)
-		
-		// Append to key/iv buffer
-		if len(key) < keyLen {
-			if len(key)+len(lastHash) > keyLen {
-				key = append(key, lastHash[:keyLen-len(key)]...)
-			} else {
-				key = append(key, lastHash...)
-			}
-		}
+		derivedBytes = append(derivedBytes, lastHash...)
 	}
-	
-	// Correct concatenation approach
-	concat := make([]byte, 0, len(hashes)*16)
-	for _, h := range hashes {
-		concat = append(concat, h...)
-	}
-	
-	return concat[:keyLen], concat[keyLen : keyLen+ivLen]
+
+	return derivedBytes[:keyLen], derivedBytes[keyLen : keyLen+ivLen]
 }
 
 func GenerateRandomString(n int) string {
