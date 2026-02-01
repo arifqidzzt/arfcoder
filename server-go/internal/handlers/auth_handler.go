@@ -136,11 +136,11 @@ func VerifyOtp(c *fiber.Ctx) error {
 	c.BodyParser(&req)
 
 	var otp models.Otp
-	if err := database.DB.Where("user_id = ? AND code = ? AND expires_at > ?", req.UserID, req.Code, time.Now()).First(&otp).Error; err != nil {
+	if err := database.DB.Where("\"userId\" = ? AND code = ? AND \"expiresAt\" > ?", req.UserID, req.Code, time.Now()).First(&otp).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid or expired OTP"})
 	}
 
-	database.DB.Model(&models.User{}).Where("id = ?", req.UserID).Update("is_verified", true)
+	database.DB.Model(&models.User{}).Where("id = ?", req.UserID).Update("isVerified", true)
 	database.DB.Delete(&otp)
 
 	return c.JSON(fiber.Map{"message": "Email verified successfully"})
@@ -229,7 +229,7 @@ func VerifyLoginOtp(c *fiber.Ctx) error {
 	c.BodyParser(&req)
 
 	var otp models.Otp
-	if err := database.DB.Where("user_id = ? AND code = ? AND expires_at > ?", req.UserID, req.Code, time.Now()).First(&otp).Error; err != nil {
+	if err := database.DB.Where("\"userId\" = ? AND code = ? AND \"expiresAt\" > ?", req.UserID, req.Code, time.Now()).First(&otp).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid or expired OTP"})
 	}
 

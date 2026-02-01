@@ -30,7 +30,7 @@ func SetupTwoFactor(c *fiber.Ctx) error {
 			return c.Status(500).JSON(fiber.Map{"message": "Error generating 2FA"})
 		}
 		secret = key.Secret()
-		database.DB.Model(&user).Update("two_factor_secret", secret)
+		database.DB.Model(&user).Update("twoFactorSecret", secret)
 	}
 
 	// QR Code Placeholder
@@ -63,7 +63,7 @@ func EnableTwoFactor(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"message": "Kode OTP salah"})
 	}
 
-	database.DB.Model(&user).Update("two_factor_enabled", true)
+	database.DB.Model(&user).Update("twoFactorEnabled", true)
 	return c.JSON(fiber.Map{"message": "2FA berhasil diaktifkan!"})
 }
 
@@ -92,7 +92,7 @@ func VerifyLogin2FA(c *fiber.Ctx) error {
 	} else {
 		// DB OTP
 		var otp models.Otp
-		if err := database.DB.Where("user_id = ? AND code = ? AND expires_at > ?", req.UserID, req.Code, time.Now()).First(&otp).Error; err == nil {
+		if err := database.DB.Where("\"userId\" = ? AND code = ? AND \"expiresAt\" > ?", req.UserID, req.Code, time.Now()).First(&otp).Error; err == nil {
 			verified = true
 			database.DB.Delete(&otp)
 		}
@@ -137,7 +137,7 @@ func SendBackupOtp(c *fiber.Ctx) error {
 	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
 	
 	// Clear old
-	database.DB.Delete(&models.Otp{}, "user_id = ?", user.ID)
+	database.DB.Delete(&models.Otp{}, "\"userId\" = ?", user.ID)
 
 	database.DB.Create(&models.Otp{
 		Code:      otpCode,
