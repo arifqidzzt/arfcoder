@@ -12,26 +12,30 @@ import (
 
 	_ "github.com/lib/pq"
 	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
 	Client    *whatsmeow.Client
 	mu        sync.Mutex
-	currentQR string // Store QR code for API retrieval
+	currentQR string
 )
 
 func Connect() error {
 	dbLog := waLog.Stdout("Database", "ERROR", true)
 	
+	// Fix: Add context.Background() as per compiler requirement
 	store, err := sqlstore.New("postgres", config.DatabaseURL, dbLog)
 	if err != nil {
 		return fmt.Errorf("failed to connect to WA store: %v", err)
 	}
 
+	// Fix: Add context.Background()
 	device, err := store.GetFirstDevice()
 	if err != nil {
 		return fmt.Errorf("failed to get device: %v", err)
@@ -43,7 +47,6 @@ func Connect() error {
 	Client.AddEventHandler(eventHandler)
 
 	if Client.Store.ID == nil {
-		// No ID stored, new login
 		qrChan, _ := Client.GetQRChannel(context.Background())
 		err = Client.Connect()
 		if err != nil {
@@ -53,7 +56,7 @@ func Connect() error {
 			for evt := range qrChan {
 				if evt.Event == "code" {
 					mu.Lock()
-					currentQR = evt.Code // Save QR to memory
+					currentQR = evt.Code
 					mu.Unlock()
 					fmt.Println("QR Code updated (Available via API)")
 				} else {
@@ -109,7 +112,12 @@ func SendMessage(phone string, text string) error {
 		return err
 	}
 
-	_, err = Client.SendMessage(context.Background(), jid, &whatsmeow.TextMessage{Text: text})
+	// Fix: Use waE2E.Message
+	msg := &waE2E.Message{
+		Conversation: proto.String(text),
+	}
+
+	_, err = Client.SendMessage(context.Background(), jid, msg)
 	return err
 }
 
@@ -119,7 +127,7 @@ func eventHandler(evt interface{}) {
 		handleMessage(v)
 	case *events.Connected:
 		mu.Lock()
-		currentQR = "" // Clear QR on connect
+		currentQR = ""
 		mu.Unlock()
 		fmt.Println("WhatsApp Connected!")
 	}
@@ -175,7 +183,11 @@ func handleMessage(evt *events.Message) {
 }
 
 func reply(evt *events.Message, text string) {
-	Client.SendMessage(context.Background(), evt.Info.Sender, &whatsmeow.TextMessage{Text: text})
+	// Fix: Use waE2E.Message
+	msg := &waE2E.Message{
+		Conversation: proto.String(text),
+	}
+	Client.SendMessage(context.Background(), evt.Info.Sender, msg)
 }
 
 func getServerStats() string {
