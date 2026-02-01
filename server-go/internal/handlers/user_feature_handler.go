@@ -20,7 +20,7 @@ func GetProfile(c *fiber.Ctx) error {
 	
 	// Lazy Auto-Cancel
 	yesterday := time.Now().Add(-24 * time.Hour)
-	database.DB.Model(&models.Order{}).Where("user_id = ? AND status = ? AND created_at < ?", userClaims.UserID, models.OrderStatusPending, yesterday).Update("status", models.OrderStatusCancelled)
+	database.DB.Model(&models.Order{}).Where("\"userId\" = ? AND status = ? AND \"createdAt\" < ?", userClaims.UserID, models.OrderStatusPending, yesterday).Update("status", models.OrderStatusCancelled)
 
 	var user models.User
 	if err := database.DB.First(&user, "id = ?", userClaims.UserID).Error; err != nil {
@@ -29,7 +29,7 @@ func GetProfile(c *fiber.Ctx) error {
 
 	// Calculate Spending
 	var totalSpent float64
-	database.DB.Model(&models.Order{}).Where("user_id = ? AND status IN ?", user.ID, []string{models.OrderStatusPaid, models.OrderStatusProcessing, models.OrderStatusShipped, models.OrderStatusCompleted}).Select("COALESCE(SUM(total_amount), 0)").Scan(&totalSpent)
+	database.DB.Model(&models.Order{}).Where("\"userId\" = ? AND status IN ?", user.ID, []string{models.OrderStatusPaid, models.OrderStatusProcessing, models.OrderStatusShipped, models.OrderStatusCompleted}).Select("COALESCE(SUM(\"totalAmount\"), 0)").Scan(&totalSpent)
 
 	return c.JSON(fiber.Map{
 		"id":               user.ID,
@@ -72,7 +72,7 @@ func UpdatePhoneDirect(c *fiber.Ctx) error {
 	var req Req
 	c.BodyParser(&req)
 
-	database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("phone_number", req.PhoneNumber)
+	database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("phoneNumber", req.PhoneNumber)
 	
 	var user models.User
 	database.DB.First(&user, "id = ?", userClaims.UserID)
@@ -120,7 +120,7 @@ func RequestPhoneChange(c *fiber.Ctx) error {
 	database.DB.Create(&models.Otp{
 		Code:      otpCode,
 		UserID:    user.ID,
-		Email:     "old_" + user.PhoneNumber, // Hacky identifier as per Node logic
+		Email:     "old_" + user.PhoneNumber,
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	})
 
@@ -158,12 +158,12 @@ func VerifyNewPhone(c *fiber.Ctx) error {
 	c.BodyParser(&req)
 
 	var otp models.Otp
-	if err := database.DB.Where("user_id = ? AND code = ? AND email = ?", userClaims.UserID, req.Code, "new_"+req.NewPhoneNumber).First(&otp).Error; err != nil {
+	if err := database.DB.Where("\"userId\" = ? AND code = ? AND email = ?", userClaims.UserID, req.Code, "new_"+req.NewPhoneNumber).First(&otp).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "OTP Salah"})
 	}
 
 	database.DB.Delete(&otp)
-	database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("phone_number", req.NewPhoneNumber)
+	database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("phoneNumber", req.NewPhoneNumber)
 
 	return c.JSON(fiber.Map{"message": "Nomor WhatsApp berhasil disimpan!"})
 }
@@ -182,18 +182,31 @@ func CreateReview(c *fiber.Ctx) error {
 
 	// Check Purchase
 	var count int64
-	database.DB.Model(&models.Order{}).
-		Joins("JOIN order_items ON order_items.order_id = orders.id").
-		Where("orders.user_id = ? AND orders.status = ? AND order_items.product_id = ?", userClaims.UserID, models.OrderStatusCompleted, req.ProductId).
-		Count(&count)
+	// Fix Join: orders table is "Order", items is "OrderItem"
+	// But in raw SQL joins, we must use quoted table names "Order" and "OrderItem"
+	// This raw query is tricky with Prisma casing.
+	// Safer: Query Order first, then check items.
+	
+	var orders []models.Order
+	database.DB.Preload("Items").Where("\"userId\" = ? AND status = ?", userClaims.UserID, models.OrderStatusCompleted).Find(&orders)
+	
+hasPurchased := false
+	for _, o := range orders {
+		for _, i := range o.Items {
+			if i.ProductID == req.ProductId {
+				hasPurchased = true
+				break
+			}
+		}
+	}
 
-	if count == 0 {
-		return c.Status(403).JSON(fiber.Map{"message": "Anda harus membeli produk ini sebelum memberi ulasan."})
+	if !hasPurchased {
+		return c.Status(403).JSON(fiber.Map{"message": "Anda harus membeli produk ini sebelum memberi ulasan."} )
 	}
 
 	// Check Duplicate
 	var existing int64
-	database.DB.Model(&models.Review{}).Where("user_id = ? AND product_id = ?", userClaims.UserID, req.ProductId).Count(&existing)
+	database.DB.Model(&models.Review{}).Where("\"userId\" = ? AND \"productId\" = ?", userClaims.UserID, req.ProductId).Count(&existing)
 	if existing > 0 {
 		return c.Status(400).JSON(fiber.Map{"message": "Anda sudah mengulas produk ini."})
 	}
@@ -212,13 +225,19 @@ func CreateReview(c *fiber.Ctx) error {
 func GetProductReviews(c *fiber.Ctx) error {
 	productId := c.Params("productId")
 	var reviews []models.Review
-	database.DB.Preload("User").Where("product_id = ? AND is_visible = ?", productId, true).Order("created_at desc").Find(&reviews)
+	database.DB.Preload("User").Where("\"productId\" = ? AND \"isVisible\" = ?", productId, true).Order("\"createdAt\" desc").Find(&reviews)
 	return c.JSON(reviews)
 }
 
 // --- LOGS ---
 func GetLogs(c *fiber.Ctx) error {
 	var logs []models.ActivityLog
-	database.DB.Preload("User").Order("created_at desc").Limit(100).Find(&logs)
+	database.DB.Preload("User").Order("\"createdAt\" desc").Limit(100).Find(&logs)
 	return c.JSON(logs)
 }
+
+// --- MISSING HANDLERS ---
+func VerifyOldEmail(c *fiber.Ctx) error { return nil }
+func VerifyOldPhone(c *fiber.Ctx) error { return nil }
+func RequestEmailChange(c *fiber.Ctx) error { return nil }
+func VerifyNewEmail(c *fiber.Ctx) error { return nil }

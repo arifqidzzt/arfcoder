@@ -2,6 +2,7 @@ package models
 
 import (
 	"time"
+	"github.com/lib/pq"
 )
 
 // Enums (mapped as strings)
@@ -59,7 +60,6 @@ type User struct {
 	ActivityLogs []ActivityLog `gorm:"foreignKey:UserID"`
 }
 
-// Force GORM to use Prisma's table name "User"
 func (User) TableName() string {
 	return "User"
 }
@@ -102,18 +102,18 @@ func (Category) TableName() string {
 }
 
 type Product struct {
-	ID          string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
-	Name        string    `gorm:"not null;column:name"`
-	Description string    `gorm:"type:text;column:description"`
-	Price       float64   `gorm:"not null;column:price"`
-	Discount    float64   `gorm:"default:0;column:discount"`
-	Stock       int       `gorm:"default:0;column:stock"`
-	Type        string    `gorm:"default:'BARANG';column:type"`
-	Images      []string  `gorm:"type:text[];column:images"`
-	CategoryID  *string   `gorm:"column:categoryId"`
-	Category    Category  `gorm:"foreignKey:CategoryID"`
-	CreatedAt   time.Time `gorm:"autoCreateTime;column:createdAt"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime;column:updatedAt"`
+	ID          string         `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	Name        string         `gorm:"not null;column:name"`
+	Description string         `gorm:"type:text;column:description"`
+	Price       float64        `gorm:"not null;column:price"`
+	Discount    float64        `gorm:"default:0;column:discount"`
+	Stock       int            `gorm:"default:0;column:stock"`
+	Type        string         `gorm:"default:'BARANG';column:type"`
+	Images      pq.StringArray `gorm:"type:text[];column:images"` // Fixed: Use pq.StringArray
+	CategoryID  *string        `gorm:"column:categoryId"`
+	Category    Category       `gorm:"foreignKey:CategoryID"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime;column:createdAt"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime;column:updatedAt"`
 
 	CartItems  []CartItem  `gorm:"foreignKey:ProductID"`
 	OrderItems []OrderItem `gorm:"foreignKey:ProductID"`
