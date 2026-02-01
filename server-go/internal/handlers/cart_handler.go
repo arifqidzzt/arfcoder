@@ -4,6 +4,7 @@ import (
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
 	"arfcoder-go/internal/utils"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 )
 
