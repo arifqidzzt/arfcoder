@@ -4,7 +4,6 @@ import (
 	"arfcoder-go/internal/config"
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/handlers"
-	"arfcoder-go/internal/models"
 	"arfcoder-go/internal/routes"
 	"arfcoder-go/internal/services/whatsapp"
 	"log"
