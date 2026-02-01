@@ -66,18 +66,22 @@ export const useCartStore = create<CartStore>()(
         const { token } = useAuthStore.getState();
         if (token) {
           await api.delete(`/user/cart/${id}`);
+          get().fetchCart(); // Refresh from server
+        } else {
+          set({ items: get().items.filter((i) => i.id !== id) });
         }
-        set({ items: get().items.filter((i) => i.id !== id) });
       },
 
       updateQuantity: async (id, quantity) => {
         const { token } = useAuthStore.getState();
         if (token) {
           await api.put(`/user/cart/${id}`, { quantity });
+          get().fetchCart(); // Refresh from server
+        } else {
+          set({
+            items: get().items.map((i) => (i.id === id ? { ...i, quantity } : i)),
+          });
         }
-        set({
-          items: get().items.map((i) => (i.id === id ? { ...i, quantity } : i)),
-        });
       },
 
       clearCart: () => set({ items: [] }),

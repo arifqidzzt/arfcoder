@@ -81,9 +81,9 @@ func UpdatePhoneDirect(c *fiber.Ctx) error {
 
 	// Admin updates their BOT identification number, not account number
 	if userClaims.Role == models.RoleAdmin || userClaims.Role == models.RoleSuperAdmin {
-		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("waBotNumber", req.PhoneNumber)
+		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Updates(map[string]interface{}{"waBotNumber": req.PhoneNumber})
 	} else {
-		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("phoneNumber", req.PhoneNumber)
+		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Updates(map[string]interface{}{"phoneNumber": req.PhoneNumber})
 	}
 
 	var user models.User
