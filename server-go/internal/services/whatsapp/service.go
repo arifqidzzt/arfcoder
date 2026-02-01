@@ -30,13 +30,13 @@ func Connect() error {
 	dbLog := waLog.Stdout("Database", "ERROR", true)
 	
 	// Fix: Add context.Background() as per compiler requirement
-	store, err := sqlstore.New("postgres", config.DatabaseURL, dbLog)
+	store, err := sqlstore.New(context.Background(), "postgres", config.DatabaseURL, dbLog)
 	if err != nil {
 		return fmt.Errorf("failed to connect to WA store: %v", err)
 	}
 
 	// Fix: Add context.Background()
-	device, err := store.GetFirstDevice()
+	device, err := store.GetFirstDevice(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to get device: %v", err)
 	}
@@ -82,7 +82,7 @@ func GetQR() string {
 
 func Logout() {
 	if Client != nil {
-		Client.Logout()
+		Client.Logout(context.Background())
 		mu.Lock()
 		currentQR = ""
 		mu.Unlock()
