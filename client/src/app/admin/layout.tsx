@@ -104,7 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         )}
 
         {/* MAIN CONTENT */}
-        <div className="md:ml-64 min-h-screen transition-all duration-300">
+        <div className="md:ml-64 min-h-screen transition-all duration-300 pt-20 md:pt-0">
             {children}
         </div>
       </div>

@@ -28,7 +28,7 @@ func GetDashboardStats(c *fiber.Ctx) error {
 	sixMonthsAgo := time.Now().AddDate(0, -5, 0)
 	sixMonthsAgo = time.Date(sixMonthsAgo.Year(), sixMonthsAgo.Month(), 1, 0, 0, 0, 0, sixMonthsAgo.Location())
 
-	var recentOrders []models.Order
+	recentOrders := make([]models.Order, 0) // Init slice
 	// FIX QUERY
 	database.DB.Where("status = ? AND \"createdAt\" >= ?", models.OrderStatusPaid, sixMonthsAgo).Find(&recentOrders)
 
@@ -70,7 +70,7 @@ func GetDashboardStats(c *fiber.Ctx) error {
 
 // --- ORDER MANAGEMENT ---
 func GetAllOrders(c *fiber.Ctx) error {
-	var orders []models.Order
+	orders := make([]models.Order, 0)
 	// FIX QUERY
 	database.DB.Preload("User").Preload("Items.Product").Order("\"createdAt\" desc").Find(&orders)
 	return c.JSON(orders)
@@ -107,7 +107,7 @@ func UpdateDeliveryInfo(c *fiber.Ctx) error {
 
 // --- USER MANAGEMENT ---
 func GetAllUsers(c *fiber.Ctx) error {
-	var users []models.User
+	users := make([]models.User, 0)
 	// FIX QUERY (Select CamelCase columns if needed, but GORM maps them now)
 	// But Select() overrides GORM, so we must use quoted names
 	database.DB.Select("id, name, email, role, \"isVerified\", \"createdAt\"").Order("\"createdAt\" desc").Find(&users)
@@ -122,7 +122,7 @@ func DeleteUser(c *fiber.Ctx) error {
 
 // --- SERVICE MANAGEMENT ---
 func GetAdminServices(c *fiber.Ctx) error {
-	var services []models.Service
+	services := make([]models.Service, 0)
 	database.DB.Order("\"createdAt\" desc").Find(&services)
 	return c.JSON(services)
 }
