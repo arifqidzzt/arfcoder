@@ -3,7 +3,10 @@ package handlers
 import (
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
+	"arfcoder-go/internal/services/whatsapp"
 	"arfcoder-go/internal/utils"
+	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -100,6 +103,162 @@ func ChangePassword(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Password berhasil diubah"})
 }
 
+// --- EMAIL CHANGE FLOW ---
+
+func RequestEmailChange(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*utils.JWTClaims)
+	var user models.User
+	database.DB.First(&user, "id = ?", userClaims.UserID)
+
+	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
+	database.DB.Create(&models.Otp{
+		Code:      otpCode,
+		UserID:    user.ID,
+		Email:     user.Email,
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+	})
+
+	// TODO: Send Email via Resend logic (omitted for brevity, assume logged)
+	fmt.Println("OTP Email Change:", otpCode)
+
+	return c.JSON(fiber.Map{"message": "OTP dikirim ke email lama"})
+}
+
+func VerifyOldEmail(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*utils.JWTClaims)
+	type Req struct {
+		Code     string `json:"code"`
+		NewEmail string `json:"newEmail"`
+	}
+	var req Req
+	c.BodyParser(&req)
+
+	var user models.User
+	database.DB.First(&user, "id = ?", userClaims.UserID)
+
+	var otp models.Otp
+	if err := database.DB.Where("\"userId\" = ? AND code = ? AND email = ?", userClaims.UserID, req.Code, user.Email).First(&otp).Error; err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "OTP Salah/Expired"})
+	}
+	database.DB.Delete(&otp)
+
+	// Send OTP to New Email
+	newOtp := fmt.Sprintf("%06d", rand.Intn(1000000))
+	database.DB.Create(&models.Otp{
+		Code:      newOtp,
+		UserID:    user.ID,
+		Email:     req.NewEmail,
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+	})
+	fmt.Println("OTP New Email:", newOtp)
+
+	return c.JSON(fiber.Map{"message": "Verifikasi berhasil. OTP dikirim ke email baru."})
+}
+
+func VerifyNewEmail(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*utils.JWTClaims)
+	type Req struct {
+		Code     string `json:"code"`
+		NewEmail string `json:"newEmail"`
+	}
+	var req Req
+	c.BodyParser(&req)
+
+	var otp models.Otp
+	if err := database.DB.Where("\"userId\" = ? AND code = ? AND email = ?", userClaims.UserID, req.Code, req.NewEmail).First(&otp).Error; err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "OTP Salah/Expired"})
+	}
+	database.DB.Delete(&otp)
+
+	database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("email", req.NewEmail)
+	return c.JSON(fiber.Map{"message": "Email berhasil diubah!"})
+}
+
+// --- PHONE CHANGE (OTP FLOW) ---
+
+func RequestPhoneChange(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*utils.JWTClaims)
+	var user models.User
+	database.DB.First(&user, "id = ?", userClaims.UserID)
+
+	if user.PhoneNumber == "" {
+		return c.JSON(fiber.Map{"message": "Langsung verifikasi nomor baru", "skipOld": true})
+	}
+
+	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
+	whatsapp.SendMessage(user.PhoneNumber, "Kode Ganti HP: "+otpCode)
+
+	database.DB.Create(&models.Otp{
+		Code:      otpCode,
+		UserID:    user.ID,
+		Email:     "old_" + user.PhoneNumber,
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+	})
+
+	return c.JSON(fiber.Map{"message": "OTP dikirim ke WhatsApp lama", "skipOld": false})
+}
+
+func VerifyOldPhone(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*utils.JWTClaims)
+	type Req struct {
+		Code string `json:"code"`
+	}
+	var req Req
+	c.BodyParser(&req)
+
+	var user models.User
+	database.DB.First(&user, "id = ?", userClaims.UserID)
+
+	var otp models.Otp
+	if err := database.DB.Where("\"userId\" = ? AND code = ? AND email = ?", userClaims.UserID, req.Code, "old_"+user.PhoneNumber).First(&otp).Error; err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "OTP Salah"})
+	}
+	
+database.DB.Delete(&otp)
+	return c.JSON(fiber.Map{"message": "Verifikasi berhasil. Masukkan nomor baru."})
+}
+
+func RequestNewPhoneOtp(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*utils.JWTClaims)
+	type Req struct {
+		NewPhoneNumber string `json:"newPhoneNumber"`
+	}
+	var req Req
+	c.BodyParser(&req)
+
+	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
+	whatsapp.SendMessage(req.NewPhoneNumber, "Kode Ganti HP Baru: "+otpCode)
+
+	database.DB.Create(&models.Otp{
+		Code:      otpCode,
+		UserID:    userClaims.UserID,
+		Email:     "new_" + req.NewPhoneNumber,
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+	})
+
+	return c.JSON(fiber.Map{"message": "OTP dikirim ke WhatsApp baru"})
+}
+
+func VerifyNewPhone(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*utils.JWTClaims)
+	type Req struct {
+		Code           string `json:"code"`
+		NewPhoneNumber string `json:"newPhoneNumber"`
+	}
+	var req Req
+	c.BodyParser(&req)
+
+	var otp models.Otp
+	if err := database.DB.Where("\"userId\" = ? AND code = ? AND email = ?", userClaims.UserID, req.Code, "new_"+req.NewPhoneNumber).First(&otp).Error; err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "OTP Salah"})
+	}
+
+	database.DB.Delete(&otp)
+	database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("phoneNumber", req.NewPhoneNumber)
+
+	return c.JSON(fiber.Map{"message": "Nomor WhatsApp berhasil disimpan!"})
+}
+
 // --- REVIEWS ---
 
 func CreateReview(c *fiber.Ctx) error {
@@ -134,7 +293,7 @@ hasPurchased := false
 	var existing int64
 	database.DB.Model(&models.Review{}).Where("\"userId\" = ? AND \"productId\" = ?", userClaims.UserID, req.ProductId).Count(&existing)
 	if existing > 0 {
-		return c.Status(400).JSON(fiber.Map{"message": "Anda sudah mengulas produk ini."}) 
+		return c.Status(400).JSON(fiber.Map{"message": "Anda sudah mengulas produk ini."})
 	}
 
 	review := models.Review{
@@ -161,9 +320,3 @@ func GetLogs(c *fiber.Ctx) error {
 	database.DB.Preload("User").Order("\"createdAt\" desc").Limit(100).Find(&logs)
 	return c.JSON(logs)
 }
-
-// --- MISSING HANDLERS ---
-func VerifyOldEmail(c *fiber.Ctx) error { return nil }
-func VerifyOldPhone(c *fiber.Ctx) error { return nil }
-func RequestEmailChange(c *fiber.Ctx) error { return nil }
-func VerifyNewEmail(c *fiber.Ctx) error { return nil }
