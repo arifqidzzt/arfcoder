@@ -83,7 +83,6 @@ func UpdatePhoneDirect(c *fiber.Ctx) error {
 
 	// Admin updates their BOT identification number, not account number
 	if userClaims.Role == models.RoleAdmin || userClaims.Role == models.RoleSuperAdmin {
-		// Use struct for update to ensure GORM uses the correct column name from tags
 		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Updates(models.User{WABotNumber: req.PhoneNumber})
 	} else {
 		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Updates(models.User{PhoneNumber: req.PhoneNumber})
