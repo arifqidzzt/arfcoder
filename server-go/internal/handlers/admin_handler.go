@@ -177,8 +177,12 @@ func GetWaStatus(c *fiber.Ctx) error {
 	qr := whatsapp.GetQR()
 	
 	if whatsapp.IsConnected() {
-		status = "CONNECTED"
-		qr = "" 
+		if whatsapp.IsLoggedIn() {
+			status = "CONNECTED"
+			qr = "" 
+		} else {
+			status = "Scan QR"
+		}
 	}
 	
 	return c.JSON(fiber.Map{

@@ -80,6 +80,13 @@ func IsConnected() bool {
 	return Client.IsConnected()
 }
 
+func IsLoggedIn() bool {
+	if Client == nil || Client.Store == nil {
+		return false
+	}
+	return Client.Store.ID != nil
+}
+
 func Logout() {
 	if Client != nil {
 		// FIX: Add context
