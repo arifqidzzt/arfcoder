@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
@@ -273,16 +272,11 @@ func evpBytesToKey(password, salt []byte) ([]byte, []byte) {
 		
 		// Append to key/iv buffer
 		if len(key) < keyLen {
-			param := lastHash
-			if len(key)+len(param) > keyLen {
-				param = param[:keyLen-len(key)]
+			if len(key)+len(lastHash) > keyLen {
+				key = append(key, lastHash[:keyLen-len(key)]...)
+			} else {
+				key = append(key, lastHash...)
 			}
-			key = append(key, param...)
-		} else if len(iv) < ivLen {
-			param := lastHash
-			// Skip used bytes for key if using same hash block
-			// Not needed for standard OpenSSL default as blocks are concatenated
-			// Actually OpenSSL concatenates all hashes then splits.
 		}
 	}
 	

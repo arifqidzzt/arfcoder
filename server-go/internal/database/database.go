@@ -2,7 +2,6 @@ package database
 
 import (
 	"arfcoder-go/internal/config"
-	"fmt"
 	"log"
 
 	"gorm.io/driver/postgres"
