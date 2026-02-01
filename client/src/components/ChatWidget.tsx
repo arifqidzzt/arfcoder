@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
-import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/useAuthStore';
+import api from '@/lib/api';
 
 interface Message {
   id?: string;
@@ -11,6 +11,7 @@ interface Message {
   senderId: string;
   isAdmin: boolean;
   sender?: { name: string };
+  createdAt?: string;
 }
 
 export default function ChatWidget() {
@@ -18,25 +19,27 @@ export default function ChatWidget() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const { user } = useAuthStore();
-  const socketRef = useRef<Socket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchMessages = async () => {
+    if (!user) return;
+    try {
+      // User fetches their own chat
+      const res = await api.get('/user/chat/history/me');
+      setMessages(res.data);
+    } catch (error) { console.error('Chat error', error); }
+  };
 
   useEffect(() => {
-    if (isOpen && !socketRef.current) {
-      socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000');
-      
-      socketRef.current.on('receiveMessage', (data: Message) => {
-        setMessages((prev) => [...prev, data]);
-      });
+    if (isOpen && user) {
+      fetchMessages();
+      intervalRef.current = setInterval(fetchMessages, 5000);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
     }
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-    };
-  }, [isOpen]);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [isOpen, user]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -44,19 +47,30 @@ export default function ChatWidget() {
     }
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message || !user || !socketRef.current) return;
+    if (!message || !user) return;
 
-    const msgData = {
-      content: message,
-      senderId: user.id,
-      isAdmin: user.role === 'ADMIN' || user.role === 'SUPER_ADMIN',
-    };
+    try {
+      const payload = {
+        content: message,
+        senderId: user.id,
+        isAdmin: false, 
+        targetUserId: '',
+      };
+      
+      // Optimistic update
+      setMessages(prev => [...prev, { ...payload, createdAt: new Date().toISOString() }]);
+      setMessage('');
 
-    socketRef.current.emit('sendMessage', msgData);
-    setMessage('');
+      await api.post('/user/chat/send', payload);
+      fetchMessages(); // Sync
+    } catch (error) {
+      console.error('Send error', error);
+    }
   };
+
+  if (!user) return null; // Hide if not logged in
 
   return (
     <div className="fixed bottom-8 right-8 z-50">
@@ -68,7 +82,7 @@ export default function ChatWidget() {
           <MessageCircle size={24} />
         </button>
       ) : (
-        <div className="bg-white w-80 h-[450px] shadow-2xl border border-gray-100 flex flex-col">
+        <div className="bg-white w-80 h-[450px] shadow-2xl border border-gray-100 flex flex-col rounded-2xl overflow-hidden">
           <div className="p-4 bg-black text-white flex justify-between items-center">
             <span className="font-bold text-sm tracking-tighter">ARF CHAT</span>
             <button onClick={() => setIsOpen(false)}><X size={18} /></button>
@@ -80,7 +94,7 @@ export default function ChatWidget() {
             )}
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-3 ${msg.senderId === user?.id ? 'bg-black text-white' : 'bg-white border border-gray-200'}`}>
+                <div className={`max-w-[80%] p-3 rounded-xl ${msg.senderId === user?.id ? 'bg-black text-white' : 'bg-white border border-gray-200'}`}>
                   {msg.content}
                 </div>
               </div>
@@ -95,7 +109,7 @@ export default function ChatWidget() {
               placeholder="Ketik pesan..." 
               className="flex-grow text-sm focus:outline-none"
             />
-            <button className="text-black"><Send size={18} /></button>
+            <button className="text-black hover:bg-gray-100 p-2 rounded-full transition-colors"><Send size={18} /></button>
           </form>
         </div>
       )}

@@ -143,23 +143,23 @@ func CheckVoucher(c *fiber.Ctx) error {
 
 	var voucher models.Voucher
 	if err := database.DB.Where("code = ?", req.Code).First(&voucher).Error; err != nil {
-		return c.JSON(fiber.Map{"valid": false, "message": "Kode voucher tidak ditemukan"})
+		return c.Status(400).JSON(fiber.Map{"valid": false, "message": "Kode voucher tidak ditemukan"})
 	}
 
 	if !voucher.IsActive {
-		return c.JSON(fiber.Map{"valid": false, "message": "Voucher tidak aktif"})
+		return c.Status(400).JSON(fiber.Map{"valid": false, "message": "Voucher tidak aktif"})
 	}
 
 	if time.Now().After(voucher.ExpiresAt) {
-		return c.JSON(fiber.Map{"valid": false, "message": "Voucher kadaluarsa"})
+		return c.Status(400).JSON(fiber.Map{"valid": false, "message": "Voucher kadaluarsa"})
 	}
 
 	if voucher.UsageLimit > 0 && voucher.UsedCount >= voucher.UsageLimit {
-		return c.JSON(fiber.Map{"valid": false, "message": "Kuota voucher habis"})
+		return c.Status(400).JSON(fiber.Map{"valid": false, "message": "Kuota voucher habis"})
 	}
 
 	if req.TotalAmount < voucher.MinPurchase {
-		return c.JSON(fiber.Map{"valid": false, "message": fmt.Sprintf("Min pembelian Rp %.0f", voucher.MinPurchase)})
+		return c.Status(400).JSON(fiber.Map{"valid": false, "message": fmt.Sprintf("Min pembelian Rp %.0f", voucher.MinPurchase)})
 	}
 
 	discount := 0.0
