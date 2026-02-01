@@ -29,12 +29,14 @@ var (
 
 func Connect() error {
 	dbLog := waLog.Stdout("Database", "ERROR", true)
-	store, err := sqlstore.New("postgres", config.DatabaseURL, dbLog)
+	// FIX: Add context
+	store, err := sqlstore.New(context.Background(), "postgres", config.DatabaseURL, dbLog)
 	if err != nil {
 		return fmt.Errorf("failed to connect to WA store: %v", err)
 	}
 
-	device, err := store.GetFirstDevice()
+	// FIX: Add context
+	device, err := store.GetFirstDevice(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to get device: %v", err)
 	}
@@ -71,7 +73,6 @@ func GetQR() string {
 	return currentQR
 }
 
-// FIX: Add Public IsConnected check
 func IsConnected() bool {
 	if Client == nil {
 		return false
@@ -81,7 +82,8 @@ func IsConnected() bool {
 
 func Logout() {
 	if Client != nil {
-		Client.Logout()
+		// FIX: Add context
+		Client.Logout(context.Background())
 		mu.Lock()
 		currentQR = ""
 		mu.Unlock()
@@ -143,10 +145,8 @@ func handleMessage(evt *events.Message) {
 	senderPhone := strings.Split(senderJID.User, "@")[0]
 
 	var user models.User
-	// Try match normal phone or without 62 prefix
 	localPhone := "0" + senderPhone[2:]
 	
-	// FIX QUERY: Use quoted identifiers
 	err := database.DB.Where("\"phoneNumber\" = ? OR \"phoneNumber\" = ? OR \"phoneNumber\" = ?", 
 		senderPhone, localPhone, "+"+senderPhone).First(&user).Error
 
