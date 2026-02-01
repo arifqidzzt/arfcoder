@@ -44,54 +44,55 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
           md:translate-x-0 md:block
         `}>
-          <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-            <div>
-              <Link href="/" className="text-xl font-bold tracking-tighter hover:text-gray-600 transition-colors">ARF ADMIN</Link>
-              <p className="text-xs text-gray-400 mt-1">Management Console</p>
+          <div className="flex flex-col h-full">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center shrink-0">
+              <div>
+                <Link href="/" className="text-xl font-bold tracking-tighter hover:text-gray-600 transition-colors">ARF ADMIN</Link>
+                <p className="text-xs text-gray-400 mt-1">Management Console</p>
+              </div>
+              <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 text-gray-400">
+                <X size={20} />
+              </button>
             </div>
-            {/* Close button for mobile inside sidebar */}
-            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 text-gray-400">
-              <X size={20} />
-            </button>
-          </div>
 
-          <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-140px)]">
-            {menuItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link 
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsSidebarOpen(false)} 
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive ? 'bg-black text-white font-medium shadow-md' : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {item.icon}
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
+            <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
+              {menuItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link 
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsSidebarOpen(false)} 
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                      isActive ? 'bg-black text-white font-medium shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {item.icon}
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
+              
+              <div className="border-t border-gray-100 my-2"></div>
+              <Link href="/admin/profile" onClick={() => setIsSidebarOpen(false)} className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${pathname === '/admin/profile' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+                <Settings size={20} />
+                <span className="font-medium">Pengaturan & 2FA</span>
+              </Link>
+              <Link href="/" target="_blank" className="flex items-center space-x-3 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                <div className="w-5 h-5 flex items-center justify-center">🌐</div>
+                <span className="font-medium">Lihat Website</span>
+              </Link>
+            </nav>
             
-            <div className="border-t border-gray-100 my-2"></div>
-            <Link href="/admin/profile" onClick={() => setIsSidebarOpen(false)} className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${pathname === '/admin/profile' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-              <Settings size={20} />
-              <span className="font-medium">Pengaturan & 2FA</span>
-            </Link>
-            <Link href="/" target="_blank" className="flex items-center space-x-3 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-              <div className="w-5 h-5 flex items-center justify-center">🌐</div>
-              <span className="font-medium">Lihat Website</span>
-            </Link>
-          </nav>
-          
-          <div className="absolute bottom-0 left-0 w-full p-4 border-t border-gray-100 bg-white">
-            <button 
-              onClick={() => { logout(); router.push('/'); }}
-              className="flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg w-full transition-colors"
-            >
-              <LogOut size={20} />
-              <span className="font-medium">Keluar</span>
-            </button>
+            <div className="p-4 border-t border-gray-100 bg-white shrink-0">
+              <button 
+                onClick={() => { logout(); router.push('/'); }}
+                className="flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg w-full transition-colors"
+              >
+                <LogOut size={20} />
+                <span className="font-medium">Keluar</span>
+              </button>
+            </div>
           </div>
         </aside>
 
@@ -104,8 +105,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         )}
 
         {/* MAIN CONTENT */}
-        <div className="md:ml-64 min-h-screen transition-all duration-300 pt-20 md:pt-0">
-            {children}
+        <div className="md:ml-64 min-h-screen transition-all duration-300 pt-20 md:pt-0 overflow-x-hidden w-full">
+            <div className="w-full max-w-full">
+              {children}
+            </div>
         </div>
       </div>
     </AuthGuard>

@@ -240,7 +240,7 @@ func RequestNewPhoneOtp(c *fiber.Ctx) error {
 	c.BodyParser(&req)
 
 	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
-	whatsapp.SendMessage(req.NewPhoneNumber, "Kode Ganti HP Baru: "+otpCode)
+	whatsapp.SendOTP(req.NewPhoneNumber, otpCode)
 
 	database.DB.Create(&models.Otp{
 		Code:      otpCode,

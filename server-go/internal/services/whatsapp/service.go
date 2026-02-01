@@ -128,6 +128,21 @@ func SendMessage(phone string, text string) error {
 	return err
 }
 
+func SendOTP(phone string, code string) error {
+	msg := fmt.Sprintf(`
+🔐 *VERIFIKASI ARFCODER*
+---------------------------
+Halo! Berikut adalah kode OTP Anda:
+
+* %s *
+
+_Jangan berikan kode ini kepada siapapun._
+---------------------------
+`, code)
+
+	return SendMessage(phone, strings.TrimSpace(msg))
+}
+
 func eventHandler(evt interface{}) {
 	switch v := evt.(type) {
 	case *events.Message:
