@@ -46,6 +46,7 @@ func init() {
 // DecryptPayload handles the specific array-of-5 obfuscation and AES decryption
 func DecryptPayload(body []interface{}) (map[string]interface{}, error) {
 	if len(body) != 5 {
+		fmt.Println("DEBUG: Body length invalid:", len(body))
 		return nil, errors.New("format invalid")
 	}
 
@@ -57,6 +58,7 @@ func DecryptPayload(body []interface{}) (map[string]interface{}, error) {
 	tsBStr, okB := body[0].(string)
 	
 	if !okA && !okB {
+		fmt.Println("DEBUG: Timestamp types invalid")
 		return nil, errors.New("TS invalid format")
 	}
 
@@ -73,6 +75,7 @@ func DecryptPayload(body []interface{}) (map[string]interface{}, error) {
 		isEven = false
 		timestamp = tsB
 	} else {
+		fmt.Printf("DEBUG: TS Out of Range. Now: %d, TSA: %d, TSB: %d\n", now, tsA, tsB)
 		return nil, errors.New("TS invalid range")
 	}
 
@@ -86,41 +89,48 @@ func DecryptPayload(body []interface{}) (map[string]interface{}, error) {
 
 	// 2. Verify Time Window
 	if math.Abs(float64(now-timestamp)) > 30*1000 {
+		fmt.Println("DEBUG: Timestamp expired")
 		return nil, errors.New("expired")
 	}
 
 	// 3. Verify Signature
 	expectedSig := computeHmac(payload+fmt.Sprintf("%d", timestamp), config.AppSecretKey)
 	if expectedSig != signature {
+		fmt.Printf("DEBUG: Sig Mismatch. Exp: %s, Got: %s\n", expectedSig, signature)
 		return nil, errors.New("sig mismatch")
 	}
 
 	// 4. Double Decrypt
 	l1, err := decryptAES(payload, config.AppSecretKey)
 	if err != nil {
+		fmt.Println("DEBUG: Decrypt L1 Failed:", err)
 		return nil, fmt.Errorf("decryption l1 failed: %v", err)
 	}
 
 	inner, err := decryptAES(l1, config.AppSecretKey)
 	if err != nil {
+		fmt.Println("DEBUG: Decrypt Inner Failed:", err)
 		return nil, fmt.Errorf("decryption inner failed: %v", err)
 	}
 
 	// 5. Parse JSON
 	var finalData map[string]interface{}
 	if err := json.Unmarshal([]byte(inner), &finalData); err != nil {
+		fmt.Println("DEBUG: JSON Unmarshal Failed:", err, "Body:", inner)
 		return nil, errors.New("json parse error")
 	}
 
 	// 6. Check Nonce
 	nonce, ok := finalData["_n"].(string)
 	if !ok || nonce == "" {
+		fmt.Println("DEBUG: No Nonce")
 		return nil, errors.New("replay: no nonce")
 	}
 
 	cacheMutex.Lock()
 	if _, exists := nonceCache[nonce]; exists {
 		cacheMutex.Unlock()
+		fmt.Println("DEBUG: Replay Detected (Nonce exists)")
 		return nil, errors.New("replay detected")
 	}
 	nonceCache[nonce] = now + 60000
