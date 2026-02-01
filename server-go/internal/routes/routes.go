@@ -64,7 +64,7 @@ func SetupRoutes(app *fiber.App) {
 
 	// --- REVIEWS ---
 	reviews := api.Group("/reviews", middleware.SecureMiddleware)
-	reviews.Get("/product/:productId", handlers.GetProductReviews)
+	reviews.Get("/:productId", handlers.GetProductReviews)
 	reviews.Post("/", middleware.AuthMiddleware, handlers.CreateReview)
 
 	// --- USER PROFILE ---

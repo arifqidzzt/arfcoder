@@ -32,22 +32,13 @@ func ForgotPassword(c *fiber.Ctx) error {
 	expiry := time.Now().Add(1 * time.Hour)
 
 	database.DB.Model(&user).Updates(map[string]interface{}{
-		"reset_token":        resetToken,
-		"reset_token_expiry": expiry,
+		"resetToken":       resetToken,
+		"resetTokenExpiry": expiry,
 	})
 
 	resetUrl := fmt.Sprintf("%s/reset-password?token=%s", config.ClientURL, resetToken)
 	
-	// Send Email
-	htmlContent := fmt.Sprintf(`
-		<div style="font-family: Arial, sans-serif;">
-			<h2>Halo, %s</h2>
-			<p>Klik tombol di bawah untuk reset password:</p>
-			<a href="%s" style="padding: 10px 20px; background: black; color: white;">Ganti Password</a>
-		</div>
-	`, user.Name, resetUrl)
-	
-	go email.SendEmail(user.Email, "Permintaan Ganti Password", htmlContent)
+	go email.SendEmail(user.Email, "Permintaan Ganti Password", email.GenerateLinkEmail(user.Name, resetUrl, "Reset Password", "Ganti Password"))
 
 	return c.JSON(fiber.Map{"message": "Link reset dikirim ke email"})
 }
@@ -62,7 +53,7 @@ func ResetPassword(c *fiber.Ctx) error {
 	c.BodyParser(&req)
 
 	var user models.User
-	if err := database.DB.Where("reset_token = ? AND reset_token_expiry > ?", req.Token, time.Now()).First(&user).Error; err != nil {
+	if err := database.DB.Where("\"resetToken\" = ? AND \"resetTokenExpiry\" > ?", req.Token, time.Now()).First(&user).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Token invalid atau expired"})
 	}
 
@@ -71,8 +62,8 @@ func ResetPassword(c *fiber.Ctx) error {
 	// Reset & Clear Token
 	database.DB.Model(&user).Updates(map[string]interface{}{
 		"password":           string(hashed),
-		"reset_token":        nil,
-		"reset_token_expiry": nil,
+		"resetToken":         nil,
+		"resetTokenExpiry":   nil,
 	})
 
 	return c.JSON(fiber.Map{"message": "Password berhasil direset"})
@@ -90,7 +81,7 @@ func ResendOtp(c *fiber.Ctx) error {
 	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
 
 	// Clear old
-	database.DB.Delete(&models.Otp{}, "user_id = ? AND email = ?", req.UserID, req.Email)
+	database.DB.Delete(&models.Otp{}, "\"userId\" = ? AND email = ?", req.UserID, req.Email)
 
 	database.DB.Create(&models.Otp{
 		Code:      otpCode,
@@ -99,7 +90,7 @@ func ResendOtp(c *fiber.Ctx) error {
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	})
 
-	go email.SendEmail(req.Email, "Kode Verifikasi Baru", "Kode: "+otpCode)
+	go email.SendEmail(req.Email, "Kode Verifikasi Baru", email.GenerateOtpEmail(req.Email, otpCode, "Verifikasi Baru"))
 
 	return c.JSON(fiber.Map{"message": "Kode OTP baru telah dikirim"})
 }

@@ -154,6 +154,13 @@ func handleMessage(evt *events.Message) {
 
 	cmd := strings.ToUpper(text)
 
+	if cmd == "CEK STATUS" {
+		status := "User Biasa"
+		if isAdmin { status = "Admin" }
+		reply(evt, fmt.Sprintf("Halo %s\nStatus Anda: %s\nID: %s", user.Name, status, user.ID))
+		return
+	}
+
 	if cmd == "INFO VPS" {
 		if !isAdmin {
 			reply(evt, fmt.Sprintf("⛔ Akses Ditolak. Nomor %s tidak dikenal/bukan admin.", senderPhone))

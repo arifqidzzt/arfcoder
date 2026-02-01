@@ -76,7 +76,7 @@ func CreateOrder(c *fiber.Ctx) error {
 					discountApplied = (totalAmount * voucher.Value) / 100
 				}
 				// Save usage
-				database.DB.Model(&voucher).Update("used_count", voucher.UsedCount+1)
+				database.DB.Model(&voucher).Update("usedCount", voucher.UsedCount+1)
 			}
 		}
 	}
@@ -145,9 +145,9 @@ func HandleMidtransWebhook(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid request"})
 	}
 
-	orderId, _ := notification["order_id"].(string)
-	transactionStatus, _ := notification["transaction_status"].(string)
-	fraudStatus, _ := notification["fraud_status"].(string)
+	orderId := fmt.Sprintf("%v", notification["order_id"])
+	transactionStatus := fmt.Sprintf("%v", notification["transaction_status"])
+	fraudStatus := fmt.Sprintf("%v", notification["fraud_status"])
 
 	var orderStatus string = models.OrderStatusPending
 
@@ -202,7 +202,7 @@ func HandleMidtransWebhook(c *fiber.Ctx) error {
 func GetMyOrders(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*utils.JWTClaims)
 	var orders []models.Order
-	database.DB.Preload("Items.Product").Where("user_id = ?", userClaims.UserID).Order("created_at desc").Find(&orders)
+	database.DB.Preload("Items.Product").Where("\"userId\" = ?", userClaims.UserID).Order("\"createdAt\" desc").Find(&orders)
 	return c.JSON(orders)
 }
 
@@ -218,7 +218,7 @@ func GetOrderById(c *fiber.Ctx) error {
 			return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
 		}
 	} else {
-		if err := database.DB.Preload("Items.Product").Preload("User").Preload("Timeline").Where("id = ? AND user_id = ?", id, userClaims.UserID).First(&order).Error; err != nil {
+		if err := database.DB.Preload("Items.Product").Preload("User").Preload("Timeline").Where("id = ? AND \"userId\" = ?", id, userClaims.UserID).First(&order).Error; err != nil {
 			return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
 		}
 	}

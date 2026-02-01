@@ -19,7 +19,7 @@ func CancelOrder(c *fiber.Ctx) error {
 	orderId := c.Params("id")
 
 	var order models.Order
-	if err := database.DB.Preload("Items").Where("id = ? AND user_id = ?", orderId, userClaims.UserID).First(&order).Error; err != nil {
+	if err := database.DB.Preload("Items").Where("id = ? AND \"userId\" = ?", orderId, userClaims.UserID).First(&order).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
 	}
 
@@ -62,7 +62,7 @@ func RequestRefund(c *fiber.Ctx) error {
 	c.BodyParser(&req)
 
 	var order models.Order
-	if err := database.DB.Where("id = ? AND user_id = ?", orderId, userClaims.UserID).First(&order).Error; err != nil {
+	if err := database.DB.Where("id = ? AND \"userId\" = ?", orderId, userClaims.UserID).First(&order).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
 	}
 
@@ -85,7 +85,7 @@ func RegeneratePaymentToken(c *fiber.Ctx) error {
 	orderId := c.Params("id")
 
 	var order models.Order
-	if err := database.DB.Where("id = ? AND user_id = ?", orderId, userClaims.UserID).First(&order).Error; err != nil {
+	if err := database.DB.Where("id = ? AND \"userId\" = ?", orderId, userClaims.UserID).First(&order).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
 	}
 

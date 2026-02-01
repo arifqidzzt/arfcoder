@@ -147,7 +147,7 @@ func SendBackupOtp(c *fiber.Ctx) error {
 	})
 
 	if req.Method == "email" {
-		go email.SendEmail(user.Email, "Kode Login Admin", "Kode: "+otpCode)
+		go email.SendEmail(user.Email, "Kode Login Admin", email.GenerateOtpEmail(user.Name, otpCode, "Login Verification"))
 	} else if req.Method == "whatsapp" {
 		if user.PhoneNumber == "" {
 			return c.Status(400).JSON(fiber.Map{"message": "Nomor WA belum diset"})

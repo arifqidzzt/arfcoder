@@ -56,8 +56,7 @@ func Register(c *fiber.Ctx) error {
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	})
 
-	go email.SendEmail(req.Email, "Verifikasi Email ArfCoder", 
-		fmt.Sprintf("<p>Halo %s,</p><p>Kode verifikasi: <strong>%s</strong></p>", req.Name, otpCode))
+	go email.SendEmail(req.Email, "Verifikasi Email ArfCoder", email.GenerateOtpEmail(req.Name, otpCode, "Verifikasi Email"))
 
 	return c.Status(201).JSON(fiber.Map{
 		"message": "User registered. Please check your email.",

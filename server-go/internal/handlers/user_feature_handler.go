@@ -3,6 +3,7 @@ package handlers
 import (
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
+	"arfcoder-go/internal/services/email"
 	"arfcoder-go/internal/services/whatsapp"
 	"arfcoder-go/internal/utils"
 	"fmt"
@@ -118,8 +119,7 @@ func RequestEmailChange(c *fiber.Ctx) error {
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	})
 
-	// TODO: Send Email via Resend logic (omitted for brevity, assume logged)
-	fmt.Println("OTP Email Change:", otpCode)
+	go email.SendEmail(user.Email, "Kode Ganti Email", email.GenerateOtpEmail(user.Name, otpCode, "Ganti Email"))
 
 	return c.JSON(fiber.Map{"message": "OTP dikirim ke email lama"})
 }
@@ -150,7 +150,7 @@ func VerifyOldEmail(c *fiber.Ctx) error {
 		Email:     req.NewEmail,
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	})
-	fmt.Println("OTP New Email:", newOtp)
+	go email.SendEmail(req.NewEmail, "Verifikasi Email Baru", email.GenerateOtpEmail(user.Name, newOtp, "Verifikasi Email Baru"))
 
 	return c.JSON(fiber.Map{"message": "Verifikasi berhasil. OTP dikirim ke email baru."})
 }

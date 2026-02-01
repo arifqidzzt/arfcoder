@@ -3,6 +3,8 @@ package handlers
 import (
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
+	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/lib/pq"
@@ -109,15 +111,18 @@ func GetAllVouchers(c *fiber.Ctx) error {
 }
 
 func CreateVoucher(c *fiber.Ctx) error {
-	type Req struct {
-		Code string `json:"code"`
-		Type string `json:"type"`
-		Value float64 `json:"value"`
+	var voucher models.Voucher
+	if err := c.BodyParser(&voucher); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "Invalid request"})
 	}
-	var req Req
-	c.BodyParser(&req)
-	// Simple placeholder implementation
-	return c.JSON(fiber.Map{"message": "Voucher created"})
+	// Defaults
+	if voucher.StartDate.IsZero() { voucher.StartDate = time.Now() }
+	if voucher.ExpiresAt.IsZero() { voucher.ExpiresAt = time.Now().Add(30 * 24 * time.Hour) }
+	
+	if err := database.DB.Create(&voucher).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"message": "Failed to create voucher"})
+	}
+	return c.Status(201).JSON(voucher)
 }
 
 func DeleteVoucher(c *fiber.Ctx) error {
@@ -127,5 +132,51 @@ func DeleteVoucher(c *fiber.Ctx) error {
 }
 
 func CheckVoucher(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{"valid": false})
+	type Req struct {
+		Code        string  `json:"code"`
+		TotalAmount float64 `json:"totalAmount"`
+	}
+	var req Req
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"valid": false, "message": "Invalid Request"})
+	}
+
+	var voucher models.Voucher
+	if err := database.DB.Where("code = ?", req.Code).First(&voucher).Error; err != nil {
+		return c.JSON(fiber.Map{"valid": false, "message": "Kode voucher tidak ditemukan"})
+	}
+
+	if !voucher.IsActive {
+		return c.JSON(fiber.Map{"valid": false, "message": "Voucher tidak aktif"})
+	}
+
+	if time.Now().After(voucher.ExpiresAt) {
+		return c.JSON(fiber.Map{"valid": false, "message": "Voucher kadaluarsa"})
+	}
+
+	if voucher.UsageLimit > 0 && voucher.UsedCount >= voucher.UsageLimit {
+		return c.JSON(fiber.Map{"valid": false, "message": "Kuota voucher habis"})
+	}
+
+	if req.TotalAmount < voucher.MinPurchase {
+		return c.JSON(fiber.Map{"valid": false, "message": fmt.Sprintf("Min pembelian Rp %.0f", voucher.MinPurchase)})
+	}
+
+	discount := 0.0
+	if voucher.Type == models.DiscountTypeFixed {
+		discount = voucher.Value
+	} else {
+		discount = (req.TotalAmount * voucher.Value) / 100
+		if voucher.MaxDiscount > 0 && discount > voucher.MaxDiscount {
+			discount = voucher.MaxDiscount
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"valid":       true,
+		"discount":    discount,
+		"code":        voucher.Code,
+		"type":        voucher.Type,
+		"finalAmount": req.TotalAmount - discount,
+	})
 }
