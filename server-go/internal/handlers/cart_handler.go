@@ -50,7 +50,9 @@ func UpdateCartQuantity(c *fiber.Ctx) error {
 	}
 	c.BodyParser(&req)
 
-	database.DB.Model(&models.CartItem{}).Where("\"userId\" = ? AND \"productId\" = ?", user.UserID, productId).Update("quantity", req.Quantity)
+	fmt.Printf("Updating cart: User %s, Product %s, Quantity %d\n", user.UserID, productId, req.Quantity)
+
+	database.DB.Model(&models.CartItem{}).Where("\"userId\" = ? AND \"productId\" = ?", user.UserID, productId).Updates(models.CartItem{Quantity: req.Quantity})
 	return c.JSON(fiber.Map{"message": "Quantity updated"})
 }
 

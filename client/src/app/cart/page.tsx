@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -10,10 +10,25 @@ import Link from 'next/link';
 export default function CartPage() {
   const { items, removeItem, updateQuantity, total, fetchCart } = useCartStore();
   const { token } = useAuthStore();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (token) fetchCart();
   }, [token]);
+
+  const handleUpdateQuantity = async (id: string, newQty: number) => {
+    setIsRefreshing(true);
+    await updateQuantity(id, newQty);
+    setIsRefreshing(false);
+  };
+
+  const handleRemove = async (id: string) => {
+    if (confirm('Hapus item ini?')) {
+      setIsRefreshing(true);
+      await removeItem(id);
+      setIsRefreshing(false);
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -38,13 +53,16 @@ export default function CartPage() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navbar />
       <main className="max-w-6xl mx-auto px-4 sm:px-8 py-12 pt-24">
-        <h1 className="text-3xl font-bold mb-8">Keranjang Belanja ({items.length})</h1>
+        <div className="flex justify-between items-end mb-8">
+          <h1 className="text-3xl font-bold">Keranjang Belanja ({items.length})</h1>
+          {isRefreshing && <span className="text-xs text-gray-400 animate-pulse font-medium">Memperbarui...</span>}
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
-              <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-6 items-center">
+              <div key={item.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-6 items-center transition-opacity ${isRefreshing ? 'opacity-50' : 'opacity-100'}`}>
                 <div className="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
                   {item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}
                 </div>
@@ -56,22 +74,25 @@ export default function CartPage() {
                   <div className="flex items-center gap-4">
                     <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200">
                       <button 
-                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                        className="p-2 hover:bg-gray-200 rounded-l-lg transition-colors"
+                        onClick={() => handleUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                        disabled={isRefreshing}
+                        className="p-2 hover:bg-gray-200 rounded-l-lg transition-colors disabled:opacity-50"
                       >
                         <Minus size={14} />
                       </button>
                       <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
                       <button 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="p-2 hover:bg-gray-200 rounded-r-lg transition-colors"
+                        onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                        disabled={isRefreshing}
+                        className="p-2 hover:bg-gray-200 rounded-r-lg transition-colors disabled:opacity-50"
                       >
                         <Plus size={14} />
                       </button>
                     </div>
                     <button 
-                      onClick={() => removeItem(item.id)} 
-                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                      onClick={() => handleRemove(item.id)} 
+                      disabled={isRefreshing}
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
                       title="Hapus"
                     >
                       <Trash2 size={18} />

@@ -79,11 +79,14 @@ func UpdatePhoneDirect(c *fiber.Ctx) error {
 	var req Req
 	c.BodyParser(&req)
 
+	fmt.Printf("Updating phone for user %s (Role: %s) to %s\n", userClaims.UserID, userClaims.Role, req.PhoneNumber)
+
 	// Admin updates their BOT identification number, not account number
 	if userClaims.Role == models.RoleAdmin || userClaims.Role == models.RoleSuperAdmin {
-		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Updates(map[string]interface{}{"waBotNumber": req.PhoneNumber})
+		// Use struct for update to ensure GORM uses the correct column name from tags
+		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Updates(models.User{WABotNumber: req.PhoneNumber})
 	} else {
-		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Updates(map[string]interface{}{"phoneNumber": req.PhoneNumber})
+		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Updates(models.User{PhoneNumber: req.PhoneNumber})
 	}
 
 	var user models.User
