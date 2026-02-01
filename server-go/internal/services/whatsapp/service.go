@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	_ "github.com/lib/pq"
 	"go.mau.fi/whatsmeow"
@@ -177,14 +178,93 @@ func handleMessage(evt *events.Message) {
 			reply(evt, fmt.Sprintf("⛔ Akses Ditolak. Nomor %s tidak dikenal/bukan admin.", senderPhone))
 			return
 		}
-		reply(evt, "⏳ Mengumpulkan data server...")
-		
-		// Run speedtest cli if available
-		out, _ := exec.Command("speedtest-cli", "--simple").Output()
-		speed := string(out)
-		if speed == "" { speed = "Speedtest CLI not installed or failed" }
+		reply(evt, "⏳ Mengumpulkan data server... (Estimasi 5-10 detik)")
 
-		reply(evt, fmt.Sprintf("%s\n\nSpeed:\n%s", getServerStats(), speed))
+		// 1. Disk
+		diskOut, _ := exec.Command("sh", "-c", "df -h / | tail -1 | awk '{print $3 \" / \" $2 \" (\" $5 \")\"}'").Output()
+		disk := strings.TrimSpace(string(diskOut))
+		if disk == "" { disk = "N/A" }
+
+		// 2. OS Distro
+		osOut, _ := exec.Command("sh", "-c", "grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '\"'").Output()
+		distro := strings.TrimSpace(string(osOut))
+		if distro == "" { distro = runtime.GOOS }
+
+		// 3. IP Info
+		ipOut, _ := exec.Command("curl", "-s", "ipinfo.io/json").Output()
+		ipJson := string(ipOut)
+		ip := getJsonValue(ipJson, "ip")
+		city := getJsonValue(ipJson, "city")
+		country := getJsonValue(ipJson, "country")
+		org := getJsonValue(ipJson, "org")
+
+		// 4. CPU
+		cpuOut, _ := exec.Command("sh", "-c", "grep 'model name' /proc/cpuinfo | head -1 | cut -d: -f2").Output()
+		cpuModel := strings.TrimSpace(string(cpuOut))
+		if cpuModel == "" { cpuModel = "Unknown CPU" }
+		
+		// 5. RAM
+		memOut, _ := exec.Command("free", "-h").Output()
+		memLines := strings.Split(string(memOut), "\n")
+		ram := "N/A"
+		if len(memLines) > 1 {
+			fields := strings.Fields(memLines[1])
+			if len(fields) >= 4 {
+				ram = fmt.Sprintf("%s Free / %s Total", fields[3], fields[1])
+			}
+		}
+
+		// 6. Uptime
+		upOut, _ := exec.Command("uptime", "-p").Output()
+		uptime := strings.TrimSpace(string(upOut))
+
+		// 7. Speedtest
+		speedOut, _ := exec.Command("speedtest-cli", "--simple").Output()
+		speedStr := string(speedOut)
+		dl := "N/A"
+		ul := "N/A"
+		if strings.Contains(speedStr, "Download:") {
+			parts := strings.Split(speedStr, "\n")
+			for _, p := range parts {
+				if strings.HasPrefix(p, "Download:") { dl = strings.TrimPrefix(p, "Download: ") }
+				if strings.HasPrefix(p, "Upload:") { ul = strings.TrimPrefix(p, "Upload: ") }
+			}
+		}
+
+		replyMsg := fmt.Sprintf(`
+🚀 *ARFCODER SERVER STATUS*
+---------------------------
+💻 *SISTEM OPERASI*
+• Distro: %s
+• Go Ver: %s
+• Uptime: %s
+
+🌍 *JARINGAN & LOKASI*
+• IP: %s
+• Lokasi: %s, %s
+• ISP: %s
+• Speed (DL): %s
+• Speed (UL): %s
+
+🧠 *RESOURCE*
+• CPU: %s (%d Core)
+• RAM: %s
+• Disk: %s
+
+---------------------------
+Bot Active | %s
+`, 
+			distro, 
+			runtime.Version(),
+			uptime,
+			ip, city, country, org,
+			dl, ul,
+			cpuModel, runtime.NumCPU(),
+			ram, disk,
+			time.Now().Format("02 Jan 2006 15:04"),
+		)
+
+		reply(evt, strings.TrimSpace(replyMsg))
 		return
 	}
 	
@@ -207,8 +287,15 @@ func reply(evt *events.Message, text string) {
 	Client.SendMessage(context.Background(), evt.Info.Sender, msg)
 }
 
-func getServerStats() string {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	return fmt.Sprintf("OS: %s | Go: %s | Alloc: %v MB", runtime.GOOS, runtime.Version(), m.Alloc/1024/1024)
+func getJsonValue(jsonStr, key string) string {
+	// Simple lookup: "key": "value"
+	keyPattern := fmt.Sprintf("\"%s\": \"", key)
+	idx := strings.Index(jsonStr, keyPattern)
+	if idx == -1 { return "?" }
+	
+	start := idx + len(keyPattern)
+	end := strings.Index(jsonStr[start:], "\"")
+	if end == -1 { return "?" }
+	
+	return jsonStr[start : start+end]
 }
