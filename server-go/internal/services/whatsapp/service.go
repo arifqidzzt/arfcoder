@@ -84,6 +84,10 @@ func Logout() {
 	if Client != nil {
 		// FIX: Add context
 		Client.Logout(context.Background())
+		// Force delete to ensure next Connect generates QR
+		if Client.Store != nil {
+			Client.Store.Delete()
+		}
 		mu.Lock()
 		currentQR = ""
 		mu.Unlock()

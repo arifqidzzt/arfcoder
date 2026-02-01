@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-import Navbar from '@/components/Navbar';
-import api from '@/lib/api';
-import { io } from 'socket.io-client';
 import { Smartphone, RefreshCcw, LogOut } from 'lucide-react';
 import QRCode from 'react-qr-code';
 
