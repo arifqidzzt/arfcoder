@@ -40,16 +40,16 @@ type User struct {
 	Password         string    `gorm:"type:text;column:password"`
 	Name             string    `gorm:"column:name"`
 	Role             string    `gorm:"default:'USER';column:role"`
-	IsVerified       bool      `gorm:"default:false;column:isVerified"` // Prisma: isVerified
-	GoogleID         string    `gorm:"uniqueIndex;column:googleId"`     // Prisma: googleId
+	IsVerified       bool      `gorm:"default:false;column:isVerified"`
+	GoogleID         string    `gorm:"uniqueIndex;column:googleId"`
 	Avatar           string    `gorm:"column:avatar"`
-	PhoneNumber      string    `gorm:"column:phoneNumber"` // Prisma: phoneNumber
-	ResetToken       string    `gorm:"column:resetToken"`  // Prisma: resetToken
+	PhoneNumber      string    `gorm:"column:phoneNumber"`
+	ResetToken       string    `gorm:"column:resetToken"`
 	ResetTokenExpiry *time.Time `gorm:"column:resetTokenExpiry"`
 	TwoFactorSecret  string    `gorm:"column:twoFactorSecret"`
 	TwoFactorEnabled bool      `gorm:"default:false;column:twoFactorEnabled"`
-	CreatedAt        time.Time `gorm:"autoCreateTime;column:createdAt"` // Prisma: createdAt
-	UpdatedAt        time.Time `gorm:"autoUpdateTime;column:updatedAt"` // Prisma: updatedAt
+	CreatedAt        time.Time `gorm:"autoCreateTime;column:createdAt"`
+	UpdatedAt        time.Time `gorm:"autoUpdateTime;column:updatedAt"`
 
 	// Relations
 	Otps         []Otp         `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
@@ -59,21 +59,24 @@ type User struct {
 	ActivityLogs []ActivityLog `gorm:"foreignKey:UserID"`
 }
 
+// Force GORM to use Prisma's table name "User"
+func (User) TableName() string {
+	return "User"
+}
+
 type ActivityLog struct {
 	ID        string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
-	UserID    string    `gorm:"not null;column:userId"` // Prisma: userId
+	UserID    string    `gorm:"not null;column:userId"`
 	User      User      `gorm:"foreignKey:UserID"`
 	Action    string    `gorm:"not null;column:action"`
 	Details   string    `gorm:"column:details"`
-	IPAddress string    `gorm:"column:ipAddress"` // Prisma: ipAddress
+	IPAddress string    `gorm:"column:ipAddress"`
 	CreatedAt time.Time `gorm:"autoCreateTime;column:createdAt"`
 }
 
-// Table name override might be needed if Prisma used "Otp" vs "otps"
-// But usually Prisma maps models to lowercase plural or keeps camelCase.
-// Assuming "Otp" or "otp". Let's verify DB table name later if needed.
-// GORM defaults plural snake_case ("otps"). Prisma defaults "Otp" or "otps" depending on map.
-// We'll stick to GORM default table naming for now unless you see "relation does not exist".
+func (ActivityLog) TableName() string {
+	return "ActivityLog"
+}
 
 type Otp struct {
 	ID        string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
@@ -84,10 +87,18 @@ type Otp struct {
 	CreatedAt time.Time `gorm:"autoCreateTime;column:createdAt"`
 }
 
+func (Otp) TableName() string {
+	return "Otp"
+}
+
 type Category struct {
 	ID       string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
 	Name     string    `gorm:"uniqueIndex;not null;column:name"`
 	Products []Product `gorm:"foreignKey:CategoryID"`
+}
+
+func (Category) TableName() string {
+	return "Category"
 }
 
 type Product struct {
@@ -110,6 +121,10 @@ type Product struct {
 	FlashSales []FlashSale `gorm:"foreignKey:ProductID"`
 }
 
+func (Product) TableName() string {
+	return "Product"
+}
+
 type Service struct {
 	ID          string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
 	Title       string    `gorm:"not null;column:title"`
@@ -118,6 +133,10 @@ type Service struct {
 	Icon        string    `gorm:"column:icon"`
 	CreatedAt   time.Time `gorm:"autoCreateTime;column:createdAt"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime;column:updatedAt"`
+}
+
+func (Service) TableName() string {
+	return "Service"
 }
 
 type CartItem struct {
@@ -129,6 +148,10 @@ type CartItem struct {
 	Quantity  int       `gorm:"default:1;column:quantity"`
 	CreatedAt time.Time `gorm:"autoCreateTime;column:createdAt"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime;column:updatedAt"`
+}
+
+func (CartItem) TableName() string {
+	return "CartItem"
 }
 
 type Order struct {
@@ -155,6 +178,10 @@ type Order struct {
 	UpdatedAt time.Time       `gorm:"autoUpdateTime;column:updatedAt"`
 }
 
+func (Order) TableName() string {
+	return "Order"
+}
+
 type OrderItem struct {
 	ID        string  `gorm:"primaryKey;default:gen_random_uuid();column:id"`
 	OrderID   string  `gorm:"not null;column:orderId"`
@@ -164,12 +191,20 @@ type OrderItem struct {
 	Price     float64 `gorm:"not null;column:price"`
 }
 
+func (OrderItem) TableName() string {
+	return "OrderItem"
+}
+
 type OrderTimeline struct {
 	ID          string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
 	OrderID     string    `gorm:"not null;column:orderId"`
 	Title       string    `gorm:"not null;column:title"`
 	Description string    `gorm:"column:description"`
 	Timestamp   time.Time `gorm:"default:now();column:timestamp"`
+}
+
+func (OrderTimeline) TableName() string {
+	return "OrderTimeline"
 }
 
 type Message struct {
@@ -181,6 +216,10 @@ type Message struct {
 	IsRead       bool      `gorm:"default:false;column:isRead"`
 	TargetUserID string    `gorm:"column:targetUserId"`
 	CreatedAt    time.Time `gorm:"autoCreateTime;column:createdAt"`
+}
+
+func (Message) TableName() string {
+	return "Message"
 }
 
 type Voucher struct {
@@ -198,6 +237,10 @@ type Voucher struct {
 	CreatedAt   time.Time `gorm:"autoCreateTime;column:createdAt"`
 }
 
+func (Voucher) TableName() string {
+	return "Voucher"
+}
+
 type FlashSale struct {
 	ID            string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
 	ProductID     string    `gorm:"not null;column:productId"`
@@ -207,6 +250,10 @@ type FlashSale struct {
 	EndTime       time.Time `gorm:"not null;column:endTime"`
 	IsActive      bool      `gorm:"default:true;column:isActive"`
 	CreatedAt     time.Time `gorm:"autoCreateTime;column:createdAt"`
+}
+
+func (FlashSale) TableName() string {
+	return "FlashSale"
 }
 
 type Review struct {
@@ -219,4 +266,8 @@ type Review struct {
 	Comment   string    `gorm:"type:text;column:comment"`
 	IsVisible bool      `gorm:"default:true;column:isVisible"`
 	CreatedAt time.Time `gorm:"autoCreateTime;column:createdAt"`
+}
+
+func (Review) TableName() string {
+	return "Review"
 }
