@@ -34,7 +34,7 @@ func SendMessage(c *fiber.Ctx) error {
 	// 1. Anti-Spam Check (Non-Admin)
 	if !req.IsAdmin {
 		var lastMessages []models.Message
-		database.DB.Where("sender_id = ?", req.SenderID).Order("created_at desc").Limit(11).Find(&lastMessages)
+		database.DB.Where("\"senderId\" = ?", req.SenderID).Order("\"createdAt\" desc").Limit(11).Find(&lastMessages)
 
 		unrepliedCount := -1
 		for i, msg := range lastMessages {
@@ -65,8 +65,8 @@ func SendMessage(c *fiber.Ctx) error {
 	// 3. Mark Read (If Admin replying)
 	if req.IsAdmin && req.TargetUserID != "" {
 		database.DB.Model(&models.Message{}).
-			Where("sender_id = ? AND is_admin = ?", req.TargetUserID, false).
-			Update("is_read", true)
+			Where("\"senderId\" = ? AND \"isAdmin\" = ?", req.TargetUserID, false).
+			Update("isRead", true)
 	}
 
 	return c.Status(201).JSON(msg)

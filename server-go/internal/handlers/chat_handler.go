@@ -28,7 +28,7 @@ func GetUserChatHistory(c *fiber.Ctx) error {
 	var messages []models.Message
 	// Select * FROM messages WHERE (sender_id = X) OR (target_user_id = X AND is_admin = true)
 	// Simplified approximation of Node logic:
-	database.DB.Where("(sender_id = ?) OR (target_user_id = ?)", queryUserId, queryUserId).Order("created_at asc").Find(&messages)
+	database.DB.Where("(\"senderId\" = ?) OR (\"targetUserId\" = ?)", queryUserId, queryUserId).Order("\"createdAt\" asc").Find(&messages)
 	
 	return c.JSON(messages)
 }
