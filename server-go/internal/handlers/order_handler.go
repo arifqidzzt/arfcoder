@@ -6,7 +6,6 @@ import (
 	"arfcoder-go/internal/models"
 	"arfcoder-go/internal/utils"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
