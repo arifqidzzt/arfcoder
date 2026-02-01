@@ -114,6 +114,7 @@ func DecryptPayload(body []interface{}) (map[string]interface{}, error) {
 	}
 
 	// 5. Parse JSON
+	inner = strings.TrimSpace(inner)
 	var finalData map[string]interface{}
 	if err := json.Unmarshal([]byte(inner), &finalData); err != nil {
 		fmt.Println("DEBUG: JSON Unmarshal Failed:", err, "Body:", inner)

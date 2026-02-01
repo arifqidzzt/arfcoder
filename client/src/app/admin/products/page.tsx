@@ -69,7 +69,7 @@ export default function AdminProductsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -104,7 +104,7 @@ export default function AdminProductsPage() {
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm min-w-[700px]">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-4 font-semibold text-gray-600">Nama Produk</th>

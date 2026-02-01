@@ -55,7 +55,7 @@ export default function AdminOrdersPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
            <Link href="/admin" className="p-2 hover:bg-gray-200 rounded-full transition-colors">
@@ -82,47 +82,49 @@ export default function AdminOrdersPage() {
         </div>
 
         <div className="bg-white rounded-b-xl border border-gray-200 border-t-0 shadow-sm overflow-hidden">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                <th className="px-6 py-4">Invoice</th>
-                <th className="px-6 py-4">Pelanggan</th>
-                <th className="px-6 py-4">Total</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Tanggal</th>
-                <th className="px-6 py-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredOrders.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-10 text-gray-400">Tidak ada pesanan di status ini.</td></tr>
-              ) : (
-                filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-mono font-medium">{order.invoiceNumber}</td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium">{order.user.name}</p>
-                      <p className="text-xs text-gray-400">{order.user.email}</p>
-                    </td>
-                    <td className="px-6 py-4">Rp {order.totalAmount.toLocaleString('id-ID')}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold 
-                        ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 
-                          order.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100'}`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-right">
-                      <Link href={`/admin/orders/${order.id}`} className="inline-flex items-center gap-1 bg-black text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors">
-                        Kelola
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[800px]">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="px-6 py-4">Invoice</th>
+                  <th className="px-6 py-4">Pelanggan</th>
+                  <th className="px-6 py-4">Total</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Tanggal</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredOrders.length === 0 ? (
+                  <tr><td colSpan={6} className="text-center py-10 text-gray-400">Tidak ada pesanan di status ini.</td></tr>
+                ) : (
+                  filteredOrders.map((order) => (
+                    <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-mono font-medium">{order.invoiceNumber}</td>
+                      <td className="px-6 py-4">
+                        <p className="font-medium">{order.user.name}</p>
+                        <p className="text-xs text-gray-400">{order.user.email}</p>
+                      </td>
+                      <td className="px-6 py-4">Rp {order.totalAmount.toLocaleString('id-ID')}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded text-xs font-bold 
+                          ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 
+                            order.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100'}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-right">
+                        <Link href={`/admin/orders/${order.id}`} className="inline-flex items-center gap-1 bg-black text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors">
+                          Kelola
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

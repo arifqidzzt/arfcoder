@@ -72,14 +72,14 @@ export default function VoucherPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
+    <div className="p-4 sm:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
           <Ticket className="text-accent" /> Manajemen Voucher
         </h1>
         <button 
           onClick={() => setShowModal(true)}
-          className="bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-gray-800"
+          className="bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-gray-800 w-full sm:w-auto justify-center"
         >
           <Plus size={18} /> Buat Voucher
         </button>
@@ -87,7 +87,7 @@ export default function VoucherPage() {
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
               <th className="text-left p-6 font-bold text-sm text-gray-500">KODE</th>

@@ -120,6 +120,21 @@
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
+  /* Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #d1d5db;
+  }
+
   /* Background Grid Pattern */
   .bg-grid-pattern {
     background-size: 40px 40px;

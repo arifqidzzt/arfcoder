@@ -73,10 +73,10 @@ export default function AdminServicesPage() {
       {/* ... Sidebar code should be here or use layout, for now simplified ... */}
       {/* Reusing Admin Layout or similar structure if you have separate layout component */}
       
-      <main className="max-w-6xl mx-auto px-8 py-24 w-full">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Kelola Jasa & Layanan</h1>
-          <button onClick={() => { setForm({ id: '', title: '', description: '', price: '', icon: 'Code' }); setShowModal(true); }} className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2"><Plus size={18}/> Tambah Jasa</button>
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-12 sm:py-24 w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold">Kelola Jasa & Layanan</h1>
+          <button onClick={() => { setForm({ id: '', title: '', description: '', price: '', icon: 'Code' }); setShowModal(true); }} className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 w-full sm:w-auto justify-center"><Plus size={18}/> Tambah Jasa</button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

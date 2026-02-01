@@ -79,7 +79,7 @@ export default function AdminProfilePage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto w-full">
       <h1 className="text-3xl font-bold mb-8">Pengaturan Akun</h1>
 
       <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm mb-8">
