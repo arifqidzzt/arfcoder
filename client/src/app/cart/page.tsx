@@ -8,9 +8,12 @@ import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, total, fetchCart } = useCartStore();
+  const { items, removeItem, updateQuantity, fetchCart } = useCartStore();
   const { token } = useAuthStore();
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Calculate total locally for real-time refresh
+  const totalAmount = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   useEffect(() => {
     if (token) fetchCart();
@@ -110,7 +113,7 @@ export default function CartPage() {
               <div className="space-y-3 mb-6 border-b border-gray-50 pb-6">
                 <div className="flex justify-between text-sm text-gray-500">
                   <span>Subtotal</span>
-                  <span>Rp {total().toLocaleString('id-ID')}</span>
+                  <span>Rp {totalAmount.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-500">
                   <span>Pajak & Biaya</span>
@@ -120,7 +123,7 @@ export default function CartPage() {
               
               <div className="flex justify-between items-center mb-8">
                 <span className="font-bold text-lg">Total</span>
-                <span className="font-black text-2xl">Rp {total().toLocaleString('id-ID')}</span>
+                <span className="font-black text-2xl">Rp {totalAmount.toLocaleString('id-ID')}</span>
               </div>
 
               <Link href="/checkout" className="w-full py-4 bg-black text-white font-bold rounded-xl flex items-center justify-center space-x-2 hover:bg-gray-800 transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-black/20">

@@ -159,7 +159,7 @@ func handleMessage(evt *events.Message) {
 	var user models.User
 	localPhone := "0" + senderPhone[2:]
 	
-	err := database.DB.Where("\"waBotNumber\" IN ? OR \"phoneNumber\" IN ?", 
+	err := database.DB.Where("(\"waBotNumber\" IS NOT NULL AND \"waBotNumber\" != '' AND \"waBotNumber\" IN ?) OR ((\"waBotNumber\" IS NULL OR \"waBotNumber\" = '') AND \"phoneNumber\" IN ?)", 
 		[]string{senderPhone, localPhone, "+"+senderPhone}, 
 		[]string{senderPhone, localPhone, "+"+senderPhone}).First(&user).Error
 
