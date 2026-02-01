@@ -202,7 +202,7 @@ hasPurchased := false
 	var existing int64
 	database.DB.Model(&models.Review{}).Where("\"userId\" = ? AND \"productId\" = ?", userClaims.UserID, req.ProductId).Count(&existing)
 	if existing > 0 {
-		return c.Status(400).JSON(fiber.Map{"message": "Anda sudah mengulas produk ini."}) 
+		return c.Status(400).JSON(fiber.Map{"message": "Anda sudah mengulas produk ini."})
 	}
 
 	review := models.Review{
