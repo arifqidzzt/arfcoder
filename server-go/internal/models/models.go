@@ -35,21 +35,21 @@ const (
 )
 
 type User struct {
-	ID               string    `gorm:"primaryKey;default:gen_random_uuid()"` // Assuming Postgres gen_random_uuid or handling ID generation in app
-	Email            string    `gorm:"uniqueIndex;not null"`
-	Password         string    `gorm:"type:text"`
-	Name             string
-	Role             string    `gorm:"default:'USER'"`
-	IsVerified       bool      `gorm:"default:false"`
-	GoogleID         string    `gorm:"uniqueIndex"`
-	Avatar           string
-	PhoneNumber      string
-	ResetToken       string
-	ResetTokenExpiry *time.Time
-	TwoFactorSecret  string
-	TwoFactorEnabled bool      `gorm:"default:false"`
-	CreatedAt        time.Time `gorm:"autoCreateTime"`
-	UpdatedAt        time.Time `gorm:"autoUpdateTime"`
+	ID               string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	Email            string    `gorm:"uniqueIndex;not null;column:email"`
+	Password         string    `gorm:"type:text;column:password"`
+	Name             string    `gorm:"column:name"`
+	Role             string    `gorm:"default:'USER';column:role"`
+	IsVerified       bool      `gorm:"default:false;column:isVerified"` // Prisma: isVerified
+	GoogleID         string    `gorm:"uniqueIndex;column:googleId"`     // Prisma: googleId
+	Avatar           string    `gorm:"column:avatar"`
+	PhoneNumber      string    `gorm:"column:phoneNumber"` // Prisma: phoneNumber
+	ResetToken       string    `gorm:"column:resetToken"`  // Prisma: resetToken
+	ResetTokenExpiry *time.Time `gorm:"column:resetTokenExpiry"`
+	TwoFactorSecret  string    `gorm:"column:twoFactorSecret"`
+	TwoFactorEnabled bool      `gorm:"default:false;column:twoFactorEnabled"`
+	CreatedAt        time.Time `gorm:"autoCreateTime;column:createdAt"` // Prisma: createdAt
+	UpdatedAt        time.Time `gorm:"autoUpdateTime;column:updatedAt"` // Prisma: updatedAt
 
 	// Relations
 	Otps         []Otp         `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
@@ -60,43 +60,49 @@ type User struct {
 }
 
 type ActivityLog struct {
-	ID        string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	UserID    string    `gorm:"not null"`
+	ID        string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	UserID    string    `gorm:"not null;column:userId"` // Prisma: userId
 	User      User      `gorm:"foreignKey:UserID"`
-	Action    string    `gorm:"not null"`
-	Details   string
-	IPAddress string
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+	Action    string    `gorm:"not null;column:action"`
+	Details   string    `gorm:"column:details"`
+	IPAddress string    `gorm:"column:ipAddress"` // Prisma: ipAddress
+	CreatedAt time.Time `gorm:"autoCreateTime;column:createdAt"`
 }
 
+// Table name override might be needed if Prisma used "Otp" vs "otps"
+// But usually Prisma maps models to lowercase plural or keeps camelCase.
+// Assuming "Otp" or "otp". Let's verify DB table name later if needed.
+// GORM defaults plural snake_case ("otps"). Prisma defaults "Otp" or "otps" depending on map.
+// We'll stick to GORM default table naming for now unless you see "relation does not exist".
+
 type Otp struct {
-	ID        string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	Code      string    `gorm:"not null"`
-	Email     string    `gorm:"not null"`
-	UserID    string    `gorm:"not null"`
-	ExpiresAt time.Time `gorm:"not null"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+	ID        string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	Code      string    `gorm:"not null;column:code"`
+	Email     string    `gorm:"not null;column:email"`
+	UserID    string    `gorm:"not null;column:userId"`
+	ExpiresAt time.Time `gorm:"not null;column:expiresAt"`
+	CreatedAt time.Time `gorm:"autoCreateTime;column:createdAt"`
 }
 
 type Category struct {
-	ID       string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	Name     string    `gorm:"uniqueIndex;not null"`
+	ID       string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	Name     string    `gorm:"uniqueIndex;not null;column:name"`
 	Products []Product `gorm:"foreignKey:CategoryID"`
 }
 
 type Product struct {
-	ID          string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	Name        string    `gorm:"not null"`
-	Description string    `gorm:"type:text"`
-	Price       float64   `gorm:"not null"`
-	Discount    float64   `gorm:"default:0"`
-	Stock       int       `gorm:"default:0"`
-	Type        string    `gorm:"default:'BARANG'"` // ProductType
-	Images      []string  `gorm:"type:text[]"`      // GORM Postgres array support
-	CategoryID  *string
+	ID          string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	Name        string    `gorm:"not null;column:name"`
+	Description string    `gorm:"type:text;column:description"`
+	Price       float64   `gorm:"not null;column:price"`
+	Discount    float64   `gorm:"default:0;column:discount"`
+	Stock       int       `gorm:"default:0;column:stock"`
+	Type        string    `gorm:"default:'BARANG';column:type"`
+	Images      []string  `gorm:"type:text[];column:images"`
+	CategoryID  *string   `gorm:"column:categoryId"`
 	Category    Category  `gorm:"foreignKey:CategoryID"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
+	CreatedAt   time.Time `gorm:"autoCreateTime;column:createdAt"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime;column:updatedAt"`
 
 	CartItems  []CartItem  `gorm:"foreignKey:ProductID"`
 	OrderItems []OrderItem `gorm:"foreignKey:ProductID"`
@@ -105,112 +111,112 @@ type Product struct {
 }
 
 type Service struct {
-	ID          string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	Title       string    `gorm:"not null"`
-	Description string    `gorm:"type:text"`
-	Price       string    `gorm:"not null"`
-	Icon        string
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
+	ID          string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	Title       string    `gorm:"not null;column:title"`
+	Description string    `gorm:"type:text;column:description"`
+	Price       string    `gorm:"not null;column:price"`
+	Icon        string    `gorm:"column:icon"`
+	CreatedAt   time.Time `gorm:"autoCreateTime;column:createdAt"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime;column:updatedAt"`
 }
 
 type CartItem struct {
-	ID        string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	UserID    string    `gorm:"not null;uniqueIndex:idx_cart_user_product"`
+	ID        string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	UserID    string    `gorm:"not null;uniqueIndex:idx_cart_user_product;column:userId"`
 	User      User      `gorm:"foreignKey:UserID"`
-	ProductID string    `gorm:"not null;uniqueIndex:idx_cart_user_product"`
+	ProductID string    `gorm:"not null;uniqueIndex:idx_cart_user_product;column:productId"`
 	Product   Product   `gorm:"foreignKey:ProductID;constraint:OnDelete:CASCADE"`
-	Quantity  int       `gorm:"default:1"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	Quantity  int       `gorm:"default:1;column:quantity"`
+	CreatedAt time.Time `gorm:"autoCreateTime;column:createdAt"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime;column:updatedAt"`
 }
 
 type Order struct {
-	ID            string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	InvoiceNumber string    `gorm:"uniqueIndex;not null"`
-	UserID        string    `gorm:"not null"`
+	ID            string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	InvoiceNumber string    `gorm:"uniqueIndex;not null;column:invoiceNumber"`
+	UserID        string    `gorm:"not null;column:userId"`
 	User          User      `gorm:"foreignKey:UserID"`
-	TotalAmount   float64   `gorm:"not null"`
-	Status        string    `gorm:"default:'PENDING'"`
-	PaymentType   string
-	SnapToken     string
-	SnapUrl       string
-	Address       string
-	DeliveryInfo  string
-	RefundReason  string
-	RefundAccount string
-	RefundProof   string
-	DiscountApplied float64 `gorm:"default:0"`
-	VoucherCode     string
+	TotalAmount   float64   `gorm:"not null;column:totalAmount"`
+	Status        string    `gorm:"default:'PENDING';column:status"`
+	PaymentType   string    `gorm:"column:paymentType"`
+	SnapToken     string    `gorm:"column:snapToken"`
+	SnapUrl       string    `gorm:"column:snapUrl"`
+	Address       string    `gorm:"column:address"`
+	DeliveryInfo  string    `gorm:"column:deliveryInfo"`
+	RefundReason  string    `gorm:"column:refundReason"`
+	RefundAccount string    `gorm:"column:refundAccount"`
+	RefundProof   string    `gorm:"column:refundProof"`
+	DiscountApplied float64 `gorm:"default:0;column:discountApplied"`
+	VoucherCode     string  `gorm:"column:voucherCode"`
 
 	Items     []OrderItem     `gorm:"foreignKey:OrderID"`
 	Timeline  []OrderTimeline `gorm:"foreignKey:OrderID"`
-	CreatedAt time.Time       `gorm:"autoCreateTime"`
-	UpdatedAt time.Time       `gorm:"autoUpdateTime"`
+	CreatedAt time.Time       `gorm:"autoCreateTime;column:createdAt"`
+	UpdatedAt time.Time       `gorm:"autoUpdateTime;column:updatedAt"`
 }
 
 type OrderItem struct {
-	ID        string  `gorm:"primaryKey;default:gen_random_uuid()"`
-	OrderID   string  `gorm:"not null"`
-	ProductID string  `gorm:"not null"`
+	ID        string  `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	OrderID   string  `gorm:"not null;column:orderId"`
+	ProductID string  `gorm:"not null;column:productId"`
 	Product   Product `gorm:"foreignKey:ProductID"`
-	Quantity  int     `gorm:"not null"`
-	Price     float64 `gorm:"not null"`
+	Quantity  int     `gorm:"not null;column:quantity"`
+	Price     float64 `gorm:"not null;column:price"`
 }
 
 type OrderTimeline struct {
-	ID          string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	OrderID     string    `gorm:"not null"`
-	Title       string    `gorm:"not null"`
-	Description string
-	Timestamp   time.Time `gorm:"default:now()"`
+	ID          string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	OrderID     string    `gorm:"not null;column:orderId"`
+	Title       string    `gorm:"not null;column:title"`
+	Description string    `gorm:"column:description"`
+	Timestamp   time.Time `gorm:"default:now();column:timestamp"`
 }
 
 type Message struct {
-	ID           string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	Content      string    `gorm:"type:text;not null"`
-	SenderID     string    `gorm:"not null"`
+	ID           string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	Content      string    `gorm:"type:text;not null;column:content"`
+	SenderID     string    `gorm:"not null;column:senderId"`
 	Sender       User      `gorm:"foreignKey:SenderID"`
-	IsAdmin      bool      `gorm:"default:false"`
-	IsRead       bool      `gorm:"default:false"`
-	TargetUserID string
-	CreatedAt    time.Time `gorm:"autoCreateTime"`
+	IsAdmin      bool      `gorm:"default:false;column:isAdmin"`
+	IsRead       bool      `gorm:"default:false;column:isRead"`
+	TargetUserID string    `gorm:"column:targetUserId"`
+	CreatedAt    time.Time `gorm:"autoCreateTime;column:createdAt"`
 }
 
 type Voucher struct {
-	ID          string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	Code        string    `gorm:"uniqueIndex;not null"`
-	Type        string    `gorm:"default:'FIXED'"`
-	Value       float64   `gorm:"not null"`
-	MinPurchase float64   `gorm:"default:0"`
-	MaxDiscount float64
-	StartDate   time.Time `gorm:"default:now()"`
-	ExpiresAt   time.Time `gorm:"not null"`
-	UsageLimit  int       `gorm:"default:0"`
-	UsedCount   int       `gorm:"default:0"`
-	IsActive    bool      `gorm:"default:true"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	ID          string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	Code        string    `gorm:"uniqueIndex;not null;column:code"`
+	Type        string    `gorm:"default:'FIXED';column:type"`
+	Value       float64   `gorm:"not null;column:value"`
+	MinPurchase float64   `gorm:"default:0;column:minPurchase"`
+	MaxDiscount float64   `gorm:"column:maxDiscount"`
+	StartDate   time.Time `gorm:"default:now();column:startDate"`
+	ExpiresAt   time.Time `gorm:"not null;column:expiresAt"`
+	UsageLimit  int       `gorm:"default:0;column:usageLimit"`
+	UsedCount   int       `gorm:"default:0;column:usedCount"`
+	IsActive    bool      `gorm:"default:true;column:isActive"`
+	CreatedAt   time.Time `gorm:"autoCreateTime;column:createdAt"`
 }
 
 type FlashSale struct {
-	ID            string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	ProductID     string    `gorm:"not null"`
+	ID            string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	ProductID     string    `gorm:"not null;column:productId"`
 	Product       Product   `gorm:"foreignKey:ProductID;constraint:OnDelete:CASCADE"`
-	DiscountPrice float64   `gorm:"not null"`
-	StartTime     time.Time `gorm:"not null"`
-	EndTime       time.Time `gorm:"not null"`
-	IsActive      bool      `gorm:"default:true"`
-	CreatedAt     time.Time `gorm:"autoCreateTime"`
+	DiscountPrice float64   `gorm:"not null;column:discountPrice"`
+	StartTime     time.Time `gorm:"not null;column:startTime"`
+	EndTime       time.Time `gorm:"not null;column:endTime"`
+	IsActive      bool      `gorm:"default:true;column:isActive"`
+	CreatedAt     time.Time `gorm:"autoCreateTime;column:createdAt"`
 }
 
 type Review struct {
-	ID        string    `gorm:"primaryKey;default:gen_random_uuid()"`
-	UserID    string    `gorm:"not null"`
+	ID        string    `gorm:"primaryKey;default:gen_random_uuid();column:id"`
+	UserID    string    `gorm:"not null;column:userId"`
 	User      User      `gorm:"foreignKey:UserID"`
-	ProductID string    `gorm:"not null"`
+	ProductID string    `gorm:"not null;column:productId"`
 	Product   Product   `gorm:"foreignKey:ProductID"`
-	Rating    int       `gorm:"not null"`
-	Comment   string    `gorm:"type:text"`
-	IsVisible bool      `gorm:"default:true"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+	Rating    int       `gorm:"not null;column:rating"`
+	Comment   string    `gorm:"type:text;column:comment"`
+	IsVisible bool      `gorm:"default:true;column:isVisible"`
+	CreatedAt time.Time `gorm:"autoCreateTime;column:createdAt"`
 }
