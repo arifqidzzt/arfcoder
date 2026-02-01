@@ -15,19 +15,8 @@ export default function AdminWhatsAppPage() {
 
   useEffect(() => {
     fetchStatus();
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '');
-    
-    socket.on('wa_qr', (data) => {
-      setQr(data.qr);
-      setStatus('Scan QR');
-    });
-
-    socket.on('wa_status', (data) => {
-      setStatus(data.status);
-      if (data.status === 'CONNECTED') setQr('');
-    });
-
-    return () => { socket.disconnect(); };
+    const interval = setInterval(fetchStatus, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchStatus = async () => {

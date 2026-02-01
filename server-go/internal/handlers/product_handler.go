@@ -173,10 +173,10 @@ func CheckVoucher(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"valid":       true,
-		"discount":    discount,
-		"code":        voucher.Code,
-		"type":        voucher.Type,
-		"finalAmount": req.TotalAmount - discount,
+		"valid":          true,
+		"discountAmount": discount,
+		"code":           voucher.Code,
+		"type":           voucher.Type,
+		"finalAmount":    req.TotalAmount - discount,
 	})
 }
