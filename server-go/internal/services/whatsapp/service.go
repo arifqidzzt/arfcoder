@@ -6,6 +6,7 @@ import (
 	"arfcoder-go/internal/models"
 	"context"
 	"fmt"
+	"os/exec"
 	"runtime"
 	"strings"
 	"sync"
@@ -28,47 +29,37 @@ var (
 
 func Connect() error {
 	dbLog := waLog.Stdout("Database", "ERROR", true)
-	
-	// Fix: Add context.Background() as per compiler requirement
-	store, err := sqlstore.New(context.Background(), "postgres", config.DatabaseURL, dbLog)
+	store, err := sqlstore.New("postgres", config.DatabaseURL, dbLog)
 	if err != nil {
 		return fmt.Errorf("failed to connect to WA store: %v", err)
 	}
 
-	// Fix: Add context.Background()
-	device, err := store.GetFirstDevice(context.Background())
+	device, err := store.GetFirstDevice()
 	if err != nil {
 		return fmt.Errorf("failed to get device: %v", err)
 	}
 
 	clientLog := waLog.Stdout("Client", "INFO", true)
 	Client = whatsmeow.NewClient(device, clientLog)
-	
 	Client.AddEventHandler(eventHandler)
 
 	if Client.Store.ID == nil {
 		qrChan, _ := Client.GetQRChannel(context.Background())
 		err = Client.Connect()
-		if err != nil {
-			return err
-		}
+		if err != nil { return err }
 		go func() {
 			for evt := range qrChan {
 				if evt.Event == "code" {
 					mu.Lock()
 					currentQR = evt.Code
 					mu.Unlock()
-					fmt.Println("QR Code updated (Available via API)")
-				} else {
-					fmt.Println("Login event:", evt.Event)
+					fmt.Println("QR Code updated")
 				}
 			}
 		}()
 	} else {
 		err = Client.Connect()
-		if err != nil {
-			return err
-		}
+		if err != nil { return err }
 	}
 
 	return nil
@@ -80,9 +71,17 @@ func GetQR() string {
 	return currentQR
 }
 
+// FIX: Add Public IsConnected check
+func IsConnected() bool {
+	if Client == nil {
+		return false
+	}
+	return Client.IsConnected()
+}
+
 func Logout() {
 	if Client != nil {
-		Client.Logout(context.Background())
+		Client.Logout()
 		mu.Lock()
 		currentQR = ""
 		mu.Unlock()
@@ -108,15 +107,9 @@ func SendMessage(phone string, text string) error {
 	}
 
 	jid, err := types.ParseJID(phone)
-	if err != nil {
-		return err
-	}
+	if err != nil { return err }
 
-	// Fix: Use waE2E.Message
-	msg := &waE2E.Message{
-		Conversation: proto.String(text),
-	}
-
+	msg := &waE2E.Message{ Conversation: proto.String(text) }
 	_, err = Client.SendMessage(context.Background(), jid, msg)
 	return err
 }
@@ -134,9 +127,7 @@ func eventHandler(evt interface{}) {
 }
 
 func handleMessage(evt *events.Message) {
-	if evt.Info.IsFromMe {
-		return 
-	}
+	if evt.Info.IsFromMe { return }
 
 	text := ""
 	if evt.Message.Conversation != nil {
@@ -146,17 +137,17 @@ func handleMessage(evt *events.Message) {
 	}
 	
 	text = strings.TrimSpace(text)
-	if text == "" {
-		return
-	}
+	if text == "" { return }
 
 	senderJID := evt.Info.Sender
 	senderPhone := strings.Split(senderJID.User, "@")[0]
 
 	var user models.User
+	// Try match normal phone or without 62 prefix
 	localPhone := "0" + senderPhone[2:]
 	
-	err := database.DB.Where("phone_number = ? OR phone_number = ? OR phone_number = ?", 
+	// FIX QUERY: Use quoted identifiers
+	err := database.DB.Where("\"phoneNumber\" = ? OR \"phoneNumber\" = ? OR \"phoneNumber\" = ?", 
 		senderPhone, localPhone, "+"+senderPhone).First(&user).Error
 
 	isAdmin := err == nil && (user.Role == models.RoleAdmin || user.Role == models.RoleSuperAdmin)
@@ -165,28 +156,36 @@ func handleMessage(evt *events.Message) {
 
 	if cmd == "INFO VPS" {
 		if !isAdmin {
-			reply(evt, "⛔ Akses Ditolak. Anda bukan Admin.")
+			reply(evt, fmt.Sprintf("⛔ Akses Ditolak. Nomor %s tidak dikenal/bukan admin.", senderPhone))
 			return
 		}
 		reply(evt, "⏳ Mengumpulkan data server...")
-		reply(evt, getServerStats())
+		
+		// Run speedtest cli if available
+		out, _ := exec.Command("speedtest-cli", "--simple").Output()
+		speed := string(out)
+		if speed == "" { speed = "Speedtest CLI not installed or failed" }
+
+		reply(evt, fmt.Sprintf("%s\n\nSpeed:\n%s", getServerStats(), speed))
 		return
 	}
 	
 	if cmd == "LIST ORDER" {
 		if !isAdmin { return }
 		var orders []models.Order
-		database.DB.Limit(5).Order("created_at desc").Find(&orders)
-		reply(evt, fmt.Sprintf("📦 5 Pesanan Terakhir:\n%d found (Stub)", len(orders)))
+		database.DB.Limit(5).Order("\"createdAt\" desc").Preload("User").Find(&orders)
+		
+		resp := "📦 5 Pesanan Terakhir:\n"
+		for _, o := range orders {
+			resp += fmt.Sprintf("- %s: Rp %.0f (%s)\n", o.InvoiceNumber, o.TotalAmount, o.Status)
+		}
+		reply(evt, resp)
 		return
 	}
 }
 
 func reply(evt *events.Message, text string) {
-	// Fix: Use waE2E.Message
-	msg := &waE2E.Message{
-		Conversation: proto.String(text),
-	}
+	msg := &waE2E.Message{ Conversation: proto.String(text) }
 	Client.SendMessage(context.Background(), evt.Info.Sender, msg)
 }
 
