@@ -3,10 +3,7 @@ package handlers
 import (
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
-	"arfcoder-go/internal/services/whatsapp"
 	"arfcoder-go/internal/utils"
-	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -103,71 +100,6 @@ func ChangePassword(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Password berhasil diubah"})
 }
 
-// --- PHONE CHANGE (OTP FLOW) ---
-
-func RequestPhoneChange(c *fiber.Ctx) error {
-	userClaims := c.Locals("user").(*utils.JWTClaims)
-	var user models.User
-	database.DB.First(&user, "id = ?", userClaims.UserID)
-
-	if user.PhoneNumber == "" {
-		return c.JSON(fiber.Map{"message": "Langsung verifikasi nomor baru", "skipOld": true})
-	}
-
-	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
-	whatsapp.SendMessage(user.PhoneNumber, "Kode Ganti HP: "+otpCode)
-
-	database.DB.Create(&models.Otp{
-		Code:      otpCode,
-		UserID:    user.ID,
-		Email:     "old_" + user.PhoneNumber,
-		ExpiresAt: time.Now().Add(5 * time.Minute),
-	})
-
-	return c.JSON(fiber.Map{"message": "OTP dikirim ke WhatsApp lama", "skipOld": false})
-}
-
-func RequestNewPhoneOtp(c *fiber.Ctx) error {
-	userClaims := c.Locals("user").(*utils.JWTClaims)
-	type Req struct {
-		NewPhoneNumber string `json:"newPhoneNumber"`
-	}
-	var req Req
-	c.BodyParser(&req)
-
-	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
-	whatsapp.SendMessage(req.NewPhoneNumber, "Kode Ganti HP Baru: "+otpCode)
-
-	database.DB.Create(&models.Otp{
-		Code:      otpCode,
-		UserID:    userClaims.UserID,
-		Email:     "new_" + req.NewPhoneNumber,
-		ExpiresAt: time.Now().Add(5 * time.Minute),
-	})
-
-	return c.JSON(fiber.Map{"message": "OTP dikirim ke WhatsApp baru"})
-}
-
-func VerifyNewPhone(c *fiber.Ctx) error {
-	userClaims := c.Locals("user").(*utils.JWTClaims)
-	type Req struct {
-		Code           string `json:"code"`
-		NewPhoneNumber string `json:"newPhoneNumber"`
-	}
-	var req Req
-	c.BodyParser(&req)
-
-	var otp models.Otp
-	if err := database.DB.Where("\"userId\" = ? AND code = ? AND email = ?", userClaims.UserID, req.Code, "new_"+req.NewPhoneNumber).First(&otp).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"message": "OTP Salah"})
-	}
-
-	database.DB.Delete(&otp)
-	database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("phoneNumber", req.NewPhoneNumber)
-
-	return c.JSON(fiber.Map{"message": "Nomor WhatsApp berhasil disimpan!"})
-}
-
 // --- REVIEWS ---
 
 func CreateReview(c *fiber.Ctx) error {
@@ -202,7 +134,7 @@ hasPurchased := false
 	var existing int64
 	database.DB.Model(&models.Review{}).Where("\"userId\" = ? AND \"productId\" = ?", userClaims.UserID, req.ProductId).Count(&existing)
 	if existing > 0 {
-		return c.Status(400).JSON(fiber.Map{"message": "Anda sudah mengulas produk ini."})
+		return c.Status(400).JSON(fiber.Map{"message": "Anda sudah mengulas produk ini."}) 
 	}
 
 	review := models.Review{

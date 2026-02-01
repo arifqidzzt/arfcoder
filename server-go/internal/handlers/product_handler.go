@@ -3,7 +3,6 @@ package handlers
 import (
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
-	"arfcoder-go/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/lib/pq"
@@ -103,49 +102,6 @@ func DeleteProduct(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Deleted"})
 }
 
-// --- ADMIN SERVICES ---
-
-func GetAdminServices(c *fiber.Ctx) error {
-	return GetPublicServices(c)
-}
-
-func UpsertService(c *fiber.Ctx) error {
-	type Req struct {
-		ID          string `json:"id"`
-		Title       string `json:"title"`
-		Description string `json:"description"`
-		Price       string `json:"price"`
-		Icon        string `json:"icon"`
-	}
-	var req Req
-	c.BodyParser(&req)
-
-	if req.ID == "" || req.ID == "new" {
-		service := models.Service{
-			Title: req.Title, Description: req.Description, Price: req.Price, Icon: req.Icon,
-		}
-		database.DB.Create(&service)
-		return c.Status(201).JSON(service)
-	} else {
-		var service models.Service
-		if err := database.DB.First(&service, "id = ?", req.ID).Error; err != nil {
-			return c.Status(404).JSON(fiber.Map{"message": "Not found"})
-		}
-		service.Title = req.Title
-		service.Description = req.Description
-		service.Price = req.Price
-		service.Icon = req.Icon
-		database.DB.Save(&service)
-		return c.JSON(service)
-	}
-}
-
-func DeleteService(c *fiber.Ctx) error {
-	id := c.Params("id")
-	database.DB.Delete(&models.Service{}, "id = ?", id)
-	return c.JSON(fiber.Map{"message": "Deleted"})
-}
-
 func GetAllVouchers(c *fiber.Ctx) error {
 	var vouchers []models.Voucher
 	database.DB.Order("\"createdAt\" desc").Find(&vouchers)
@@ -153,7 +109,14 @@ func GetAllVouchers(c *fiber.Ctx) error {
 }
 
 func CreateVoucher(c *fiber.Ctx) error {
-	// ... implementation same as Node ...
+	type Req struct {
+		Code string `json:"code"`
+		Type string `json:"type"`
+		Value float64 `json:"value"`
+	}
+	var req Req
+	c.BodyParser(&req)
+	// Simple placeholder implementation
 	return c.JSON(fiber.Map{"message": "Voucher created"})
 }
 
@@ -164,6 +127,5 @@ func DeleteVoucher(c *fiber.Ctx) error {
 }
 
 func CheckVoucher(c *fiber.Ctx) error {
-	// Logic check voucher
 	return c.JSON(fiber.Map{"valid": false})
 }
