@@ -33,12 +33,18 @@ func GetActiveFlashSales(c *fiber.Ctx) error {
 	now := time.Now()
 	var flashSales []models.FlashSale
 	
-	// FIX QUERY: use quoted identifiers for CamelCase columns
 	err := database.DB.Preload("Product").Where("\"isActive\" = ? AND \"startTime\" <= ? AND \"endTime\" > ?", true, now, now).Order("\"endTime\" asc").Find(&flashSales).Error
 	
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"message": "Error fetching flash sales"})
 	}
+	return c.JSON(flashSales)
+}
+
+// FIX: Added GetAllFlashSales for Admin
+func GetAllFlashSales(c *fiber.Ctx) error {
+	var flashSales []models.FlashSale
+	database.DB.Preload("Product").Order("\"createdAt\" desc").Find(&flashSales)
 	return c.JSON(flashSales)
 }
 

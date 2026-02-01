@@ -58,6 +58,7 @@ func SetupRoutes(app *fiber.App) {
 	// --- FLASH SALES ---
 	fs := api.Group("/flash-sales", middleware.SecureMiddleware)
 	fs.Get("/active", handlers.GetActiveFlashSales)
+	fs.Get("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetAllFlashSales) // FIX: Added
 	fs.Post("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.CreateFlashSale)
 	fs.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteFlashSale)
 
