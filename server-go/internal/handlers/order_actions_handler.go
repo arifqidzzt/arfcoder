@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"arfcoder-go/internal/config"
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
 	"arfcoder-go/internal/utils"
@@ -11,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/snap"
+	"gorm.io/gorm"
 )
 
 // Cancel Order (Return Stock)
@@ -39,7 +39,7 @@ func CancelOrder(c *fiber.Ctx) error {
 	// 2. Return Stock
 	for _, item := range order.Items {
 		if err := tx.Model(&models.Product{}).Where("id = ?", item.ProductID).
-			Update("stock", gormExpr("stock + ?", item.Quantity)).Error; err != nil {
+			Update("stock", gorm.Expr("stock + ?", item.Quantity)).Error; err != nil {
 			tx.Rollback()
 			return c.Status(500).JSON(fiber.Map{"message": "Failed to restore stock"})
 		}
@@ -47,15 +47,6 @@ func CancelOrder(c *fiber.Ctx) error {
 
 	tx.Commit()
 	return c.JSON(fiber.Map{"message": "Order cancelled"})
-}
-
-// Helper for GORM Expression
-func gormExpr(expr string, args ...interface{}) interface{} {
-	return database.DB.Statement.Context.Expr(expr, args...) // Simplified access to gorm.Expr
-	// Note: In real GORM usage we import gorm.io/gorm. 
-	// To avoid import mess in this snippet, I will use raw map update logic above or direct GORM update.
-	// Actually, just using database.DB.Raw or specific logic is safer.
-	// Re-writing loop above to be standard GORM.
 }
 
 // Refund Request
@@ -116,12 +107,13 @@ func RegeneratePaymentToken(c *fiber.Ctx) error {
 			OrderID:  newTxId, 
 			GrossAmt: int64(order.TotalAmount),
 		},
-		CustomerDetails: &midtrans.CustomerDetails{
+		CustomerDetail: &midtrans.CustomerDetails{ // Fixed field name
 			FName: userClaims.UserID,
 		},
 	}
 
-	resp, err := snapClient.CreateTransaction(reqSnap)
+	// Use exported SnapClient from order_handler.go
+	resp, err := SnapClient.CreateTransaction(reqSnap)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"message": "Failed to regenerate token"})
 	}
