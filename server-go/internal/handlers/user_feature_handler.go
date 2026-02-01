@@ -32,12 +32,18 @@ func GetProfile(c *fiber.Ctx) error {
 	var totalSpent float64
 	database.DB.Model(&models.Order{}).Where("\"userId\" = ? AND status IN ?", user.ID, []string{models.OrderStatusPaid, models.OrderStatusProcessing, models.OrderStatusShipped, models.OrderStatusCompleted}).Select("COALESCE(SUM(\"totalAmount\"), 0)").Scan(&totalSpent)
 
+	waBotNum := user.WABotNumber
+	if waBotNum == "" {
+		waBotNum = user.PhoneNumber
+	}
+
 	return c.JSON(fiber.Map{
 		"id":               user.ID,
 		"name":             user.Name,
 		"email":            user.Email,
 		"avatar":           user.Avatar,
 		"phoneNumber":      user.PhoneNumber,
+		"waBotNumber":      waBotNum,
 		"role":             user.Role,
 		"twoFactorEnabled": user.TwoFactorEnabled,
 		"totalSpent":       totalSpent,
@@ -73,8 +79,13 @@ func UpdatePhoneDirect(c *fiber.Ctx) error {
 	var req Req
 	c.BodyParser(&req)
 
-	database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("phoneNumber", req.PhoneNumber)
-	
+	// Admin updates their BOT identification number, not account number
+	if userClaims.Role == models.RoleAdmin || userClaims.Role == models.RoleSuperAdmin {
+		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("waBotNumber", req.PhoneNumber)
+	} else {
+		database.DB.Model(&models.User{}).Where("id = ?", userClaims.UserID).Update("phoneNumber", req.PhoneNumber)
+	}
+
 	var user models.User
 	database.DB.First(&user, "id = ?", userClaims.UserID)
 	return c.JSON(user)

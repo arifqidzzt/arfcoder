@@ -77,7 +77,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <header className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-2xl font-bold">Halo, {user?.name}</h2>

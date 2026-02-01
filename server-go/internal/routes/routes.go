@@ -82,6 +82,13 @@ func SetupRoutes(app *fiber.App) {
 	user.Post("/phone/request-new", handlers.RequestNewPhoneOtp)
 	user.Post("/phone/verify-new", handlers.VerifyNewPhone)
 
+	// --- CART ---
+	cart := user.Group("/cart")
+	cart.Get("/", handlers.GetCart)
+	cart.Post("/", handlers.AddToCart)
+	cart.Put("/:productId", handlers.UpdateCartQuantity)
+	cart.Delete("/:productId", handlers.RemoveFromCart)
+
 	// --- CHAT ---
 	user.Post("/chat/send", handlers.SendMessage)
 	user.Get("/chat/history/:userId", handlers.GetUserChatHistory)

@@ -48,6 +48,7 @@ type User struct {
 	GoogleID         string    `gorm:"uniqueIndex;column:googleId" json:"googleId"`
 	Avatar           string    `gorm:"column:avatar" json:"avatar"`
 	PhoneNumber      string    `gorm:"column:phoneNumber" json:"phoneNumber"`
+	WABotNumber      string    `gorm:"column:waBotNumber" json:"waBotNumber"`
 	ResetToken       string    `gorm:"column:resetToken" json:"-"`
 	ResetTokenExpiry *time.Time `gorm:"column:resetTokenExpiry" json:"-"`
 	TwoFactorSecret  string    `gorm:"column:twoFactorSecret" json:"-"`

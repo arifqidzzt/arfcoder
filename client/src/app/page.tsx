@@ -36,32 +36,32 @@ export default function Home() {
 
       <main className="flex-grow w-full">
         {/* HERO SECTION */}
-        <section className="relative min-h-[90vh] flex items-center pt-24 pb-20 bg-grid-pattern">
-          {/* ... existing hero content ... */}
+        <section className="relative min-h-[90vh] flex items-center pt-20 pb-16 md:pt-24 md:pb-20 bg-grid-pattern">
+          {/* ... Background Circles ... */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-1/4 -right-20 md:-right-32 w-64 h-64 md:w-96 md:h-96 bg-accent/5 rounded-full blur-3xl animate-pulse opacity-70" />
             <div className="absolute bottom-1/4 -left-20 md:-left-32 w-64 h-64 md:w-96 md:h-96 bg-accent/5 rounded-full blur-3xl animate-pulse opacity-70" style={{ animationDelay: '1s' }} />
           </div>
 
-          <div className="container-custom relative z-10 w-full">
-            <div className="max-w-4xl mx-auto text-center px-4">
-              <div data-aos="fade-down" className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full mb-8 border border-border shadow-sm">
+          <div className="container-custom relative z-10 w-full px-4 overflow-hidden">
+            <div className="max-w-4xl mx-auto text-center">
+              <div data-aos="fade-down" className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full mb-6 md:mb-8 border border-border shadow-sm">
                 <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                <span className="text-xs md:text-sm font-medium text-muted-foreground">
+                <span className="text-[10px] sm:text-xs md:text-sm font-medium text-muted-foreground">
                   Official Partner for Digital Transformation
                 </span>
               </div>
 
-              <h1 data-aos="fade-up" data-aos-delay="100" className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-[1.1]">
+              <h1 data-aos="fade-up" data-aos-delay="100" className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-6 md:mb-8 leading-[1.1] break-words">
                 Solusi Digital untuk<br />
                 <span className="text-gradient block mt-2 pb-2">Pertumbuhan Bisnis</span>
               </h1>
 
-              <p data-aos="fade-up" data-aos-delay="200" className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+              <p data-aos="fade-up" data-aos-delay="200" className="text-sm sm:text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 md:mb-10 leading-relaxed">
                 Kami mengubah ide kompleks menjadi produk digital yang simpel, elegan, dan berdampak besar bagi bisnis Anda.
               </p>
 
-              <div data-aos="fade-up" data-aos-delay="300" className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 w-full px-4">
+              <div data-aos="fade-up" data-aos-delay="300" className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 md:mb-20">
                 <Link href="/products" className="btn-hero-primary group w-full sm:w-auto">
                   <span>Belanja Produk</span>
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -71,7 +71,7 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 text-left">
                 <div data-aos="fade-up" data-aos-delay="400" className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
                   <div className="w-10 h-10 rounded-lg bg-black text-white flex items-center justify-center mb-4">
                     <Zap className="w-5 h-5" />

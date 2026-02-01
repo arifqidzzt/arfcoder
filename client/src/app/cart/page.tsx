@@ -1,12 +1,19 @@
 'use client';
 
+import { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { useCartStore } from '@/store/useCartStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, total } = useCartStore();
+  const { items, removeItem, updateQuantity, total, fetchCart } = useCartStore();
+  const { token } = useAuthStore();
+
+  useEffect(() => {
+    if (token) fetchCart();
+  }, [token]);
 
   if (items.length === 0) {
     return (

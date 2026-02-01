@@ -159,8 +159,9 @@ func handleMessage(evt *events.Message) {
 	var user models.User
 	localPhone := "0" + senderPhone[2:]
 	
-	err := database.DB.Where("\"phoneNumber\" = ? OR \"phoneNumber\" = ? OR \"phoneNumber\" = ?", 
-		senderPhone, localPhone, "+"+senderPhone).First(&user).Error
+	err := database.DB.Where("\"waBotNumber\" IN ? OR \"phoneNumber\" IN ?", 
+		[]string{senderPhone, localPhone, "+"+senderPhone}, 
+		[]string{senderPhone, localPhone, "+"+senderPhone}).First(&user).Error
 
 	isAdmin := err == nil && (user.Role == models.RoleAdmin || user.Role == models.RoleSuperAdmin)
 
@@ -190,7 +191,12 @@ func handleMessage(evt *events.Message) {
 		distro := strings.TrimSpace(string(osOut))
 		if distro == "" { distro = runtime.GOOS }
 
-		// 3. IP Info
+		// 3. Kernel
+		kernOut, _ := exec.Command("uname", "-r").Output()
+		kernel := strings.TrimSpace(string(kernOut))
+		if kernel == "" { kernel = "N/A" }
+
+		// 4. IP Info
 		ipOut, _ := exec.Command("curl", "-s", "ipinfo.io/json").Output()
 		ipJson := string(ipOut)
 		ip := getJsonValue(ipJson, "ip")
@@ -198,12 +204,12 @@ func handleMessage(evt *events.Message) {
 		country := getJsonValue(ipJson, "country")
 		org := getJsonValue(ipJson, "org")
 
-		// 4. CPU
+		// 5. CPU
 		cpuOut, _ := exec.Command("sh", "-c", "grep 'model name' /proc/cpuinfo | head -1 | cut -d: -f2").Output()
 		cpuModel := strings.TrimSpace(string(cpuOut))
 		if cpuModel == "" { cpuModel = "Unknown CPU" }
 		
-		// 5. RAM
+		// 6. RAM
 		memOut, _ := exec.Command("free", "-h").Output()
 		memLines := strings.Split(string(memOut), "\n")
 		ram := "N/A"
@@ -214,11 +220,11 @@ func handleMessage(evt *events.Message) {
 			}
 		}
 
-		// 6. Uptime
+		// 7. Uptime
 		upOut, _ := exec.Command("uptime", "-p").Output()
 		uptime := strings.TrimSpace(string(upOut))
 
-		// 7. Speedtest
+		// 8. Speedtest
 		speedOut, _ := exec.Command("speedtest-cli", "--simple").Output()
 		speedStr := string(speedOut)
 		dl := "N/A"
@@ -236,8 +242,9 @@ func handleMessage(evt *events.Message) {
 ---------------------------
 💻 *SISTEM OPERASI*
 • Distro: %s
-• Go Ver: %s
+• Kernel: %s
 • Uptime: %s
+• Go: %s
 
 🌍 *JARINGAN & LOKASI*
 • IP: %s
@@ -254,14 +261,12 @@ func handleMessage(evt *events.Message) {
 ---------------------------
 Bot Active | %s
 `, 
-			distro, 
-			runtime.Version(),
-			uptime,
+			distro, kernel, uptime, runtime.Version(),
 			ip, city, country, org,
 			dl, ul,
 			cpuModel, runtime.NumCPU(),
 			ram, disk,
-			time.Now().Format("02 Jan 2006 15:04"),
+			time.Now().Format("02/01/2006, 15:04:05"),
 		)
 
 		reply(evt, strings.TrimSpace(replyMsg))

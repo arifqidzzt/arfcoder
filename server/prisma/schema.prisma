@@ -50,6 +50,7 @@ model User {
   // Profile Additions
   avatar        String?
   phoneNumber   String?
+  waBotNumber   String? // For Admin Bot identification
   
   // Security (2FA)
   resetToken        String?

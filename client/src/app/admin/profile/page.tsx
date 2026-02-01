@@ -23,7 +23,7 @@ export default function AdminProfilePage() {
     try {
       const res = await api.get('/user/profile');
       if (res.data.twoFactorEnabled) setIsEnabled(true);
-      if (res.data.phoneNumber) setPhoneNumber(res.data.phoneNumber);
+      if (res.data.waBotNumber) setPhoneNumber(res.data.waBotNumber);
       // Also update store
       useAuthStore.setState({ user: res.data });
     } catch (e) {
@@ -38,7 +38,7 @@ export default function AdminProfilePage() {
   // Sync with store updates too
   useEffect(() => {
     if (user?.twoFactorEnabled) setIsEnabled(true);
-    if (user?.phoneNumber) setPhoneNumber(user.phoneNumber);
+    if (user?.waBotNumber) setPhoneNumber(user.waBotNumber);
   }, [user]);
 
   const handleUpdatePhone = async (e: React.FormEvent) => {
