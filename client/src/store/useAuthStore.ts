@@ -9,6 +9,7 @@ interface User {
   role: string;
   avatar?: string | null;
   phoneNumber?: string | null;
+  waBotNumber?: string | null;
   twoFactorEnabled?: boolean;
 }
 
