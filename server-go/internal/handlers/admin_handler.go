@@ -10,38 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// ... (Other handlers remain unchanged, overwriting just GetWaStatus & helpers) ...
-
-// --- WA BOT CONTROL ---
-func GetWaStatus(c *fiber.Ctx) error {
-	status := "DISCONNECTED"
-	qr := whatsapp.GetQR() // Fetch from memory
-	
-	if whatsapp.Client != nil && whatsapp.Client.IsConnected() {
-		status = "CONNECTED"
-		qr = "" // No QR if connected
-	}
-	
-	return c.JSON(fiber.Map{
-		"status": status,
-		"qr":     qr,
-	})
-}
-
-func LogoutWa(c *fiber.Ctx) error {
-	whatsapp.Logout()
-	return c.JSON(fiber.Map{"message": "WA Logged out"})
-}
-
-func StartWa(c *fiber.Ctx) error {
-	go whatsapp.Connect()
-	return c.JSON(fiber.Map{"message": "WA Connection initiated"})
-}
-
-// ... (Rest of Admin handlers need to be preserved) ...
-// Since this tool overwrites files, I must include the full content of admin_handler.go again.
-// To ensure I don't lose the previous work in admin_handler.go, I will re-output the WHOLE file.
-
 // --- DASHBOARD STATS ---
 func GetDashboardStats(c *fiber.Ctx) error {
 	var totalOrders int64
@@ -53,15 +21,16 @@ func GetDashboardStats(c *fiber.Ctx) error {
 	database.DB.Model(&models.Product{}).Count(&totalProducts)
 	database.DB.Model(&models.User{}).Count(&totalUsers)
 
-	// Sum total sales (PAID)
-	database.DB.Model(&models.Order{}).Where("status = ?", models.OrderStatusPaid).Select("COALESCE(SUM(total_amount), 0)").Scan(&totalSales)
+	// Sum total sales (PAID) - FIX QUERY
+	database.DB.Model(&models.Order{}).Where("status = ?", models.OrderStatusPaid).Select("COALESCE(SUM(\"totalAmount\"), 0)").Scan(&totalSales)
 
 	// Chart Data
 	sixMonthsAgo := time.Now().AddDate(0, -5, 0)
 	sixMonthsAgo = time.Date(sixMonthsAgo.Year(), sixMonthsAgo.Month(), 1, 0, 0, 0, 0, sixMonthsAgo.Location())
 
 	var recentOrders []models.Order
-	database.DB.Where("status = ? AND created_at >= ?", models.OrderStatusPaid, sixMonthsAgo).Find(&recentOrders)
+	// FIX QUERY
+	database.DB.Where("status = ? AND \"createdAt\" >= ?", models.OrderStatusPaid, sixMonthsAgo).Find(&recentOrders)
 
 	monthlyStats := make(map[string]float64)
 	monthNames := []string{"Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"}
@@ -102,7 +71,8 @@ func GetDashboardStats(c *fiber.Ctx) error {
 // --- ORDER MANAGEMENT ---
 func GetAllOrders(c *fiber.Ctx) error {
 	var orders []models.Order
-	database.DB.Preload("User").Preload("Items.Product").Order("created_at desc").Find(&orders)
+	// FIX QUERY
+	database.DB.Preload("User").Preload("Items.Product").Order("\"createdAt\" desc").Find(&orders)
 	return c.JSON(orders)
 }
 
@@ -115,6 +85,7 @@ func UpdateOrderStatus(c *fiber.Ctx) error {
 	var req Req
 	c.BodyParser(&req)
 
+	// FIX QUERY
 	database.DB.Model(&models.Order{}).Where("id = ?", id).Updates(models.Order{Status: req.Status, RefundProof: req.RefundProof})
 	return c.JSON(fiber.Map{"message": "Status updated"})
 }
@@ -137,7 +108,9 @@ func UpdateDeliveryInfo(c *fiber.Ctx) error {
 // --- USER MANAGEMENT ---
 func GetAllUsers(c *fiber.Ctx) error {
 	var users []models.User
-	database.DB.Select("id, name, email, role, is_verified, created_at").Order("created_at desc").Find(&users)
+	// FIX QUERY (Select CamelCase columns if needed, but GORM maps them now)
+	// But Select() overrides GORM, so we must use quoted names
+	database.DB.Select("id, name, email, role, \"isVerified\", \"createdAt\"").Order("\"createdAt\" desc").Find(&users)
 	return c.JSON(users)
 }
 
@@ -150,7 +123,7 @@ func DeleteUser(c *fiber.Ctx) error {
 // --- SERVICE MANAGEMENT ---
 func GetAdminServices(c *fiber.Ctx) error {
 	var services []models.Service
-	database.DB.Order("created_at desc").Find(&services)
+	database.DB.Order("\"createdAt\" desc").Find(&services)
 	return c.JSON(services)
 }
 
@@ -196,4 +169,30 @@ func DeleteOrderTimeline(c *fiber.Ctx) error {
 	id := c.Params("id")
 	database.DB.Delete(&models.OrderTimeline{}, "id = ?", id)
 	return c.JSON(fiber.Map{"message": "Deleted"})
+}
+
+// --- WA BOT CONTROL ---
+func GetWaStatus(c *fiber.Ctx) error {
+	status := "DISCONNECTED"
+	qr := whatsapp.GetQR()
+	
+	if whatsapp.IsConnected() {
+		status = "CONNECTED"
+		qr = "" 
+	}
+	
+	return c.JSON(fiber.Map{
+		"status": status,
+		"qr":     qr,
+	})
+}
+
+func LogoutWa(c *fiber.Ctx) error {
+	whatsapp.Logout()
+	return c.JSON(fiber.Map{"message": "WA Logged out"})
+}
+
+func StartWa(c *fiber.Ctx) error {
+	go whatsapp.Connect()
+	return c.JSON(fiber.Map{"message": "WA Connection initiated"})
 }
