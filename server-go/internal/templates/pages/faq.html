@@ -1,0 +1,22 @@
+<div class="min-h-screen bg-gray-50/50 pb-20 pt-24">
+    <div class="container mx-auto px-4 md:px-8 max-w-3xl">
+        <div class="text-center mb-16">
+            <h1 class="text-4xl font-black uppercase tracking-tighter mb-4">Pusat Bantuan</h1>
+            <p class="text-gray-400 font-medium">Pertanyaan yang sering diajukan seputar layanan ArfCoder.</p>
+        </div>
+
+        <div class="space-y-4" x-data="{ active: null }">
+            {{range $i, $q := (slice "Bagaimana cara memesan jasa koding?" "Berapa lama proses pengerjaan produk?" "Apakah ada garansi jika terjadi error?" "Bagaimana sistem pembayarannya?")}}
+            <div class="bg-white rounded-3xl border border-gray-100 shadow-soft overflow-hidden">
+                <button @click="active === {{$i}} ? active = null : active = {{$i}}" class="w-full p-6 text-left flex justify-between items-center hover:bg-gray-50 transition-all">
+                    <span class="font-black uppercase tracking-tight text-sm">{{.}}</span>
+                    <svg :class="active === {{$i}} ? 'rotate-180' : ''" class="transition-transform duration-300" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div x-show="active === {{$i}}" x-collapse class="p-6 pt-0 text-gray-500 text-sm font-medium leading-relaxed border-t border-gray-50">
+                    Kami akan membantu Anda dari tahap konsultasi awal hingga produk live. Durasi pengerjaan bergantung pada kompleksitas project, namun rata-rata memakan waktu 3-7 hari kerja untuk produk standar. Pembayaran dilakukan via Midtrans yang mendukung berbagai metode.
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>

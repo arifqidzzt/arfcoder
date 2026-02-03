@@ -199,6 +199,42 @@ func RenderAdminProducts(c *fiber.Ctx) error {
 	return c.Render("pages/admin/products", data, "layouts/admin")
 }
 
+func RenderAdminProductForm(c *fiber.Ctx) error {
+	id := c.Params("id")
+	data := getCommonData(c)
+	data["Title"] = "Form Produk"
+
+	var product models.Product
+	if id != "new" {
+		database.DB.First(&product, "id = ?", id)
+	}
+	data["Product"] = product
+
+	var categories []models.Category
+	database.DB.Find(&categories)
+	data["Categories"] = categories
+
+	return c.Render("pages/admin/product_form", data, "layouts/admin")
+}
+
+func RenderAdminOrderManage(c *fiber.Ctx) error {
+	id := c.Params("id")
+	data := getCommonData(c)
+	data["Title"] = "Kelola Pesanan"
+
+	var order models.Order
+	database.DB.Preload("Items.Product").Preload("User").Preload("Timeline").First(&order, "id = ?", id)
+	data["Order"] = order
+
+	return c.Render("pages/admin/order_manage", data, "layouts/admin")
+}
+
+func RenderProfileSecurity(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Keamanan Akun"
+	return c.Render("pages/profile_security", data)
+}
+
 func RenderAdminOrders(c *fiber.Ctx) error {
 	data := getCommonData(c)
 	data["Title"] = "Kelola Pesanan"
@@ -233,6 +269,12 @@ func RenderAdminServices(c *fiber.Ctx) error {
 	database.DB.Order("\"createdAt\" desc").Find(&services)
 	data["Services"] = services
 	return c.Render("pages/admin/services", data, "layouts/admin")
+}
+
+func RenderAdminChat(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Live Chat"
+	return c.Render("pages/admin/chat", data, "layouts/admin")
 }
 
 func RenderAdminWhatsapp(c *fiber.Ctx) error {

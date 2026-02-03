@@ -1,0 +1,88 @@
+<div class="p-4 md:p-10 max-w-5xl mx-auto" x-data="{ status: '{{.Order.Status}}' }">
+    <div class="flex items-center gap-4 mb-10">
+        <a href="/admin/orders" class="p-2 bg-white rounded-full border border-gray-100 shadow-sm hover:bg-gray-50 transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </a>
+        <h1 class="text-3xl font-black uppercase tracking-tighter">Kelola Pesanan #{{.Order.InvoiceNumber}}</h1>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Order Status Controller -->
+            <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-soft">
+                <h3 class="font-black text-xs uppercase tracking-widest text-gray-400 mb-6">Update Status</h3>
+                <form hx-put="/api/admin/orders/{{.Order.ID}}" hx-target="body" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <select name="status" x-model="status" class="p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-sm uppercase tracking-widest">
+                        <option value="PENDING">PENDING</option>
+                        <option value="PAID">PAID</option>
+                        <option value="PROCESSING">PROCESSING</option>
+                        <option value="SHIPPED">SHIPPED</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                    </select>
+                    <button type="submit" class="bg-black text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-gray-800 transition-all">Update Status</button>
+                </form>
+            </div>
+
+            <!-- Delivery Info -->
+            <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-soft">
+                <h3 class="font-black text-xs uppercase tracking-widest text-gray-400 mb-6">Informasi Pengiriman / Resi / Link</h3>
+                <form hx-put="/api/admin/orders/{{.Order.ID}}/delivery" hx-target="body" class="space-y-4">
+                    <textarea name="deliveryInfo" rows="3" class="w-full p-5 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-medium text-sm" placeholder="Masukkan link download atau nomor resi pengiriman...">{{.Order.DeliveryInfo}}</textarea>
+                    <button type="submit" class="w-full py-4 bg-accent text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:opacity-90 transition-all">Simpan & Kirim Notifikasi</button>
+                </form>
+            </div>
+
+            <!-- Timeline -->
+            <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-soft">
+                <h3 class="font-black text-xs uppercase tracking-widest text-gray-400 mb-8">Timeline Manual</h3>
+                <form hx-post="/api/admin/timeline/{{.Order.ID}}" hx-target="body" class="flex flex-col sm:flex-row gap-4 mb-10">
+                    <input name="title" placeholder="Judul (misal: Paket dikirim)" required class="flex-1 p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-sm">
+                    <button type="submit" class="bg-gray-100 text-black px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-gray-200">Tambah Point</button>
+                </form>
+                
+                <div class="space-y-6">
+                    {{range .Order.Timeline}}
+                    <div class="flex justify-between items-center group">
+                        <div>
+                            <p class="font-black uppercase text-sm tracking-tight">{{.Title}}</p>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">{{.Timestamp.Format "02 Jan 2006, 15:04"}}</p>
+                        </div>
+                        <button hx-delete="/api/admin/timeline/{{.ID}}" hx-target="body" class="p-2 text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Info -->
+        <div class="lg:col-span-1 space-y-8">
+            <div class="bg-gray-900 text-white p-8 rounded-[2.5rem] shadow-xl">
+                <h3 class="font-black text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-6">Informasi Pelanggan</h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Nama</p>
+                        <p class="font-black text-lg">{{.Order.User.Name}}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Email</p>
+                        <p class="font-medium text-sm text-gray-300 underline">{{.Order.User.Email}}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">WhatsApp</p>
+                        <p class="font-black text-lg text-accent">{{.Order.User.PhoneNumber}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-soft">
+                <h3 class="font-black text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-6">Alamat/Catatan</h3>
+                <p class="text-sm font-medium text-gray-600 leading-relaxed italic">
+                    "{{.Order.Address}}"
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
