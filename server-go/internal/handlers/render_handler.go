@@ -17,10 +17,10 @@ func getCommonData(c *fiber.Ctx) fiber.Map {
 
 	// Get User from Token (Cookie-based for Frontend)
 
-token := c.Cookies("auth_token")
+	token := c.Cookies("auth_token")
 	if token != "" {
-		claims, err := utils.VerifyToken(token)
-		if err == nil {
+		data["Token"] = token
+		claims, err := utils.VerifyToken(token)		if err == nil {
 			var user models.User
 			database.DB.First(&user, "id = ?", claims.UserID)
 			data["User"] = user
@@ -59,6 +59,44 @@ func RenderProducts(c *fiber.Ctx) error {
 	data["Products"] = products
 
 	return c.Render("pages/products", data)
+}
+
+func RenderProductDetail(c *fiber.Ctx) error {
+	id := c.Params("id")
+	data := getCommonData(c)
+
+	var product models.Product
+	if err := database.DB.Preload("Category").First(&product, "id = ?", id).Error; err != nil {
+		return c.Redirect("/products")
+	}
+
+	data["Title"] = product.Name
+	data["Product"] = product
+
+	return c.Render("pages/product_detail", data)
+}
+
+func RenderOrderDetail(c *fiber.Ctx) error {
+	id := c.Params("id")
+	data := getCommonData(c)
+	user, ok := data["User"].(models.User)
+	if !ok { return c.Redirect("/login") }
+
+	var order models.Order
+	query := database.DB.Preload("Items.Product").Preload("Timeline")
+	
+	if user.Role == "ADMIN" || user.Role == "SUPER_ADMIN" {
+		query.First(&order, "id = ?", id)
+	} else {
+		query.Where("id = ? AND \"userId\" = ?", id, user.ID).First(&order)
+	}
+
+	if order.ID == "" { return c.Redirect("/orders") }
+
+	data["Title"] = "Detail Pesanan #" + order.InvoiceNumber
+	data["Order"] = order
+
+	return c.Render("pages/order_detail", data)
 }
 
 func RenderCart(c *fiber.Ctx) error {
@@ -149,5 +187,65 @@ func RenderAdminDashboard(c *fiber.Ctx) error {
 		"TotalSales":    totalSales,
 	}
 
-	return c.Render("pages/admin/dashboard", data, "layouts/admin") // Note: Use specific layout
+	return c.Render("pages/admin/dashboard", data, "layouts/admin")
+}
+
+func RenderAdminProducts(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Kelola Produk"
+	var products []models.Product
+	database.DB.Order("\"createdAt\" desc").Find(&products)
+	data["Products"] = products
+	return c.Render("pages/admin/products", data, "layouts/admin")
+}
+
+func RenderAdminOrders(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Kelola Pesanan"
+	var orders []models.Order
+	database.DB.Preload("User").Order("\"createdAt\" desc").Find(&orders)
+	data["Orders"] = orders
+	return c.Render("pages/admin/orders", data, "layouts/admin")
+}
+
+func RenderAdminUsers(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Kelola Pengguna"
+	var users []models.User
+	database.DB.Order("\"createdAt\" desc").Find(&users)
+	data["Users"] = users
+	return c.Render("pages/admin/users", data, "layouts/admin")
+}
+
+func RenderAdminVouchers(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Kelola Voucher"
+	var vouchers []models.Voucher
+	database.DB.Order("\"createdAt\" desc").Find(&vouchers)
+	data["Vouchers"] = vouchers
+	return c.Render("pages/admin/vouchers", data, "layouts/admin")
+}
+
+func RenderAdminServices(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Kelola Jasa"
+	var services []models.Service
+	database.DB.Order("\"createdAt\" desc").Find(&services)
+	data["Services"] = services
+	return c.Render("pages/admin/services", data, "layouts/admin")
+}
+
+func RenderAdminWhatsapp(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "WhatsApp Bot"
+	return c.Render("pages/admin/whatsapp", data, "layouts/admin")
+}
+
+func RenderAdminLogs(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Audit Logs"
+	var logs []models.ActivityLog
+	database.DB.Preload("User").Order("\"createdAt\" desc").Limit(100).Find(&logs)
+	data["Logs"] = logs
+	return c.Render("pages/admin/logs", data, "layouts/admin")
 }

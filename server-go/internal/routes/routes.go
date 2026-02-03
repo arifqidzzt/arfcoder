@@ -13,11 +13,24 @@ func SetupRoutes(app *fiber.App) {
 	app.Get("/login", func(c *fiber.Ctx) error { return c.Render("pages/login", fiber.Map{"Title": "Login"}) })
 	app.Get("/register", func(c *fiber.Ctx) error { return c.Render("pages/register", fiber.Map{"Title": "Daftar"}) })
 	app.Get("/products", handlers.RenderProducts)
+	app.Get("/products/:id", handlers.RenderProductDetail)
 	app.Get("/cart", handlers.RenderCart)
 	app.Get("/checkout", handlers.RenderCheckout)
 	app.Get("/orders", handlers.RenderOrders)
+	app.Get("/orders/:id", handlers.RenderOrderDetail)
 	app.Get("/profile", handlers.RenderProfile)
 	app.Post("/logout", handlers.Logout)
+
+	// --- ADMIN DASHBOARD ---
+	admin := app.Group("/admin", middleware.AuthMiddleware, middleware.AdminOnly)
+	admin.Get("/", handlers.RenderAdminDashboard)
+	admin.Get("/products", handlers.RenderAdminProducts)
+	admin.Get("/orders", handlers.RenderAdminOrders)
+	admin.Get("/users", handlers.RenderAdminUsers)
+	admin.Get("/vouchers", handlers.RenderAdminVouchers)
+	admin.Get("/services", handlers.RenderAdminServices)
+	admin.Get("/whatsapp", handlers.RenderAdminWhatsapp)
+	admin.Get("/logs", handlers.RenderAdminLogs)
 
 	api := app.Group("/api", middleware.RateLimitAPI())
 
