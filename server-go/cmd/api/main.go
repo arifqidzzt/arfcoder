@@ -7,6 +7,7 @@ import (
 	"arfcoder-go/internal/routes"
 	"arfcoder-go/internal/services/whatsapp"
 	"log"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -16,6 +17,11 @@ import (
 )
 
 func main() {
+	// Debug: Print CWD
+	if wd, err := os.Getwd(); err == nil {
+		log.Println("Current Working Directory:", wd)
+	}
+
 	// 1. Config
 	config.LoadConfig()
 
@@ -33,7 +39,9 @@ func main() {
 
 	// 4. Fiber App with Template Engine
 	engine := html.New("./web/templates", ".html")
-	
+	engine.Reload(true) // Development mode
+	engine.Debug(true)  // Print loaded templates
+
 	app := fiber.New(fiber.Config{
 		BodyLimit: 50 * 1024 * 1024, // 50MB
 		Views:     engine,
