@@ -19,7 +19,7 @@ func WebHome(c *fiber.Ctx) error {
 
 	// 2. Fetch Featured Products (Limit 3)
 	var products []models.Product
-	if err := database.DB.Order("created_at desc").Limit(3).Find(&products).Error; err != nil {
+	if err := database.DB.Order("\"createdAt\" desc").Limit(3).Find(&products).Error; err != nil {
 		// Log error but don't fail page
 		// log.Println("Error fetching products:", err)
 	}

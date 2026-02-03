@@ -42,6 +42,29 @@ func main() {
 	engine.Reload(true) // Development mode
 	engine.Debug(true)  // Print loaded templates
 
+	// Add Template Functions
+	engine.AddFunc("mul", func(a, b interface{}) float64 {
+		return toFloat(a) * toFloat(b)
+	})
+	engine.AddFunc("sub", func(a, b interface{}) float64 {
+		return toFloat(a) - toFloat(b)
+	})
+	engine.AddFunc("div", func(a, b interface{}) float64 {
+		return toFloat(a) / toFloat(b)
+	})
+	engine.AddFunc("add", func(a, b interface{}) float64 {
+		return toFloat(a) + toFloat(b)
+	})
+	engine.AddFunc("substr", func(s string, start, length int) string {
+		if start >= len(s) {
+			return ""
+		}
+		if start+length > len(s) {
+			length = len(s) - start
+		}
+		return s[start : start+length]
+	})
+
 	app := fiber.New(fiber.Config{
 		BodyLimit: 50 * 1024 * 1024, // 50MB
 		Views:     engine,
@@ -65,4 +88,19 @@ func main() {
 
 	// 7. Start
 	log.Fatal(app.Listen(":" + config.Port))
+}
+
+func toFloat(i interface{}) float64 {
+	switch v := i.(type) {
+	case int:
+		return float64(v)
+	case int64:
+		return float64(v)
+	case float64:
+		return v
+	case float32:
+		return float64(v)
+	default:
+		return 0
+	}
 }

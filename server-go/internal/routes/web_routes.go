@@ -15,6 +15,8 @@ func SetupWebRoutes(app *fiber.App) {
 	web := app.Group("/", middleware.SoftWebAuth)
 	
 	web.Get("/", handlers.WebHome)
+	web.Get("/login", handlers.WebLogin)       // Shortcut
+	web.Get("/register", handlers.WebRegister) // Shortcut
     web.Get("/auth/login", handlers.WebLogin)
     web.Get("/auth/register", handlers.WebRegister)
     web.Get("/products", handlers.WebProducts)
