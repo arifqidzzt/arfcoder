@@ -1,0 +1,314 @@
+{{define "content"}}
+<div class="min-h-screen bg-gray-50 flex flex-col" x-data="profilePage">
+    <main class="flex-grow max-w-4xl mx-auto w-full px-4 sm:px-6 py-12 pt-24">
+        <h1 class="text-3xl font-bold mb-2">Profil Saya</h1>
+        <p class="text-gray-500 mb-8">Kelola informasi akun dan preferensi keamanan Anda.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Sidebar Navigation -->
+            <div class="space-y-2">
+                <button class="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-xl font-bold shadow-sm">
+                    Informasi Akun
+                </button>
+                <a href="/orders/my" class="block w-full text-left px-4 py-3 text-gray-500 hover:bg-white hover:shadow-sm rounded-xl transition-all">
+                    Riwayat Pesanan
+                </a>
+                <button @click="logout" class="w-full text-left px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-all font-medium">
+                    Keluar
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="md:col-span-2 space-y-6">
+                <!-- Profile Card -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-6 mb-8">
+                        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-3xl font-bold text-gray-400 uppercase">
+                            {{ substr .User.Name 0 1 }}
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold">{{ .User.Name }}</h2>
+                            <p class="text-gray-500 text-sm">{{ .User.Email }}</p>
+                            <span class="inline-block mt-2 px-3 py-1 bg-gray-100 text-xs font-bold rounded-full uppercase">{{ .User.Role }}</span>
+                        </div>
+                    </div>
+
+                    <form @submit.prevent="updateProfile" class="space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Nama Lengkap</label>
+                                <input type="text" x-model="name" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-black focus:outline-none transition-colors" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">No. WhatsApp</label>
+                                <div class="relative">
+                                    <input type="text" :value="currentPhone" readonly class="w-full p-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed" />
+                                    <button type="button" @click="startPhoneChange" class="absolute right-3 top-3 text-blue-600 text-xs font-bold hover:underline">
+                                        Ganti
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 flex justify-end">
+                            <button type="submit" :disabled="loading" class="bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors disabled:opacity-50">
+                                <span x-text="loading ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Security Card -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold mb-4 flex items-center gap-2">
+                        <i data-lucide="lock" class="w-[18px] h-[18px]"></i> Keamanan
+                    </h3>
+                    <div class="space-y-4">
+                         <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                            <div>
+                                <p class="text-xs text-gray-400">Email</p>
+                                <p class="font-medium text-sm">{{ .User.Email }}</p>
+                            </div>
+                            <button @click="startEmailChange" class="text-blue-600 text-xs font-bold hover:underline">Ganti</button>
+                        </div>
+
+                        <button @click="showPass = true" class="w-full flex justify-between items-center p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-left">
+                            <span class="font-medium text-sm">Ganti Password</span>
+                            <i data-lucide="edit" class="text-gray-400 w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Change Password Modal -->
+    <div x-show="showPass" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl">
+            <h3 class="font-bold mb-4">Ganti Password</h3>
+            <input type="password" x-model="passData.old" class="w-full p-3 border rounded-lg mb-3" placeholder="Password Lama" />
+            <input type="password" x-model="passData.new" class="w-full p-3 border rounded-lg mb-3" placeholder="Password Baru" />
+            <input type="password" x-model="passData.confirm" class="w-full p-3 border rounded-lg mb-4" placeholder="Konfirmasi Password Baru" />
+            <div class="flex justify-end gap-2">
+                <button @click="showPass = false" class="px-4 py-2 bg-gray-100 rounded-lg text-sm">Batal</button>
+                <button @click="changePassword" class="px-4 py-2 bg-black text-white rounded-lg text-sm font-bold">Ganti</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Change Modal -->
+    <div x-show="showEmail" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm">
+            <h3 class="font-bold mb-4">Ganti Email (Tahap <span x-text="emailStep"></span>/3)</h3>
+            
+            <template x-if="emailStep === 1">
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 mb-4">Kami akan mengirim OTP ke email lama Anda ({{ .User.Email }}) untuk verifikasi.</p>
+                    <button @click="handleEmailChange" class="w-full py-2 bg-black text-white rounded-lg font-bold">Kirim OTP</button>
+                </div>
+            </template>
+
+            <template x-if="emailStep === 2">
+                <div>
+                    <input x-model="emailForm.code" class="w-full p-3 border rounded-lg mb-3 text-center tracking-widest" placeholder="Kode OTP (Email Lama)" />
+                    <input x-model="emailForm.newEmail" class="w-full p-3 border rounded-lg mb-4" placeholder="Email Baru" />
+                    <button @click="handleEmailChange" class="w-full py-2 bg-black text-white rounded-lg font-bold">Lanjut</button>
+                </div>
+            </template>
+
+            <template x-if="emailStep === 3">
+                <div>
+                    <p class="text-sm text-gray-500 mb-2">OTP telah dikirim ke <strong x-text="emailForm.newEmail"></strong></p>
+                    <input x-model="emailForm.code" class="w-full p-3 border rounded-lg mb-4 text-center tracking-widest" placeholder="Kode OTP (Email Baru)" />
+                    <button @click="handleEmailChange" class="w-full py-2 bg-black text-white rounded-lg font-bold">Verifikasi & Ganti</button>
+                </div>
+            </template>
+
+            <button @click="showEmail = false" class="mt-4 text-xs text-gray-400 hover:text-black w-full text-center">Batal</button>
+        </div>
+    </div>
+
+    <!-- Phone Change Modal -->
+    <div x-show="showPhone" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm">
+            <h3 class="font-bold mb-4">Hubungkan WhatsApp</h3>
+            
+            <template x-if="phoneStep === 1">
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 mb-4" x-text="currentPhone ? 'Kami akan mengirim OTP ke nomor lama untuk verifikasi.' : 'Hubungkan nomor WhatsApp untuk keamanan.'"></p>
+                    <button @click="handlePhoneChange" class="w-full py-2 bg-black text-white rounded-lg font-bold" x-text="currentPhone ? 'Kirim OTP ke Nomor Lama' : 'Mulai Hubungkan'"></button>
+                </div>
+            </template>
+
+            <template x-if="phoneStep === 2">
+                <div>
+                    <p class="text-sm text-gray-500 mb-2">Masukkan OTP dari WhatsApp lama:</p>
+                    <input x-model="phoneForm.code" class="w-full p-3 border rounded-lg mb-4 text-center tracking-widest" placeholder="Kode OTP" />
+                    <button @click="handlePhoneChange" class="w-full py-2 bg-black text-white rounded-lg font-bold">Verifikasi</button>
+                </div>
+            </template>
+
+            <template x-if="phoneStep === 3">
+                <div>
+                    <p class="text-sm text-gray-500 mb-2">Masukkan Nomor WhatsApp Baru (cth: 08123...)</p>
+                    <input x-model="phoneForm.newPhone" class="w-full p-3 border rounded-lg mb-4" placeholder="Nomor WhatsApp" />
+                    <button @click="handlePhoneChange" class="w-full py-2 bg-black text-white rounded-lg font-bold">Kirim OTP</button>
+                </div>
+            </template>
+
+            <template x-if="phoneStep === 4">
+                <div>
+                    <p class="text-sm text-gray-500 mb-2">OTP dikirim ke <strong x-text="phoneForm.newPhone"></strong></p>
+                    <input x-model="phoneForm.code" class="w-full p-3 border rounded-lg mb-4 text-center tracking-widest" placeholder="Kode OTP" />
+                    <button @click="handlePhoneChange" class="w-full py-2 bg-black text-white rounded-lg font-bold">Simpan Nomor</button>
+                </div>
+            </template>
+
+            <button @click="showPhone = false" class="mt-4 text-xs text-gray-400 hover:text-black w-full text-center">Batal</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('profilePage', () => ({
+            name: '{{ .User.Name }}',
+            currentPhone: '{{ .User.PhoneNumber }}',
+            loading: false,
+
+            // Password State
+            showPass: false,
+            passData: { old: '', new: '', confirm: '' },
+
+            // Email State
+            showEmail: false,
+            emailStep: 1,
+            emailForm: { newEmail: '', code: '' },
+
+            // Phone State
+            showPhone: false,
+            phoneStep: 1,
+            phoneForm: { newPhone: '', code: '' },
+
+            async updateProfile() {
+                this.loading = true;
+                try {
+                    const res = await fetch('/api/user/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: this.name })
+                    });
+                    if (!res.ok) throw new Error();
+                    alert('Profil diperbarui');
+                } catch (e) { alert('Gagal update profile'); }
+                finally { this.loading = false; }
+            },
+
+            async changePassword() {
+                if (this.passData.new !== this.passData.confirm) {
+                    alert('Password tidak cocok'); return;
+                }
+                try {
+                    const res = await fetch('/api/user/change-password', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ oldPassword: this.passData.old, newPassword: this.passData.new })
+                    });
+                    if (!res.ok) {
+                        const d = await res.json();
+                        throw new Error(d.message);
+                    }
+                    alert('Password berhasil diganti');
+                    this.showPass = false;
+                    this.passData = { old: '', new: '', confirm: '' };
+                } catch (e) { alert(e.message || 'Gagal ganti password'); }
+            },
+
+            // Email Logic
+            startEmailChange() {
+                this.emailStep = 1;
+                this.showEmail = true;
+                this.emailForm = { newEmail: '', code: '' };
+            },
+            async handleEmailChange() {
+                try {
+                    if (this.emailStep === 1) {
+                        await fetch('/api/user/email/request', { method: 'POST' });
+                        this.emailStep = 2;
+                        alert('OTP dikirim ke email lama');
+                    } else if (this.emailStep === 2) {
+                        await fetch('/api/user/email/verify-old', { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: this.emailForm.code, newEmail: this.emailForm.newEmail })
+                        });
+                        this.emailStep = 3;
+                        this.emailForm.code = '';
+                        alert('OTP dikirim ke email baru');
+                    } else {
+                        await fetch('/api/user/email/verify-new', {
+                             method: 'POST', 
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify({ code: this.emailForm.code, newEmail: this.emailForm.newEmail })
+                        });
+                        alert('Email berhasil diganti! Silakan login ulang.');
+                        this.logout();
+                    }
+                } catch (e) { alert('Terjadi kesalahan. Cek kode OTP.'); }
+            },
+
+            // Phone Logic
+            startPhoneChange() {
+                this.phoneStep = 1;
+                this.showPhone = true;
+                this.phoneForm = { newPhone: '', code: '' };
+            },
+            async handlePhoneChange() {
+                try {
+                    if (this.phoneStep === 1) {
+                        const res = await fetch('/api/user/phone/request', { method: 'POST' });
+                        const data = await res.json();
+                        if (data.skipOld) {
+                            this.phoneStep = 3;
+                        } else {
+                            this.phoneStep = 2;
+                            alert('OTP dikirim ke WhatsApp lama');
+                        }
+                    } else if (this.phoneStep === 2) {
+                        await fetch('/api/user/phone/verify-old', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: this.phoneForm.code })
+                        });
+                        this.phoneStep = 3;
+                        this.phoneForm.code = '';
+                        alert('Verifikasi berhasil. Masukkan nomor baru.');
+                    } else if (this.phoneStep === 3) {
+                        await fetch('/api/user/phone/request-new', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ newPhoneNumber: this.phoneForm.newPhone })
+                        });
+                        this.phoneStep = 4;
+                        this.phoneForm.code = '';
+                        alert('OTP dikirim ke WhatsApp baru');
+                    } else {
+                        await fetch('/api/user/phone/verify-new', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: this.phoneForm.code, newPhoneNumber: this.phoneForm.newPhone })
+                        });
+                        alert('Nomor WhatsApp berhasil disimpan!');
+                        window.location.reload();
+                    }
+                } catch (e) { alert('Terjadi kesalahan. Cek kode OTP.'); }
+            },
+
+            logout() {
+                document.cookie = "token=; path=/; max-age=0";
+                window.location.href = "/";
+            }
+        }))
+    });
+</script>
+{{end}}

@@ -96,10 +96,6 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	if user.Role == models.RoleAdmin || user.Role == models.RoleSuperAdmin {
-		if c.Get("HX-Request") != "" {
-			c.Set("HX-Redirect", "/verify-admin?userId="+user.ID)
-			return c.SendStatus(200)
-		}
 		return c.Status(202).JSON(fiber.Map{
 			"require2fa": true,
 			"userId":     user.ID,
@@ -111,27 +107,12 @@ func Login(c *fiber.Ctx) error {
 	token, _ := utils.GenerateToken(user.ID, user.Role)
 	refreshToken, _ := utils.GenerateRefreshToken(user.ID)
 
-	// Set Cookie for Go Frontend
-	c.Cookie(&fiber.Cookie{
-		Name:     "auth_token",
-		Value:    token,
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		HTTPOnly: true,
-		Secure:   config.MidtransIsProd == "true",
-		SameSite: "Lax",
-	})
-
 	go database.DB.Create(&models.ActivityLog{
 		UserID: user.ID,
 		Action: "LOGIN",
 		Details: "Login via Password",
 		IPAddress: c.IP(),
 	})
-
-	if c.Get("HX-Request") != "" {
-		c.Set("HX-Redirect", "/")
-		return c.SendStatus(200)
-	}
 
 	return c.JSON(fiber.Map{
 		"token":        token,
@@ -143,15 +124,6 @@ func Login(c *fiber.Ctx) error {
 			"role":  user.Role,
 		},
 	})
-}
-
-func Logout(c *fiber.Ctx) error {
-	c.ClearCookie("auth_token")
-	if c.Get("HX-Request") != "" {
-		c.Set("HX-Redirect", "/login")
-		return c.SendStatus(200)
-	}
-	return c.JSON(fiber.Map{"message": "Logged out"})
 }
 
 func VerifyOtp(c *fiber.Ctx) error {
@@ -226,16 +198,6 @@ func GoogleLogin(c *fiber.Ctx) error {
 
 	token, _ := utils.GenerateToken(user.ID, user.Role)
 	refreshToken, _ := utils.GenerateRefreshToken(user.ID)
-
-	// Set Cookie
-	c.Cookie(&fiber.Cookie{
-		Name:     "auth_token",
-		Value:    token,
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		HTTPOnly: true,
-		Secure:   config.MidtransIsProd == "true",
-		SameSite: "Lax",
-	})
 
 	go database.DB.Create(&models.ActivityLog{
 		UserID: user.ID,

@@ -1,0 +1,190 @@
+{{define "content"}}
+<div class="min-h-screen bg-gray-50 pb-20" x-data="orderDetail">
+    <main class="max-w-3xl mx-auto px-4 pt-24">
+        
+        <!-- Header -->
+        <div class="flex items-center gap-4 mb-6">
+            <a href="/orders/my" class="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-100">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="text-xl font-bold">Rincian Pesanan</h1>
+                <p class="text-sm text-gray-500">Invoice: {{ .Order.InvoiceNumber }}</p>
+            </div>
+        </div>
+
+        <!-- Status Card -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center">
+                    <span class="text-sm text-gray-500 mr-2">Status Pesanan</span>
+                    {{ if eq .Order.Status "PENDING" }}
+                    <span class="ml-2 text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">Menunggu Pembayaran</span>
+                    {{ end }}
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-bold 
+                    {{ if eq .Order.Status "PAID" }}bg-green-100 text-green-700{{ else if eq .Order.Status "PENDING" }}bg-orange-100 text-orange-700{{ else }}bg-gray-100 text-gray-700{{ end }}">
+                    {{ .Order.Status }}
+                </span>
+            </div>
+            
+            {{ if eq .Order.Status "PENDING" }}
+            <div class="flex gap-3">
+                <button @click="payOrder" class="flex-1 bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors">
+                    Bayar Sekarang
+                </button>
+                <button @click="cancelOrder" class="flex-1 bg-white border border-red-200 text-red-600 py-3 rounded-lg font-bold hover:bg-red-50 transition-colors">
+                    Batalkan
+                </button>
+            </div>
+            {{ end }}
+
+            {{ if eq .Order.Status "PAID" }}
+            <button @click="showRefundForm = true" class="w-full mt-4 text-sm text-gray-500 underline hover:text-red-500">
+                Ajukan Pengembalian Dana (Refund)
+            </button>
+            {{ end }}
+        </div>
+
+        <!-- TIMELINE -->
+        {{ if .Order.Timeline }}
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+            <h3 class="font-bold mb-6 flex items-center gap-2">
+                <i data-lucide="activity" class="text-accent w-5 h-5"></i> Timeline Pengerjaan
+            </h3>
+            <div class="relative pl-4 border-l-2 border-gray-100 space-y-8">
+                {{ range .Order.Timeline }}
+                <div class="relative">
+                    <div class="absolute -left-[21px] top-0 w-4 h-4 bg-accent rounded-full border-4 border-white shadow-sm"></div>
+                    <h4 class="font-bold text-sm">{{ .Title }}</h4>
+                    <p class="text-xs text-gray-500 mt-1">{{ .Timestamp.Format "02 Jan 2006 15:04" }}</p>
+                    {{ if .Description }}
+                    <p class="text-sm text-gray-600 mt-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        {{ .Description }}
+                    </p>
+                    {{ end }}
+                </div>
+                {{ end }}
+            </div>
+        </div>
+        {{ end }}
+
+        <!-- Delivery Info -->
+        {{ if or (eq .Order.Status "PAID") (eq .Order.Status "COMPLETED") (eq .Order.Status "SHIPPED") }}
+        <div class="bg-blue-50 rounded-xl p-6 border border-blue-100 mb-6">
+            <h3 class="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                <i data-lucide="download" class="w-[18px] h-[18px]"></i> Informasi Pengiriman / Akses
+            </h3>
+            {{ if .Order.DeliveryInfo }}
+            <div class="bg-white p-4 rounded-lg border border-blue-100 text-sm whitespace-pre-wrap font-mono">{{ .Order.DeliveryInfo }}</div>
+            {{ else }}
+            <p class="text-sm text-blue-600">
+                Admin sedang menyiapkan file/akses untuk Anda. Harap cek secara berkala.
+            </p>
+            {{ end }}
+        </div>
+        {{ end }}
+
+        <!-- Refund Form -->
+        <div x-show="showRefundForm" class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+            <h3 class="font-bold mb-4">Formulir Refund</h3>
+            <form @submit.prevent="submitRefund" class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Alasan Refund</label>
+                    <textarea required x-model="refundReason" class="w-full p-3 border border-gray-200 rounded-lg text-sm mt-1 focus:outline-none focus:border-black" placeholder="Jelaskan kenapa Anda mengajukan refund..."></textarea>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Rekening Tujuan</label>
+                    <input required type="text" x-model="refundAccount" class="w-full p-3 border border-gray-200 rounded-lg text-sm mt-1 focus:outline-none focus:border-black" placeholder="Nama Bank - No Rekening - Atas Nama"/>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" @click="showRefundForm = false" class="text-sm text-gray-500 hover:text-black">Batal</button>
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700">Kirim Pengajuan</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Product List -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <h3 class="font-bold mb-4">Barang yang Dibeli</h3>
+            <div class="space-y-4">
+                {{ range .Order.Items }}
+                <div class="flex gap-4 border-b border-gray-50 last:border-0 pb-4 last:pb-0">
+                    <img src="{{ if .Product.Images }}{{ index .Product.Images 0 }}{{ else }}https://placehold.co/100{{ end }}" class="w-16 h-16 rounded-lg bg-gray-100 object-cover" />
+                    <div class="flex-1">
+                        <h4 class="font-medium text-sm line-clamp-2">{{ .Product.Name }}</h4>
+                        <p class="text-xs text-gray-500 mt-1">{{ .Quantity }} x Rp {{ .Price }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-sm">Rp {{ mul .Price .Quantity }}</p>
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+            <div class="mt-6 pt-4 border-t border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 text-sm">Total Pembayaran</span>
+                <span class="text-xl font-bold">Rp {{ .Order.TotalAmount }}</span>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="{{ if eq .MidtransIsProd "true" }}https://app.midtrans.com/snap/snap.js{{ else }}https://app.sandbox.midtrans.com/snap/snap.js{{ end }}" data-client-key="{{ .MidtransClientKey }}"></script>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('orderDetail', () => ({
+            orderId: '{{ .Order.ID }}',
+            showRefundForm: false,
+            refundReason: '',
+            refundAccount: '',
+
+            async payOrder() {
+                try {
+                    const res = await fetch(`/api/orders/${this.orderId}/pay`, { method: 'POST' });
+                    const data = await res.json();
+                    
+                    if (data.snapToken && window.snap) {
+                        window.snap.pay(data.snapToken, {
+                            onSuccess: () => window.location.reload(),
+                            onPending: () => window.location.reload(),
+                            onError: () => alert('Pembayaran Gagal'),
+                            onClose: () => alert('Pembayaran belum selesai')
+                        });
+                    } else {
+                        alert('Token pembayaran tidak valid');
+                    }
+                } catch (e) {
+                    alert('Gagal memuat pembayaran');
+                }
+            },
+
+            async cancelOrder() {
+                if (!confirm('Yakin batalkan pesanan?')) return;
+                try {
+                    await fetch(`/api/orders/${this.orderId}/cancel`, { method: 'PUT' });
+                    alert('Pesanan dibatalkan');
+                    window.location.reload();
+                } catch (e) {
+                    alert('Gagal membatalkan pesanan');
+                }
+            },
+
+            async submitRefund() {
+                try {
+                    await fetch(`/api/orders/${this.orderId}/refund`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reason: this.refundReason, account: this.refundAccount })
+                    });
+                    alert('Pengajuan refund dikirim');
+                    window.location.reload();
+                } catch (e) {
+                    alert('Gagal mengajukan refund');
+                }
+            }
+        }))
+    });
+</script>
+{{end}}

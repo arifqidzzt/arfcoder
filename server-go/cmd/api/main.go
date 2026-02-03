@@ -6,19 +6,11 @@ import (
 	"arfcoder-go/internal/handlers"
 	"arfcoder-go/internal/routes"
 	"arfcoder-go/internal/services/whatsapp"
-	"arfcoder-go/internal/static"
-	"arfcoder-go/internal/templates"
-	"net/http"
 	"log"
-	"strings"
-	"fmt"
-	"time"
-	"encoding/json"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	//"github.com/gofiber/fiber/v2/middleware/helmet"
-	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
 )
@@ -32,63 +24,37 @@ func main() {
 
 	// 3. Init Services
 	handlers.InitMidtrans()
-	
+
 	go func() {
 		if err := whatsapp.Connect(); err != nil {
 			log.Println("Failed to start WhatsApp Service:", err)
 		}
 	}()
 
-	// 4. Template Engine
-	engine := html.NewFileSystem(http.FS(templates.Templates), ".html")
-	engine.AddFunc("formatNumber", func(n float64) string {
-		s := fmt.Sprintf("%.0f", n)
-		var result []string
-		for i := len(s); i > 0; i -= 3 {
-			start := i - 3
-			if start < 0 { start = 0 }
-			result = append([]string{s[start:i]}, result...)
-		}
-		return strings.Join(result, ".")
-	})
-	engine.AddFunc("calcDiscount", func(price float64, discount float64, qty int) float64 {
-		return (price * (1 - discount/100)) * float64(qty)
-	})
-	engine.AddFunc("formatDateNow", func() string {
-		return time.Now().Format("02 Jan 2006")
-	})
-	engine.AddFunc("json", func(v interface{}) string {
-		b, _ := json.Marshal(v)
-		return string(b)
-	})
-	engine.AddFunc("mul", func(a, b int) int {
-		return a * b
-	})
-
-	// 5. Fiber App
+	// 4. Fiber App with Template Engine
+	engine := html.New("./web/templates", ".html")
+	
 	app := fiber.New(fiber.Config{
 		BodyLimit: 50 * 1024 * 1024, // 50MB
-		Views: engine,
-		ViewsLayout: "layouts/base",
+		Views:     engine,
 	})
 
-	// 6. Global Middleware
+	// 5. Global Middleware
 	app.Use(logger.New())
-	// app.Use(helmet.New(helmet.Config{
-	// 	ContentSecurityPolicy: "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;",
-	// }))
-	app.Use("/static", filesystem.New(filesystem.Config{
-		Root: http.FS(static.Assets),
-	}))
+	app.Use(helmet.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: config.ClientURL,
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization, x-arf-secure-token",
 		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
 	}))
 
-	// 7. Routes
-	routes.SetupRoutes(app)
+	// Static Files
+	app.Static("/static", "./web/static")
 
-	// 8. Start
+	// 6. Routes
+	routes.SetupWebRoutes(app) // Web Routes (HTML)
+	routes.SetupRoutes(app)    // API Routes (JSON)
+
+	// 7. Start
 	log.Fatal(app.Listen(":" + config.Port))
 }

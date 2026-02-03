@@ -8,49 +8,7 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	// --- PAGES (Frontend) ---
-	app.Get("/", handlers.RenderHome)
-	app.Get("/login", handlers.RenderLogin)
-	app.Get("/register", handlers.RenderRegister)
-	app.Get("/forgot-password", handlers.RenderForgotPassword)
-	app.Get("/reset-password", handlers.RenderResetPassword)
-	app.Get("/verify-otp", handlers.RenderVerifyOtp)
-	app.Get("/verify-admin", handlers.RenderVerifyAdmin)
-	app.Get("/products", handlers.RenderProducts)
-	app.Get("/products/:id", handlers.RenderProductDetail)
-	app.Get("/services", handlers.RenderPublicServices)
-	app.Get("/contact", handlers.RenderContact)
-	app.Get("/cart", handlers.RenderCart)
-	app.Get("/checkout", handlers.RenderCheckout)
-	app.Get("/orders", handlers.RenderOrders)
-	app.Get("/orders/:id", handlers.RenderOrderDetail)
-	app.Get("/profile", handlers.RenderProfile)
-	app.Get("/profile/security", handlers.RenderProfileSecurity)
-	app.Get("/faq", func(c *fiber.Ctx) error { return c.Render("pages/faq", fiber.Map{"Title": "FAQ"}) })
-	app.Get("/privacy", func(c *fiber.Ctx) error { return c.Render("pages/legal", fiber.Map{"Title": "Kebijakan Privasi", "Content": "Isi kebijakan privasi Anda di sini."}) })
-	app.Get("/terms", func(c *fiber.Ctx) error { return c.Render("pages/legal", fiber.Map{"Title": "Syarat & Ketentuan", "Content": "Isi syarat dan ketentuan Anda di sini."}) })
-	app.Get("/refund-policy", func(c *fiber.Ctx) error { return c.Render("pages/legal", fiber.Map{"Title": "Kebijakan Refund", "Content": "Isi kebijakan refund Anda di sini."}) })
-	app.Post("/logout", handlers.Logout)
-
 	api := app.Group("/api", middleware.RateLimitAPI())
-
-	// --- ADMIN DASHBOARD ---
-	admin := app.Group("/admin", middleware.AuthMiddleware, middleware.AdminOnly)
-	admin.Get("/", handlers.RenderAdminDashboard)
-	admin.Get("/products", handlers.RenderAdminProducts)
-	admin.Get("/products/:id", handlers.RenderAdminProductForm)
-	admin.Get("/orders", handlers.RenderAdminOrders)
-	admin.Get("/orders/:id", handlers.RenderAdminOrderManage)
-	admin.Get("/users", handlers.RenderAdminUsers)
-	admin.Get("/vouchers", handlers.RenderAdminVouchers)
-	admin.Get("/flash-sale", handlers.RenderAdminFlashSales)
-	admin.Get("/services", handlers.RenderAdminServices)
-	admin.Get("/chat", handlers.RenderAdminChat)
-	admin.Get("/whatsapp", handlers.RenderAdminWhatsapp)
-	admin.Get("/logs", handlers.RenderAdminLogs)
-
-	// --- PUBLIC WEBHOOK ---
-	api.Post("/midtrans-webhook", handlers.HandleMidtransWebhook)
 
 	// --- AUTH ---
 	auth := api.Group("/auth", middleware.RateLimitAuth(), middleware.SecureMiddleware)
@@ -82,6 +40,7 @@ func SetupRoutes(app *fiber.App) {
 	// --- ORDERS ---
 	orders := api.Group("/orders", middleware.SecureMiddleware)
 	orders.Post("/", middleware.AuthMiddleware, handlers.CreateOrder)
+	orders.Post("/webhook", handlers.HandleMidtransWebhook)
 	orders.Get("/my", middleware.AuthMiddleware, handlers.GetMyOrders)
 	orders.Get("/:id", middleware.AuthMiddleware, handlers.GetOrderById)
 	// Order Actions
@@ -135,26 +94,26 @@ func SetupRoutes(app *fiber.App) {
 	user.Get("/chat/history/:userId", handlers.GetUserChatHistory)
 
 	// --- ADMIN DASHBOARD ---
-	adminAPI := api.Group("/admin", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly)
-	adminAPI.Get("/stats", handlers.GetDashboardStats)
-	adminAPI.Get("/orders", handlers.GetAllOrders)
-	adminAPI.Put("/orders/:id", handlers.UpdateOrderStatus)
-	adminAPI.Put("/orders/:id/delivery", handlers.UpdateDeliveryInfo)
-	adminAPI.Get("/users", handlers.GetAllUsers)
-	adminAPI.Delete("/users/:id", handlers.DeleteUser)
+	admin := api.Group("/admin", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly)
+	admin.Get("/stats", handlers.GetDashboardStats)
+	admin.Get("/orders", handlers.GetAllOrders)
+	admin.Put("/orders/:id", handlers.UpdateOrderStatus)
+	admin.Put("/orders/:id/delivery", handlers.UpdateDeliveryInfo)
+	admin.Get("/users", handlers.GetAllUsers)
+	admin.Delete("/users/:id", handlers.DeleteUser)
 	
-	adminAPI.Get("/chat/:userId", handlers.GetUserChatHistory)
+	admin.Get("/chat/:userId", handlers.GetUserChatHistory)
 
-	adminAPI.Get("/services", handlers.GetAdminServices)
-	adminAPI.Post("/services", handlers.UpsertService)
-	adminAPI.Delete("/services/:id", handlers.DeleteService)
+	admin.Get("/services", handlers.GetAdminServices)
+	admin.Post("/services", handlers.UpsertService)
+	admin.Delete("/services/:id", handlers.DeleteService)
 	
-	adminAPI.Get("/wa/status", handlers.GetWaStatus)
-	adminAPI.Post("/wa/logout", handlers.LogoutWa)
-	adminAPI.Post("/wa/start", handlers.StartWa)
+	admin.Get("/wa/status", handlers.GetWaStatus)
+	admin.Post("/wa/logout", handlers.LogoutWa)
+	admin.Post("/wa/start", handlers.StartWa)
 	
-	adminAPI.Post("/timeline/:id", handlers.UpdateOrderTimeline)
-	adminAPI.Delete("/timeline/:id", handlers.DeleteOrderTimeline)
+	admin.Post("/timeline/:id", handlers.UpdateOrderTimeline)
+	admin.Delete("/timeline/:id", handlers.DeleteOrderTimeline)
 	
 	// --- LOGS ---
 	api.Get("/logs", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetLogs)

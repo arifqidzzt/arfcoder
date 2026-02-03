@@ -1,0 +1,240 @@
+{{define "content"}}
+<div class="min-h-screen bg-gray-50 flex flex-col" x-data="checkoutPage">
+    <main class="max-w-6xl mx-auto px-4 py-24 w-full">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">1</div>
+            <h1 class="text-3xl font-bold tracking-tight">Konfirmasi Pesanan</h1>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Address Section -->
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-2 mb-6 text-accent">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        <h2 class="font-bold uppercase tracking-wider text-sm">Alamat Pengiriman / Catatan Jasa</h2>
+                    </div>
+                    <textarea 
+                        x-model="address"
+                        rows="4"
+                        class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all"
+                        placeholder="Contoh: Jl. Sudirman No. 1 atau detail khusus untuk jasa koding..."
+                    ></textarea>
+                </div>
+
+                <!-- Items Section -->
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-2 mb-6">
+                        <i data-lucide="truck" class="w-5 h-5"></i>
+                        <h2 class="font-bold uppercase tracking-wider text-sm">Rincian Produk</h2>
+                    </div>
+                    <div class="space-y-4">
+                        {{ range .CartItems }}
+                        <div class="flex gap-4 py-4 border-b border-gray-50 last:border-0">
+                            <img src="{{ if .Product.Images }}{{ index .Product.Images 0 }}{{ else }}https://placehold.co/100{{ end }}" class="w-20 h-20 rounded-xl object-cover bg-gray-100" />
+                            <div class="flex-1">
+                                <h3 class="font-bold text-sm">{{ .Product.Name }}</h3>
+                                <p class="text-xs text-gray-400 mt-1">{{ .Quantity }} Barang</p>
+                            </div>
+                            <div class="text-right">
+                                <!-- Price Calculation for Display -->
+                                {{ $price := .Product.Price }}
+                                {{ if gt .Product.Discount 0.0 }}
+                                    {{ $price = sub .Product.Price (mul .Product.Price (div .Product.Discount 100)) }}
+                                {{ end }}
+                                <p class="font-bold text-sm">Rp {{ mul $price .Quantity }}</p>
+                            </div>
+                        </div>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Summary Sidebar -->
+            <div class="space-y-6">
+                <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 sticky top-24">
+                    <h2 class="text-xl font-bold mb-6">Ringkasan</h2>
+                    
+                    <!-- Voucher Input -->
+                    <div class="mb-6">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Punya Kode Promo?</label>
+                        <div class="flex gap-2">
+                            <input 
+                                type="text" 
+                                x-model="voucherInput"
+                                class="flex-1 bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-black font-bold uppercase"
+                                placeholder="KODE100"
+                                :disabled="!!appliedVoucher"
+                            />
+                            <template x-if="appliedVoucher">
+                                <button 
+                                    @click="removeVoucher"
+                                    class="px-4 py-2 bg-red-50 text-red-500 rounded-xl text-xs font-bold hover:bg-red-100"
+                                >
+                                    Hapus
+                                </button>
+                            </template>
+                            <template x-if="!appliedVoucher">
+                                <button 
+                                    @click="applyVoucher"
+                                    class="px-4 py-2 bg-black text-white rounded-xl text-xs font-bold hover:bg-gray-800"
+                                >
+                                    Pasang
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 mb-8">
+                        <div class="flex justify-between text-gray-500 text-sm">
+                            <span>Total Harga ({{ len .CartItems }} Barang)</span>
+                            <span>Rp {{ .Total }}</span>
+                        </div>
+                        <template x-if="discount > 0">
+                            <div class="flex justify-between text-green-600 text-sm font-bold">
+                                <span>Potongan Voucher</span>
+                                <span x-text="'-Rp ' + discount"></span>
+                            </div>
+                        </template>
+                        <div class="flex justify-between text-gray-500 text-sm">
+                            <span>Biaya Layanan</span>
+                            <span class="text-green-600 font-bold uppercase text-[10px] bg-green-50 px-2 py-0.5 rounded">Gratis</span>
+                        </div>
+                        <div class="pt-4 border-t flex justify-between items-center">
+                            <span class="font-medium">Total Bayar</span>
+                            <span class="text-2xl font-black text-accent" x-text="'Rp ' + (total - discount)"></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 p-4 rounded-2xl mb-8 flex items-start gap-3">
+                        <i data-lucide="shield-check" class="text-blue-600 shrink-0 w-5 h-5"></i>
+                        <p class="text-[10px] text-blue-700 leading-relaxed">
+                            Pembayaran Anda aman dan terenkripsi melalui payment gateway Midtrans.
+                        </p>
+                    </div>
+
+                    <button 
+                        @click="handleCheckout"
+                        :disabled="loading"
+                        class="w-full py-4 bg-black text-white rounded-2xl font-bold hover:bg-gray-800 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:bg-gray-300 shadow-xl shadow-black/10 disabled:cursor-not-allowed"
+                    >
+                        <span x-text="loading ? 'Memproses...' : 'Buat Pesanan'"></span>
+                        <i x-show="!loading" data-lucide="arrow-right" class="w-[18px] h-[18px]"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Midtrans Script -->
+<script src="{{ if eq .MidtransIsProd "true" }}https://app.midtrans.com/snap/snap.js{{ else }}https://app.sandbox.midtrans.com/snap/snap.js{{ end }}" data-client-key="{{ .MidtransClientKey }}"></script>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('checkoutPage', () => ({
+            address: '',
+            voucherInput: '',
+            appliedVoucher: null,
+            discount: 0,
+            total: {{ .Total }},
+            loading: false,
+
+            // Cart Items needed for checkout payload
+            // Passed via template logic or gathered from DOM, 
+            // but safer to use just "all cart items" assumption on backend if payload omits items.
+            // However, existing backend might expect items array.
+            // Let's check api/orders handler expectation.
+            // Assuming we need to send items. We will reconstruct them from server data injected here.
+            items: [
+                {{ range .CartItems }}
+                { productId: '{{ .ProductID }}', quantity: {{ .Quantity }} },
+                {{ end }}
+            ],
+
+            async applyVoucher() {
+                if (!this.voucherInput) return;
+                try {
+                    const res = await fetch('/api/vouchers/check', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: this.voucherInput, totalAmount: this.total })
+                    });
+                    const data = await res.json();
+                    
+                    if (!res.ok) throw new Error(data.message || 'Voucher invalid');
+
+                    this.discount = data.discountAmount;
+                    this.appliedVoucher = this.voucherInput;
+                    alert('Voucher berhasil dipasang!');
+                } catch (e) {
+                    alert(e.message);
+                    this.discount = 0;
+                    this.appliedVoucher = null;
+                }
+            },
+
+            removeVoucher() {
+                this.appliedVoucher = null;
+                this.discount = 0;
+                this.voucherInput = '';
+            },
+
+            async handleCheckout() {
+                if (!this.address) {
+                    alert('Alamat/Catatan harus diisi');
+                    return;
+                }
+                
+                this.loading = true;
+                try {
+                    const res = await fetch('/api/orders', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            items: this.items,
+                            address: this.address,
+                            voucherCode: this.appliedVoucher
+                        })
+                    });
+                    
+                    const data = await res.json();
+                    
+                    if (!res.ok) throw new Error(data.message || 'Gagal memproses pesanan');
+
+                    if (data.snapToken && window.snap) {
+                        window.snap.pay(data.snapToken, {
+                            onSuccess: function(result){
+                                alert("Pembayaran Berhasil!");
+                                // Clear cart? Backend usually clears after order creation? 
+                                // Actually backend usually clears cart AFTER successful checkout order creation 
+                                // OR logic in CreateOrder clears it?
+                                // Let's assume we redirect to orders page
+                                window.location.href = '/orders/my';
+                            },
+                            onPending: function(result){
+                                alert("Menunggu pembayaran...");
+                                window.location.href = '/orders/my';
+                            },
+                            onError: function(result){
+                                alert("Pembayaran gagal!");
+                                this.loading = false;
+                            },
+                            onClose: function(){
+                                alert('Anda menutup popup tanpa menyelesaikan pembayaran');
+                                window.location.href = '/orders/my';
+                            }
+                        });
+                    } else {
+                        throw new Error("Midtrans Token missing");
+                    }
+
+                } catch (e) {
+                    alert(e.message);
+                    this.loading = false;
+                }
+            }
+        }))
+    });
+</script>
+{{end}}

@@ -9,21 +9,11 @@ import (
 
 func AuthMiddleware(c *fiber.Ctx) error {
 	authHeader := c.Get("Authorization")
-	var tokenString string
-
-	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-		tokenString = strings.TrimPrefix(authHeader, "Bearer ")
-	} else {
-		// Try Cookie
-		tokenString = c.Cookies("auth_token")
-	}
-
-	if tokenString == "" {
-		if c.Get("HX-Request") != "" || c.Accepts("text/html") != "" {
-			return c.Redirect("/login")
-		}
+	if authHeader == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
 	}
+
+	tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
 	claims, err := utils.VerifyToken(tokenString)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid Token"})
