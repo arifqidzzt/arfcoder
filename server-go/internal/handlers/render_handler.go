@@ -21,7 +21,8 @@ func getCommonData(c *fiber.Ctx) fiber.Map {
 	token := c.Cookies("auth_token")
 	if token != "" {
 		data["Token"] = token
-		claims, err := utils.VerifyToken(token)		if err == nil {
+		claims, err := utils.VerifyToken(token)
+		if err == nil {
 			var user models.User
 			database.DB.First(&user, "id = ?", claims.UserID)
 			data["User"] = user
