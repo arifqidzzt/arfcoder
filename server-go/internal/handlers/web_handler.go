@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"arfcoder-go/internal/config"
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
 	"arfcoder-go/internal/utils"
