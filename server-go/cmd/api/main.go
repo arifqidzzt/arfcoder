@@ -59,6 +59,9 @@ func main() {
 		b, _ := json.Marshal(v)
 		return string(b)
 	})
+	engine.AddFunc("mul", func(a, b int) int {
+		return a * b
+	})
 
 	// 5. Fiber App
 	app := fiber.New(fiber.Config{

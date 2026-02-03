@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
+    <!-- Animations (AOS) -->
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
     <!-- Scripts -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -67,7 +70,17 @@
     <!-- Notifications Toast -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2"></div>
 
+    <!-- Animation Script -->
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script>
+        // Init Animations
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 50,
+            easing: 'ease-out-cubic'
+        });
+
         // Simple Toast Notification Logic
         window.toast = (message, type = 'success') => {
             const container = document.getElementById('toast-container');
@@ -85,6 +98,12 @@
                 const response = JSON.parse(evt.detail.xhr.responseText);
                 toast(response.message || 'Terjadi kesalahan', 'error');
             }
+        });
+
+        // Re-init Animations and Scroll after page swap
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            AOS.refreshHard();
+            window.scrollTo(0, 0);
         });
     </script>
 </body>
