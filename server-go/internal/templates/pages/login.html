@@ -1,67 +1,101 @@
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<div class="min-h-screen flex flex-col pt-20"> <!-- pt-20 to offset fixed navbar -->
+    <main class="flex-grow flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        <!-- Background Blobs -->
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px] -z-10"></div>
+        <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px] -z-10"></div>
 
-<div class="min-h-[80vh] flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white p-8 rounded-3xl border border-gray-100 shadow-elevated">
-        <div class="text-center mb-10">
-            <h1 class="text-3xl font-black tracking-tight mb-2 uppercase">Selamat Datang</h1>
-            <p class="text-gray-400 text-sm">Masuk ke akun ArfCoder Anda</p>
-        </div>
-
-        <!-- Social Login -->
-        <div id="g_id_onload"
-             data-client_id="{{.GoogleClientID}}"
-             data-callback="handleCredentialResponse"
-             data-auto_prompt="false">
-        </div>
-        <button onclick="google.accounts.id.prompt()" class="w-full py-3 border border-gray-200 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-gray-50 transition-all mb-6">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" />
-            <span>Lanjutkan dengan Google</span>
-        </button>
-
-        <script>
-            function handleCredentialResponse(response) {
-                fetch('/api/auth/google', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: response.credential })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.token) {
-                        window.location.href = '/';
-                    } else {
-                        toast('Login Gagal', 'error');
-                    }
-                });
-            }
-        </script>
-
-        <div class="relative mb-8 text-center">
-            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
-            <span class="relative px-4 bg-white text-xs text-gray-300 font-bold uppercase tracking-widest">Atau Email</span>
-        </div>
-
-        <form hx-post="/api/auth/login" hx-ext="json-enc" hx-target="body" hx-push-url="true" class="space-y-5">
-            <div>
-                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Email</label>
-                <input type="email" name="email" required class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/5 mt-1" placeholder="nama@email.com">
-            </div>
-            <div>
-                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Password</label>
-                <input type="password" name="password" required class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/5 mt-1" placeholder="••••••••">
+        <div class="w-full max-w-md bg-white/50 backdrop-blur-xl border border-white/20 p-8 rounded-3xl shadow-xl">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold tracking-tight mb-2">Selamat Datang</h1>
+                <p class="text-gray-500">Masuk untuk melanjutkan perjalanan digital Anda.</p>
             </div>
 
-            <div class="flex justify-end">
-                <a href="/forgot-password" class="text-xs font-bold text-accent hover:underline">Lupa Password?</a>
+            <form hx-post="/api/auth/login" hx-ext="json-enc" hx-on::after-request="if(event.detail.successful) { const res = JSON.parse(event.detail.xhr.responseText); if(res.token) { window.location.href = '/'; } else if(res.message) { toast(res.message, 'success'); if(res.require2fa) window.location.href='/verify-admin?userId='+res.userId; } } else { const res = JSON.parse(event.detail.xhr.responseText); if(res.status === 403) window.location.href='/verify-otp?userId='+res.userId; else toast(res.message || 'Login gagal', 'error'); }" class="space-y-5">
+                <div class="space-y-2">
+                    <label class="text-sm font-medium ml-1">Email</label>
+                    <div class="relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-3.5 text-gray-400"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        <input 
+                            type="email" 
+                            name="email" 
+                            class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
+                            placeholder="nama@email.com"
+                            required
+                        />
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-medium ml-1">Password</label>
+                        <a href="/forgot-password" class="text-xs font-bold text-accent hover:underline">
+                            Lupa Password?
+                        </a>
+                    </div>
+                    <div class="relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-3.5 text-gray-400"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <input 
+                            type="password" 
+                            name="password"
+                            class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
+                            placeholder="••••••••"
+                            required
+                        />
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-black/10">
+                    <span>Masuk Sekarang</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </button>
+            </form>
+
+            <div class="relative my-8">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center text-xs uppercase tracking-wider font-bold text-gray-400">
+                    <span class="px-2 bg-white/50 backdrop-blur-xl">Atau Lanjutkan Dengan</span>
+                </div>
             </div>
 
-            <button type="submit" class="w-full py-4 bg-black text-white rounded-2xl font-bold shadow-xl shadow-black/10 hover:bg-gray-800 transition-all active:scale-[0.98]">
-                Masuk Sekarang
-            </button>
-        </form>
+            <div class="flex justify-center">
+                <div id="g_id_onload"
+                     data-client_id="{{.GoogleClientID}}"
+                     data-callback="handleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="pill"
+                     data-theme="filled_black"
+                     data-text="continue_with"
+                     data-size="large"
+                     data-logo_alignment="left"
+                     data-width="100%">
+                </div>
+            </div>
 
-        <p class="mt-8 text-center text-sm text-gray-400">
-            Belum punya akun? <a href="/register" class="text-black font-bold hover:underline">Daftar Gratis</a>
-        </p>
-    </div>
+            <p class="mt-8 text-center text-sm text-gray-500">
+                Belum punya akun? <a href="/register" class="text-accent font-bold hover:underline">Daftar Sekarang</a>
+            </p>
+        </div>
+    </main>
 </div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+    function handleCredentialResponse(response) {
+        fetch('/api/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: response.credential })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.token) {
+                window.location.href = '/';
+            } else {
+                toast('Login Gagal', 'error');
+            }
+        });
+    }
+</script>
