@@ -127,7 +127,7 @@ func RenderVerifyAdmin(c *fiber.Ctx) error {
 	return c.Render("pages/verify_admin", data)
 }
 
-func RenderAdminOrderManage(c *fiber.Ctx) error {
+func RenderOrderDetail(c *fiber.Ctx) error {
 	id := c.Params("id")
 	data := getCommonData(c)
 	user, ok := data["User"].(models.User)

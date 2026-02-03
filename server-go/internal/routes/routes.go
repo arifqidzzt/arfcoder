@@ -32,6 +32,8 @@ func SetupRoutes(app *fiber.App) {
 	app.Get("/refund-policy", func(c *fiber.Ctx) error { return c.Render("pages/legal", fiber.Map{"Title": "Kebijakan Refund", "Content": "Isi kebijakan refund Anda di sini."}) })
 	app.Post("/logout", handlers.Logout)
 
+	api := app.Group("/api", middleware.RateLimitAPI())
+
 	// --- ADMIN DASHBOARD ---
 	admin := app.Group("/admin", middleware.AuthMiddleware, middleware.AdminOnly)
 	admin.Get("/", handlers.RenderAdminDashboard)
@@ -46,8 +48,6 @@ func SetupRoutes(app *fiber.App) {
 	admin.Get("/chat", handlers.RenderAdminChat)
 	admin.Get("/whatsapp", handlers.RenderAdminWhatsapp)
 	admin.Get("/logs", handlers.RenderAdminLogs)
-
-	api := app.Group("/api", middleware.RateLimitAPI())
 
 	// --- PUBLIC WEBHOOK ---
 	api.Post("/midtrans-webhook", handlers.HandleMidtransWebhook)
@@ -135,26 +135,26 @@ func SetupRoutes(app *fiber.App) {
 	user.Get("/chat/history/:userId", handlers.GetUserChatHistory)
 
 	// --- ADMIN DASHBOARD ---
-	admin := api.Group("/admin", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly)
-	admin.Get("/stats", handlers.GetDashboardStats)
-	admin.Get("/orders", handlers.GetAllOrders)
-	admin.Put("/orders/:id", handlers.UpdateOrderStatus)
-	admin.Put("/orders/:id/delivery", handlers.UpdateDeliveryInfo)
-	admin.Get("/users", handlers.GetAllUsers)
-	admin.Delete("/users/:id", handlers.DeleteUser)
+	adminAPI := api.Group("/admin", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly)
+	adminAPI.Get("/stats", handlers.GetDashboardStats)
+	adminAPI.Get("/orders", handlers.GetAllOrders)
+	adminAPI.Put("/orders/:id", handlers.UpdateOrderStatus)
+	adminAPI.Put("/orders/:id/delivery", handlers.UpdateDeliveryInfo)
+	adminAPI.Get("/users", handlers.GetAllUsers)
+	adminAPI.Delete("/users/:id", handlers.DeleteUser)
 	
-	admin.Get("/chat/:userId", handlers.GetUserChatHistory)
+	adminAPI.Get("/chat/:userId", handlers.GetUserChatHistory)
 
-	admin.Get("/services", handlers.GetAdminServices)
-	admin.Post("/services", handlers.UpsertService)
-	admin.Delete("/services/:id", handlers.DeleteService)
+	adminAPI.Get("/services", handlers.GetAdminServices)
+	adminAPI.Post("/services", handlers.UpsertService)
+	adminAPI.Delete("/services/:id", handlers.DeleteService)
 	
-	admin.Get("/wa/status", handlers.GetWaStatus)
-	admin.Post("/wa/logout", handlers.LogoutWa)
-	admin.Post("/wa/start", handlers.StartWa)
+	adminAPI.Get("/wa/status", handlers.GetWaStatus)
+	adminAPI.Post("/wa/logout", handlers.LogoutWa)
+	adminAPI.Post("/wa/start", handlers.StartWa)
 	
-	admin.Post("/timeline/:id", handlers.UpdateOrderTimeline)
-	admin.Delete("/timeline/:id", handlers.DeleteOrderTimeline)
+	adminAPI.Post("/timeline/:id", handlers.UpdateOrderTimeline)
+	adminAPI.Delete("/timeline/:id", handlers.DeleteOrderTimeline)
 	
 	// --- LOGS ---
 	api.Get("/logs", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetLogs)
