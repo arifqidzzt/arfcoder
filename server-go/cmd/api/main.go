@@ -6,6 +6,7 @@ import (
 	"arfcoder-go/internal/handlers"
 	"arfcoder-go/internal/routes"
 	"arfcoder-go/internal/services/whatsapp"
+	"arfcoder-go/internal/static"
 	"arfcoder-go/internal/templates"
 	"net/http"
 	"log"
@@ -17,6 +18,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	//"github.com/gofiber/fiber/v2/middleware/helmet"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
 )
@@ -75,7 +77,9 @@ func main() {
 	// app.Use(helmet.New(helmet.Config{
 	// 	ContentSecurityPolicy: "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;",
 	// }))
-	app.Static("/static", "./static") // Serve static files
+	app.Use("/static", filesystem.New(filesystem.Config{
+		Root: http.FS(static.Assets),
+	}))
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: config.ClientURL,
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization, x-arf-secure-token",

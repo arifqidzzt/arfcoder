@@ -97,7 +97,8 @@ func Login(c *fiber.Ctx) error {
 
 	if user.Role == models.RoleAdmin || user.Role == models.RoleSuperAdmin {
 		if c.Get("HX-Request") != "" {
-			return c.Redirect("/verify-admin?userId=" + user.ID)
+			c.Set("HX-Redirect", "/verify-admin?userId="+user.ID)
+			return c.SendStatus(200)
 		}
 		return c.Status(202).JSON(fiber.Map{
 			"require2fa": true,
@@ -128,7 +129,8 @@ func Login(c *fiber.Ctx) error {
 	})
 
 	if c.Get("HX-Request") != "" {
-		return c.Redirect("/")
+		c.Set("HX-Redirect", "/")
+		return c.SendStatus(200)
 	}
 
 	return c.JSON(fiber.Map{
@@ -146,7 +148,8 @@ func Login(c *fiber.Ctx) error {
 func Logout(c *fiber.Ctx) error {
 	c.ClearCookie("auth_token")
 	if c.Get("HX-Request") != "" {
-		return c.Redirect("/login")
+		c.Set("HX-Redirect", "/login")
+		return c.SendStatus(200)
 	}
 	return c.JSON(fiber.Map{"message": "Logged out"})
 }
