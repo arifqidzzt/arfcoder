@@ -6,6 +6,8 @@ import (
 	"arfcoder-go/internal/handlers"
 	"arfcoder-go/internal/routes"
 	"arfcoder-go/internal/services/whatsapp"
+	"arfcoder-go/internal/templates"
+	"net/http"
 	"log"
 	"strings"
 	"fmt"
@@ -14,7 +16,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/helmet"
+	//"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
 )
@@ -36,7 +38,7 @@ func main() {
 	}()
 
 	// 4. Template Engine
-	engine := html.New("./internal/templates", ".html")
+	engine := html.NewFileSystem(http.FS(templates.Templates), ".html")
 	engine.AddFunc("formatNumber", func(n float64) string {
 		s := fmt.Sprintf("%.0f", n)
 		var result []string
@@ -67,9 +69,9 @@ func main() {
 
 	// 6. Global Middleware
 	app.Use(logger.New())
-	app.Use(helmet.New(helmet.Config{
-		ContentSecurityPolicy: "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;",
-	}))
+	// app.Use(helmet.New(helmet.Config{
+	// 	ContentSecurityPolicy: "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;",
+	// }))
 	app.Static("/static", "./static") // Serve static files
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: config.ClientURL,
