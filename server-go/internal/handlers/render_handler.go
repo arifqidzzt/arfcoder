@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"arfcoder-go/internal/config"
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
 	"arfcoder-go/internal/utils"
@@ -61,12 +62,25 @@ func RenderProducts(c *fiber.Ctx) error {
 	return c.Render("pages/products", data)
 }
 
+func RenderLogin(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Login"
+	data["GoogleClientID"] = config.GoogleClientID
+	return c.Render("pages/login", data)
+}
+
+func RenderRegister(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Daftar"
+	return c.Render("pages/register", data)
+}
+
 func RenderProductDetail(c *fiber.Ctx) error {
 	id := c.Params("id")
 	data := getCommonData(c)
 
 	var product models.Product
-	if err := database.DB.Preload("Category").First(&product, "id = ?", id).Error; err != nil {
+	if err := database.DB.Preload("Category").Preload("Reviews.User").First(&product, "id = ?", id).Error; err != nil {
 		return c.Redirect("/products")
 	}
 
@@ -76,7 +90,43 @@ func RenderProductDetail(c *fiber.Ctx) error {
 	return c.Render("pages/product_detail", data)
 }
 
-func RenderOrderDetail(c *fiber.Ctx) error {
+func RenderAdminFlashSales(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Kelola Flash Sale"
+	var flashSales []models.FlashSale
+	database.DB.Preload("Product").Order("\"createdAt\" desc").Find(&flashSales)
+	data["FlashSales"] = flashSales
+	
+	var products []models.Product
+	database.DB.Find(&products)
+	data["AllProducts"] = products
+
+	return c.Render("pages/admin/flash_sales", data, "layouts/admin")
+}
+
+func RenderForgotPassword(c *fiber.Ctx) error {
+	return c.Render("pages/forgot_password", getCommonData(c))
+}
+
+func RenderResetPassword(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Token"] = c.Query("token")
+	return c.Render("pages/reset_password", data)
+}
+
+func RenderVerifyOtp(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["UserID"] = c.Query("userId")
+	return c.Render("pages/verify_otp", data)
+}
+
+func RenderVerifyAdmin(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["UserID"] = c.Query("userId")
+	return c.Render("pages/verify_admin", data)
+}
+
+func RenderAdminOrderManage(c *fiber.Ctx) error {
 	id := c.Params("id")
 	data := getCommonData(c)
 	user, ok := data["User"].(models.User)
@@ -159,6 +209,21 @@ func RenderOrders(c *fiber.Ctx) error {
 	data["Orders"] = orders
 
 	return c.Render("pages/orders", data)
+}
+
+func RenderPublicServices(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Layanan Kami"
+	var services []models.Service
+	database.DB.Order("\"createdAt\" desc").Find(&services)
+	data["Services"] = services
+	return c.Render("pages/services", data)
+}
+
+func RenderContact(c *fiber.Ctx) error {
+	data := getCommonData(c)
+	data["Title"] = "Hubungi Kami"
+	return c.Render("pages/contact", data)
 }
 
 func RenderAdminDashboard(c *fiber.Ctx) error {

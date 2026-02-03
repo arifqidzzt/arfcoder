@@ -96,6 +96,9 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	if user.Role == models.RoleAdmin || user.Role == models.RoleSuperAdmin {
+		if c.Get("HX-Request") != "" {
+			return c.Redirect("/verify-admin?userId=" + user.ID)
+		}
 		return c.Status(202).JSON(fiber.Map{
 			"require2fa": true,
 			"userId":     user.ID,

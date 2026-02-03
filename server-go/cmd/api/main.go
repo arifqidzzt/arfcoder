@@ -10,6 +10,7 @@ import (
 	"strings"
 	"fmt"
 	"time"
+	"encoding/json"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -51,6 +52,10 @@ func main() {
 	})
 	engine.AddFunc("formatDateNow", func() string {
 		return time.Now().Format("02 Jan 2006")
+	})
+	engine.AddFunc("json", func(v interface{}) string {
+		b, _ := json.Marshal(v)
+		return string(b)
 	})
 
 	// 5. Fiber App

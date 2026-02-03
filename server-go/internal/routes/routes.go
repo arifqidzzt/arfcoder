@@ -10,10 +10,16 @@ import (
 func SetupRoutes(app *fiber.App) {
 	// --- PAGES (Frontend) ---
 	app.Get("/", handlers.RenderHome)
-	app.Get("/login", func(c *fiber.Ctx) error { return c.Render("pages/login", fiber.Map{"Title": "Login"}) })
-	app.Get("/register", func(c *fiber.Ctx) error { return c.Render("pages/register", fiber.Map{"Title": "Daftar"}) })
+	app.Get("/login", handlers.RenderLogin)
+	app.Get("/register", handlers.RenderRegister)
+	app.Get("/forgot-password", handlers.RenderForgotPassword)
+	app.Get("/reset-password", handlers.RenderResetPassword)
+	app.Get("/verify-otp", handlers.RenderVerifyOtp)
+	app.Get("/verify-admin", handlers.RenderVerifyAdmin)
 	app.Get("/products", handlers.RenderProducts)
 	app.Get("/products/:id", handlers.RenderProductDetail)
+	app.Get("/services", handlers.RenderPublicServices)
+	app.Get("/contact", handlers.RenderContact)
 	app.Get("/cart", handlers.RenderCart)
 	app.Get("/checkout", handlers.RenderCheckout)
 	app.Get("/orders", handlers.RenderOrders)
@@ -35,12 +41,16 @@ func SetupRoutes(app *fiber.App) {
 	admin.Get("/orders/:id", handlers.RenderAdminOrderManage)
 	admin.Get("/users", handlers.RenderAdminUsers)
 	admin.Get("/vouchers", handlers.RenderAdminVouchers)
+	admin.Get("/flash-sale", handlers.RenderAdminFlashSales)
 	admin.Get("/services", handlers.RenderAdminServices)
 	admin.Get("/chat", handlers.RenderAdminChat)
 	admin.Get("/whatsapp", handlers.RenderAdminWhatsapp)
 	admin.Get("/logs", handlers.RenderAdminLogs)
 
 	api := app.Group("/api", middleware.RateLimitAPI())
+
+	// --- PUBLIC WEBHOOK ---
+	api.Post("/midtrans-webhook", handlers.HandleMidtransWebhook)
 
 	// --- AUTH ---
 	auth := api.Group("/auth", middleware.RateLimitAuth(), middleware.SecureMiddleware)
@@ -72,7 +82,6 @@ func SetupRoutes(app *fiber.App) {
 	// --- ORDERS ---
 	orders := api.Group("/orders", middleware.SecureMiddleware)
 	orders.Post("/", middleware.AuthMiddleware, handlers.CreateOrder)
-	orders.Post("/webhook", handlers.HandleMidtransWebhook)
 	orders.Get("/my", middleware.AuthMiddleware, handlers.GetMyOrders)
 	orders.Get("/:id", middleware.AuthMiddleware, handlers.GetOrderById)
 	// Order Actions

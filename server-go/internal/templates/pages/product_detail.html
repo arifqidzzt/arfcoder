@@ -66,5 +66,60 @@
                 </div>
             </div>
         </div>
+
+        <!-- REVIEWS -->
+        <div class="mt-12 bg-white p-8 md:p-12 rounded-[3rem] border border-gray-100 shadow-soft">
+            <h3 class="font-black text-xl uppercase tracking-tighter mb-10">Ulasan Pelanggan</h3>
+            
+            {{if .User}}
+            <div class="mb-10 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                <h4 class="font-bold text-sm mb-4">Tulis Ulasan</h4>
+                <form hx-post="/api/reviews" hx-ext="json-enc" hx-on::after-request="if(event.detail.successful) { this.reset(); toast('Ulasan terkirim!'); setTimeout(() => window.location.reload(), 1000); }" class="space-y-4">
+                    <input type="hidden" name="productId" value="{{.Product.ID}}">
+                    <div class="flex gap-2">
+                        <select name="rating" class="p-3 rounded-xl border border-gray-200 text-sm font-bold outline-none focus:ring-2 focus:ring-black/5">
+                            <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                            <option value="4">⭐⭐⭐⭐ (4)</option>
+                            <option value="3">⭐⭐⭐ (3)</option>
+                            <option value="2">⭐⭐ (2)</option>
+                            <option value="1">⭐ (1)</option>
+                        </select>
+                    </div>
+                    <textarea name="comment" rows="3" placeholder="Ceritakan pengalaman Anda..." required class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-black/5"></textarea>
+                    <button type="submit" class="bg-black text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-gray-800 transition-all">Kirim Ulasan</button>
+                </form>
+            </div>
+            {{else}}
+            <div class="mb-10 text-center">
+                <p class="text-sm text-gray-400">Silakan <a href="/login" class="text-black font-bold underline">login</a> untuk menulis ulasan.</p>
+            </div>
+            {{end}}
+
+            <div class="space-y-10">
+                {{if .Product.Reviews}}
+                    {{range .Product.Reviews}}
+                    <div class="flex gap-6 items-start">
+                        <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center font-black text-xs shrink-0 uppercase tracking-widest">
+                            {{slice .User.Name 0 1}}
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-3">
+                                <p class="font-black text-sm uppercase tracking-tight">{{.User.Name}}</p>
+                                <div class="flex text-yellow-400">
+                                    {{range $i := (slice 1 2 3 4 5)}}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="{{if le $i $.Rating}}currentColor{{else}}none{{end}}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    {{end}}
+                                </div>
+                            </div>
+                            <p class="text-gray-500 text-sm font-medium leading-relaxed">{{.Comment}}</p>
+                            <p class="text-[10px] text-gray-300 font-bold uppercase tracking-widest">{{.CreatedAt.Format "02/01/2006"}}</p>
+                        </div>
+                    </div>
+                    {{end}}
+                {{else}}
+                    <div class="text-center py-10 text-gray-400 italic">Belum ada ulasan untuk produk ini.</div>
+                {{end}}
+            </div>
+        </div>
     </div>
 </div>

@@ -1,0 +1,29 @@
+<div class="min-h-screen bg-gray-50/50 pb-20 pt-24">
+    <div class="container mx-auto px-4 md:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <h1 class="text-4xl font-black uppercase tracking-tighter mb-4">Layanan Profesional</h1>
+            <p class="text-gray-400 font-medium">Solusi digital custom yang disesuaikan dengan kebutuhan bisnis Anda.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {{if .Services}}
+                {{range .Services}}
+                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
+                    <div class="w-14 h-14 bg-black text-white rounded-2xl flex items-center justify-center mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                    </div>
+                    <h3 class="text-xl font-black uppercase tracking-tight mb-3">{{.Title}}</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6 h-20 overflow-hidden">{{.Description}}</p>
+                    <p class="text-2xl font-black tracking-tighter text-accent">{{.Price}}</p>
+                    
+                    <a href="https://wa.me/628988289551?text=Halo%20ArfCoder,%20saya%20tertarik%20dengan%20layanan%20{{.Title}}" target="_blank" class="mt-8 block w-full py-4 bg-gray-50 text-black font-bold text-center rounded-2xl hover:bg-black hover:text-white transition-all">
+                        Konsultasi via WA
+                    </a>
+                </div>
+                {{end}}
+            {{else}}
+                <div class="col-span-3 text-center py-20 text-gray-400 italic">Belum ada layanan yang tersedia.</div>
+            {{end}}
+        </div>
+    </div>
+</div>
