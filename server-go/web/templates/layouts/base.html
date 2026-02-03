@@ -205,13 +205,13 @@
 </head>
 <body hx-boost="true"> <!-- Enable HTMX Boost for SPA-like navigation -->
     
-    {{template "navbar" .}}
+    {{template "partials/navbar" .}}
 
     <div id="main-content">
         {{embed}}
     </div>
 
-    {{template "footer" .}}
+    {{template "partials/footer" .}}
 
     <script>
         // Init AOS
