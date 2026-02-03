@@ -68,7 +68,7 @@ func main() {
 	// 6. Global Middleware
 	app.Use(logger.New())
 	app.Use(helmet.New(helmet.Config{
-		ContentSecurityPolicy: "default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.sandbox.midtrans.com https://app.midtrans.com https://unpkg.com https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;",
+		ContentSecurityPolicy: "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;",
 	}))
 	app.Static("/static", "./static") // Serve static files
 	app.Use(cors.New(cors.Config{
