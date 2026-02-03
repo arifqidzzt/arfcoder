@@ -1,0 +1,13 @@
+<!-- Cart Items -->
+<div class="lg:col-span-2 space-y-4">
+    <div id="cart-items-list" class="space-y-4">
+        {{template "partials/cart_items" .}}
+    </div>
+</div>
+
+<!-- Summary Sidebar -->
+<div class="lg:col-span-1">
+    <div id="cart-summary" class="bg-white p-8 rounded-3xl shadow-soft border border-gray-100 sticky top-24">
+        {{template "partials/cart_summary" .}}
+    </div>
+</div>

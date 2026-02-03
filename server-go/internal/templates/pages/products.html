@@ -1,0 +1,32 @@
+<div class="bg-gray-50/50 min-h-screen py-24">
+    <div class="container mx-auto px-4 md:px-8">
+        <div class="mb-12">
+            <h1 class="text-4xl font-black tracking-tight mb-2 uppercase">Katalog Produk</h1>
+            <p class="text-gray-400">Temukan solusi digital terbaik untuk kebutuhan Anda.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {{if .Products}}
+                {{range .Products}}
+                <a href="/products/{{.ID}}" class="group cursor-pointer bg-white rounded-2xl p-4 border border-gray-100 hover:border-accent/30 transition-all hover:shadow-lg">
+                    <div class="bg-gray-100 rounded-xl aspect-square mb-5 overflow-hidden relative">
+                        <img src="{{index .Images 0}}" alt="{{.Name}}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/600x400'" />
+                    </div>
+                    <div class="px-2">
+                        <h3 class="text-lg font-bold mb-1 group-hover:text-accent transition-colors">{{.Name}}</h3>
+                        <p class="text-gray-400 text-xs mb-3 line-clamp-2">{{.Description}}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-lg">Rp {{formatNumber .Price}}</span>
+                            <div class="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center group-hover:bg-accent transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {{end}}
+            {{else}}
+                <div class="col-span-full text-center py-20 text-gray-400 italic">Belum ada produk saat ini.</div>
+            {{end}}
+        </div>
+    </div>
+</div>

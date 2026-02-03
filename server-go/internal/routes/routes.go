@@ -8,6 +8,17 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
+	// --- PAGES (Frontend) ---
+	app.Get("/", handlers.RenderHome)
+	app.Get("/login", func(c *fiber.Ctx) error { return c.Render("pages/login", fiber.Map{"Title": "Login"}) })
+	app.Get("/register", func(c *fiber.Ctx) error { return c.Render("pages/register", fiber.Map{"Title": "Daftar"}) })
+	app.Get("/products", handlers.RenderProducts)
+	app.Get("/cart", handlers.RenderCart)
+	app.Get("/checkout", handlers.RenderCheckout)
+	app.Get("/orders", handlers.RenderOrders)
+	app.Get("/profile", handlers.RenderProfile)
+	app.Post("/logout", handlers.Logout)
+
 	api := app.Group("/api", middleware.RateLimitAPI())
 
 	// --- AUTH ---

@@ -1,0 +1,25 @@
+<h2 class="text-xl font-black mb-8 uppercase tracking-tight">Ringkasan</h2>
+<div class="space-y-4 mb-8 border-b border-gray-100 pb-8">
+    <div class="flex justify-between text-sm text-gray-400 font-medium uppercase tracking-wider">
+        <span>Subtotal</span>
+        <span class="text-black font-bold">Rp {{formatNumber .Total}}</span>
+    </div>
+    <div class="flex justify-between text-sm text-gray-400 font-medium uppercase tracking-wider">
+        <span>Biaya Layanan</span>
+        <span class="text-green-600 font-black text-[10px] bg-green-50 px-2 py-0.5 rounded tracking-tighter">GRATIS</span>
+    </div>
+</div>
+
+<div class="flex justify-between items-center mb-10">
+    <span class="font-bold text-lg text-gray-400 uppercase tracking-tighter">Total Bayar</span>
+    <span class="font-black text-3xl tracking-tighter">Rp {{formatNumber .Total}}</span>
+</div>
+
+<a href="/checkout" class="w-full py-5 bg-black text-white font-bold rounded-2xl flex items-center justify-center space-x-3 hover:bg-gray-800 transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-black/10 group">
+    <span>Checkout Sekarang</span>
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+</a>
+
+<p class="text-center text-[10px] text-gray-300 font-bold uppercase tracking-widest mt-6">
+    Transaksi aman & terenkripsi
+</p>

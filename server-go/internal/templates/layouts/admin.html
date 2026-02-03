@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{.Title}} | Admin ArfCoder</title>
+    
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#000000', accent: '#5e5ce6' },
+                    boxShadow: { 'soft': '0 4px 20px -4px rgba(0, 0, 0, 0.08)', 'elevated': '0 12px 40px -8px rgba(0, 0, 0, 0.12)' }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-black min-h-screen" hx-boost="true" x-data="{ isSidebarOpen: false }">
+    
+    <!-- MOBILE HEADER -->
+    <div class="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
+        <a href="/" class="text-xl font-black tracking-tighter uppercase">ARF ADMIN</a>
+        <button @click="isSidebarOpen = !isSidebarOpen" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+            <svg x-show="!isSidebarOpen" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            <svg x-show="isSidebarOpen" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-40 transition-transform duration-300 ease-in-out md:translate-x-0 md:block">
+        <div class="flex flex-col h-full">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center shrink-0">
+                <div>
+                    <a href="/" class="text-xl font-black tracking-tighter uppercase">ARF ADMIN</a>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-widest">Management Console</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
+                <a href="/admin" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50 {{if eq .Title "Admin Dashboard"}}bg-black text-white shadow-lg{{else}}text-gray-500{{end}}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                    <span class="font-bold text-sm">Dashboard</span>
+                </a>
+                <!-- Add other links similarly... -->
+                <div class="border-t border-gray-100 my-4"></div>
+                <a href="/" target="_blank" class="flex items-center space-x-3 px-4 py-3 text-accent hover:bg-indigo-50 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span class="font-bold text-sm">Lihat Website</span>
+                </a>
+            </nav>
+            
+            <div class="p-4 border-t border-gray-100 bg-white shrink-0">
+                <form hx-post="/api/auth/logout" hx-target="body">
+                    <button type="submit" class="flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl w-full transition-all font-bold text-sm uppercase">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                        <span>Keluar</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <!-- OVERLAY -->
+    <div x-show="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-30 md:hidden transition-opacity"></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="md:ml-64 min-h-screen transition-all duration-300 pt-20 md:pt-0">
+        <div class="w-full max-w-full">
+            {{embed}}
+        </div>
+    </div>
+
+</body>
+</html>

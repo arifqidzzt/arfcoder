@@ -25,6 +25,9 @@ require (
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/coder/websocket v1.8.14 // indirect
 	github.com/elliotchance/orderedmap/v3 v3.1.0 // indirect
+	github.com/gofiber/template v1.8.3 // indirect
+	github.com/gofiber/template/html/v2 v2.1.3 // indirect
+	github.com/gofiber/utils v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

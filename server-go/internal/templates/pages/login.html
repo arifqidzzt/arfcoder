@@ -1,0 +1,42 @@
+<div class="min-h-[80vh] flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white p-8 rounded-3xl border border-gray-100 shadow-elevated">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-black tracking-tight mb-2 uppercase">Selamat Datang</h1>
+            <p class="text-gray-400 text-sm">Masuk ke akun ArfCoder Anda</p>
+        </div>
+
+        <!-- Social Login -->
+        <button class="w-full py-3 border border-gray-200 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-gray-50 transition-all mb-6">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" />
+            <span>Lanjutkan dengan Google</span>
+        </button>
+
+        <div class="relative mb-8 text-center">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div>
+            <span class="relative px-4 bg-white text-xs text-gray-300 font-bold uppercase tracking-widest">Atau Email</span>
+        </div>
+
+        <form hx-post="/api/auth/login" hx-ext="json-enc" hx-target="body" hx-push-url="true" class="space-y-5">
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Email</label>
+                <input type="email" name="email" required class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/5 mt-1" placeholder="nama@email.com">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Password</label>
+                <input type="password" name="password" required class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black/5 mt-1" placeholder="••••••••">
+            </div>
+
+            <div class="flex justify-end">
+                <a href="/forgot-password" class="text-xs font-bold text-accent hover:underline">Lupa Password?</a>
+            </div>
+
+            <button type="submit" class="w-full py-4 bg-black text-white rounded-2xl font-bold shadow-xl shadow-black/10 hover:bg-gray-800 transition-all active:scale-[0.98]">
+                Masuk Sekarang
+            </button>
+        </form>
+
+        <p class="mt-8 text-center text-sm text-gray-400">
+            Belum punya akun? <a href="/register" class="text-black font-bold hover:underline">Daftar Gratis</a>
+        </p>
+    </div>
+</div>

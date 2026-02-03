@@ -1,0 +1,21 @@
+<div class="min-h-screen bg-gray-50/50 pb-20 pt-24">
+    <div class="container mx-auto px-4 md:px-8">
+        <h1 class="text-3xl font-black mb-10 uppercase tracking-tighter">Keranjang Belanja</h1>
+        
+        <div id="cart-container" class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <!-- Cart Items -->
+            <div class="lg:col-span-2 space-y-4">
+                <div id="cart-items-list" class="space-y-4">
+                    {{template "partials/cart_items" .}}
+                </div>
+            </div>
+
+            <!-- Summary Sidebar -->
+            <div class="lg:col-span-1">
+                <div id="cart-summary" class="bg-white p-8 rounded-3xl shadow-soft border border-gray-100 sticky top-24">
+                    {{template "partials/cart_summary" .}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
