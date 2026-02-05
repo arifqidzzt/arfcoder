@@ -56,32 +56,7 @@ func main() {
 		}
 	}
 
-	// 3. Create Super Admin
-	email := "admin@arfcoder.com"
-	password := "admin123"
-	
-	var user models.User
-	if err := database.DB.Where("email = ?", email).First(&user).Error; err != nil {
-		hashed, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
-		admin := models.User{
-			Email:      email,
-			Password:   string(hashed),
-			Name:       "Super Admin",
-			Role:       models.RoleSuperAdmin,
-			IsVerified: true,
-		}
-		database.DB.Create(&admin)
-		
-		fmt.Println("\n✅ Admin Created Successfully!")
-		fmt.Println("---------------------------")
-		fmt.Printf("Email: %s\n", email)
-		fmt.Printf("Pass : %s\n", password)
-		fmt.Println("---------------------------")
-	} else {
-		// Ensure role is Super Admin
-		database.DB.Model(&user).Update("role", models.RoleSuperAdmin)
-		fmt.Println("\nℹ️ Admin account already exists (Role updated to SUPER_ADMIN)")
-	}
+	// [REMOVED] Admin creation logic to prevent overwriting existing data
 
 	// 4. Seed Payment Methods
 	methods := []models.PaymentMethod{
