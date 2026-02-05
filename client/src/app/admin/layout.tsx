@@ -21,6 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/vouchers', icon: <Ticket size={20} />, label: 'Vouchers' },
     { href: '/admin/flash-sale', icon: <Zap size={20} />, label: 'Flash Sale' },
     { href: '/admin/services', icon: <Layers size={20} />, label: 'Layanan' },
+    { href: '/admin/payments', icon: <CreditCard size={20} />, label: 'Pembayaran' },
     { href: '/admin/chat', icon: <MessageSquare size={20} />, label: 'Live Chat' },
     { href: '/admin/whatsapp', icon: <div className="w-5 h-5 flex items-center justify-center font-bold text-lg">📱</div>, label: 'WhatsApp Bot' },
     { href: '/admin/logs', icon: <History size={20} />, label: 'Audit Logs' },
