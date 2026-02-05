@@ -19,6 +19,14 @@ interface OrderDetail {
   refundAccount?: string;
   refundStatus?: string;
   createdAt: string;
+  // Core API fields
+  useCoreApi?: boolean;
+  coreApiPaymentMethod?: string;
+  coreApiVaNumber?: string;
+  coreApiBankCode?: string;
+  coreApiQrisUrl?: string;
+  coreApiDeeplinkUrl?: string;
+  paymentExpiredAt?: string;
   items: {
     product: { name: string; images: string[]; type: string };
     quantity: number;
