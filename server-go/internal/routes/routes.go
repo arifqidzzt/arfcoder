@@ -8,8 +8,8 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	// --- WEBHOOK PALING LUAR (TEMBUS SEMUA) ---
-	// URL: https://arfzxdev.com/api/callback/midtrans
+	// --- MANDATORY: WEBHOOK (AT THE VERY TOP) ---
+	// Using All to support both GET (test) and POST (Midtrans)
 	app.All("/api/callback/midtrans", func(c *fiber.Ctx) error {
 		if c.Method() == "GET" {
 			return c.SendString("Midtrans Callback is active and reachable!")
@@ -17,6 +17,7 @@ func SetupRoutes(app *fiber.App) {
 		return handlers.HandleMidtransWebhook(c)
 	})
 
+	// Group /api for Rate Limiting
 	api := app.Group("/api", middleware.RateLimitAPI())
 
 	// --- AUTH ---
@@ -53,23 +54,26 @@ func SetupRoutes(app *fiber.App) {
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
 	orders.Post("/:id/refund", middleware.AuthMiddleware, handlers.RequestRefund)
 
-	// --- VOUCHERS & LAINNYA ---
+	// --- VOUCHERS ---
 	vouchers := api.Group("/vouchers", middleware.SecureMiddleware)
 	vouchers.Get("/", handlers.GetAllVouchers)
 	vouchers.Post("/check", handlers.CheckVoucher)
 	vouchers.Post("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.CreateVoucher)
 	vouchers.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteVoucher)
 
+	// --- FLASH SALES ---
 	fs := api.Group("/flash-sales", middleware.SecureMiddleware)
 	fs.Get("/active", handlers.GetActiveFlashSales)
 	fs.Get("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetAllFlashSales)
 	fs.Post("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.CreateFlashSale)
 	fs.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteFlashSale)
 
+	// --- REVIEWS ---
 	reviews := api.Group("/reviews", middleware.SecureMiddleware)
 	reviews.Get("/:productId", handlers.GetProductReviews)
 	reviews.Post("/", middleware.AuthMiddleware, handlers.CreateReview)
 
+	// --- USER PROFILE ---
 	user := api.Group("/user", middleware.SecureMiddleware, middleware.AuthMiddleware)
 	user.Get("/profile", handlers.GetProfile)
 	user.Put("/profile", handlers.UpdateProfile)
@@ -83,15 +87,18 @@ func SetupRoutes(app *fiber.App) {
 	user.Post("/phone/request-new", handlers.RequestNewPhoneOtp)
 	user.Post("/phone/verify-new", handlers.VerifyNewPhone)
 
+	// --- CART ---
 	cart := user.Group("/cart")
 	cart.Get("/", handlers.GetCart)
 	cart.Post("/", handlers.AddToCart)
 	cart.Put("/:productId", handlers.UpdateCartQuantity)
 	cart.Delete("/:productId", handlers.RemoveFromCart)
 
+	// --- CHAT ---
 	user.Post("/chat/send", handlers.SendMessage)
 	user.Get("/chat/history/:userId", handlers.GetUserChatHistory)
 
+	// --- ADMIN ---
 	admin := api.Group("/admin", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly)
 	admin.Get("/stats", handlers.GetDashboardStats)
 	admin.Get("/orders", handlers.GetAllOrders)
