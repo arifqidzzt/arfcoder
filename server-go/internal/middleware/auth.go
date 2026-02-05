@@ -30,23 +30,3 @@ func AdminOnly(c *fiber.Ctx) error {
 	}
 	return c.Next()
 }
-
-// OptionalAuth extracts user from token if present, but doesn't require auth
-// Used for view pages that need user info but are accessible to guests
-func OptionalAuth(c *fiber.Ctx) error {
-	authHeader := c.Get("Authorization")
-	if authHeader == "" {
-		// No auth header, continue as guest
-		return c.Next()
-	}
-
-	tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
-	claims, err := utils.VerifyToken(tokenString)
-	if err != nil {
-		// Invalid token, continue as guest
-		return c.Next()
-	}
-
-	c.Locals("user", claims)
-	return c.Next()
-}
