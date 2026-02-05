@@ -6,10 +6,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Modern Minimalist E-commerce for Digital Services and Products">
-    <title>{{if .Title}}{{.Title}} | {{end}}ArfCoder | Digital Services & Product Store</title>
+    <title>{{if .Title}}{{.Title}}{{else}}ArfCoder | Digital Services & Product Store{{end}}</title>
     <link rel="icon" href="/static/images/app_icon.png">
 
-    <!-- Google Fonts - Geist equivalent (Inter) -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -30,6 +30,9 @@
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Midtrans -->
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{.MidtransClientKey}}"></script>
 </head>
 
 <body class="font-sans antialiased selection:bg-black selection:text-white" x-data="appState()" x-init="init()"

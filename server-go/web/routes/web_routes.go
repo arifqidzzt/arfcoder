@@ -1,11 +1,14 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"arfcoder-go/internal/config"
 
@@ -13,11 +16,11 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 )
 
-var templates *template.Template
+var templates map[string]*template.Template
 
 // InitTemplates loads and parses all HTML templates
 func InitTemplates() {
-	var err error
+	templates = make(map[string]*template.Template)
 	templateDir := "web/templates"
 
 	// Define template functions
@@ -34,35 +37,57 @@ func InitTemplates() {
 				return "Rp 0"
 			}
 		},
+		"formatDate": func(date interface{}) string {
+			return fmt.Sprintf("%v", date)
+		},
 	}
 
-	// Parse all templates
-	templates = template.New("").Funcs(funcMap)
+	// Load layout files
+	baseLayout := filepath.Join(templateDir, "layouts", "base.html")
+	adminLayout := filepath.Join(templateDir, "layouts", "admin.html")
 
-	patterns := []string{
-		filepath.Join(templateDir, "layouts", "*.html"),
-		filepath.Join(templateDir, "partials", "*.html"),
-		filepath.Join(templateDir, "pages", "*.html"),
-		filepath.Join(templateDir, "pages", "admin", "*.html"),
+	// Load partials
+	partials, err := filepath.Glob(filepath.Join(templateDir, "partials", "*.html"))
+	if err != nil {
+		log.Printf("Error loading partials: %v", err)
 	}
 
-	for _, pattern := range patterns {
-		templates, err = templates.ParseGlob(pattern)
+	// Load public page templates
+	publicPages, _ := filepath.Glob(filepath.Join(templateDir, "pages", "*.html"))
+	for _, page := range publicPages {
+		name := strings.TrimSuffix(filepath.Base(page), ".html")
+		files := append([]string{baseLayout, page}, partials...)
+		tmpl, err := template.New("").Funcs(funcMap).ParseFiles(files...)
 		if err != nil {
-			log.Printf("Warning: Could not parse templates in %s: %v", pattern, err)
+			log.Printf("Error parsing template %s: %v", name, err)
+			continue
 		}
+		templates[name] = tmpl
+		log.Printf("Loaded template: %s", name)
 	}
 
-	log.Println("Templates loaded successfully")
+	// Load admin page templates
+	adminPages, _ := filepath.Glob(filepath.Join(templateDir, "pages", "admin", "*.html"))
+	for _, page := range adminPages {
+		name := "admin/" + strings.TrimSuffix(filepath.Base(page), ".html")
+		files := append([]string{adminLayout, page}, partials...)
+		tmpl, err := template.New("").Funcs(funcMap).ParseFiles(files...)
+		if err != nil {
+			log.Printf("Error parsing admin template %s: %v", name, err)
+			continue
+		}
+		templates[name] = tmpl
+		log.Printf("Loaded admin template: %s", name)
+	}
+
+	log.Printf("Templates loaded: %d total", len(templates))
 }
 
 func formatIDR(amount float64) string {
-	// Simple IDR formatting
 	return "Rp " + formatNumber(amount)
 }
 
 func formatNumber(n float64) string {
-	// Format number with thousand separators
 	str := ""
 	i := int64(n)
 	for i > 0 {
@@ -133,31 +158,40 @@ func renderPage(page, layout string) fiber.Handler {
 		data := fiber.Map{
 			"Title":             getPageTitle(page),
 			"MidtransClientKey": config.MidtransClientKey,
+			"CurrentPath":       c.Path(),
 		}
 
-		// Check for HTMX request - only return page content
+		tmpl, ok := templates[page]
+		if !ok {
+			log.Printf("Template not found: %s", page)
+			return c.Status(404).SendString("Template not found: " + page)
+		}
+
+		// For HTMX requests, only return the content block
 		if c.Get("HX-Request") == "true" {
 			c.Set("Content-Type", "text/html")
-			return renderTemplate(c, page, data)
+			var buf bytes.Buffer
+			contentName := "content"
+			if layout == "admin" {
+				contentName = "admin_content"
+			}
+			if err := tmpl.ExecuteTemplate(&buf, contentName, data); err != nil {
+				log.Printf("Error executing content template %s: %v", page, err)
+				return c.Status(500).SendString("Template error: " + err.Error())
+			}
+			return c.Send(buf.Bytes())
 		}
 
 		// Full page render with layout
-		data["Page"] = page
-		return renderWithLayout(c, page, layout, data)
+		c.Set("Content-Type", "text/html")
+		layoutName := layout + ".html"
+		var buf bytes.Buffer
+		if err := tmpl.ExecuteTemplate(&buf, layoutName, data); err != nil {
+			log.Printf("Error executing layout %s for page %s: %v", layoutName, page, err)
+			return c.Status(500).SendString("Template error: " + err.Error())
+		}
+		return c.Send(buf.Bytes())
 	}
-}
-
-func renderTemplate(c *fiber.Ctx, name string, data fiber.Map) error {
-	c.Set("Content-Type", "text/html")
-	return templates.ExecuteTemplate(c.Response().BodyWriter(), name, data)
-}
-
-func renderWithLayout(c *fiber.Ctx, page, layout string, data fiber.Map) error {
-	c.Set("Content-Type", "text/html")
-
-	// For admin pages use admin layout, otherwise base
-	layoutTemplate := layout + ".html"
-	return templates.ExecuteTemplate(c.Response().BodyWriter(), layoutTemplate, data)
 }
 
 func getPageTitle(page string) string {
@@ -198,4 +232,10 @@ func getPageTitle(page string) string {
 		return title
 	}
 	return "ArfCoder"
+}
+
+// GetWorkingDirectory returns the current working directory
+func GetWorkingDirectory() string {
+	wd, _ := os.Getwd()
+	return wd
 }
