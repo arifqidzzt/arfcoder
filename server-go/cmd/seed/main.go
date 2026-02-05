@@ -5,7 +5,6 @@ import (
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
 	"fmt"
-	"log"
 
 	"golang.org/x/crypto/bcrypt"
 )
