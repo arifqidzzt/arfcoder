@@ -46,7 +46,6 @@ func SetupRoutes(app *fiber.App) {
 	// Order Actions
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
 	orders.Post("/:id/refund", middleware.AuthMiddleware, handlers.RequestRefund)
-	orders.Post("/:id/pay", middleware.AuthMiddleware, handlers.RegeneratePaymentToken)
 
 	// --- VOUCHERS ---
 	vouchers := api.Group("/vouchers", middleware.SecureMiddleware)
