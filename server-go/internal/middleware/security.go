@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"encoding/json"
-	"strings"
 
 	"arfcoder-go/internal/utils"
 
@@ -10,13 +9,7 @@ import (
 )
 
 func SecureMiddleware(c *fiber.Ctx) error {
-	// --- KARTU PASS WEBHOOK ---
-	// Jika URL mengandung "webhook", biarkan Midtrans masuk tanpa header rahasia
-	if strings.Contains(c.Path(), "webhook") {
-		return c.Next()
-	}
-
-	// 1. Check Header Keamanan untuk User
+	// 1. Check Header Keamanan
 	secureHeader := c.Get("x-arf-secure-token")
 	if !utils.VerifySecureHeader(secureHeader) {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
@@ -48,6 +41,7 @@ func SecureMiddleware(c *fiber.Ctx) error {
 			})
 		}
 
+		// Replace Body with Decrypted JSON
 		newBody, err := json.Marshal(decrypted)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Re-marshal failed"})
