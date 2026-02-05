@@ -7,7 +7,6 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -286,8 +285,21 @@ func GenerateRandomString(n int) string {
 	return hex.EncodeToString(b)
 }
 
-func SHA512Hash(data string) string {
-	h := sha512.New()
-	h.Write([]byte(data))
-	return hex.EncodeToString(h.Sum(nil))
+// JSONField for GORM JSONB support
+type JSONField map[string]interface{}
+
+func (j JSONField) Value() (interface{}, error) {
+	return json.Marshal(j)
+}
+
+func (j *JSONField) Scan(value interface{}) error {
+	if value == nil {
+		*j = nil
+		return nil
+	}
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(bytes, j)
 }

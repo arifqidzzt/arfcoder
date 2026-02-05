@@ -35,16 +35,14 @@ func GetProductById(c *fiber.Ctx) error {
 
 func CreateProduct(c *fiber.Ctx) error {
 	type Req struct {
-		Name        string   `json:"name"`
-		Description string   `json:"description"`
-		Price       float64  `json:"price"`
-		Discount    float64  `json:"discount"`
-		Stock       int      `json:"stock"`
-		Type        string   `json:"type"`
-		Images      []string `json:"images"`
-		CategoryId  string   `json:"categoryId"`
-		// Payment Configuration
-		UseCoreApi     bool     `json:"useCoreApi"`
+		Name           string   `json:"name"`
+		Description    string   `json:"description"`
+		Price          float64  `json:"price"`
+		Discount       float64  `json:"discount"`
+		Stock          int      `json:"stock"`
+		Type           string   `json:"type"`
+		Images         []string `json:"images"`
+		CategoryId     string   `json:"categoryId"`
 		PaymentMethods []string `json:"paymentMethods"`
 	}
 	var req Req
@@ -53,14 +51,13 @@ func CreateProduct(c *fiber.Ctx) error {
 	}
 
 	product := models.Product{
-		Name:        req.Name,
-		Description: req.Description,
-		Price:       req.Price,
-		Discount:    req.Discount,
-		Stock:       req.Stock,
-		Type:        req.Type,
-		Images:      pq.StringArray(req.Images),
-		UseCoreApi:  req.UseCoreApi,
+		Name:           req.Name,
+		Description:    req.Description,
+		Price:          req.Price,
+		Discount:       req.Discount,
+		Stock:          req.Stock,
+		Type:           req.Type,
+		Images:         pq.StringArray(req.Images),
 		PaymentMethods: pq.StringArray(req.PaymentMethods),
 	}
 	
@@ -75,15 +72,13 @@ func CreateProduct(c *fiber.Ctx) error {
 func UpdateProduct(c *fiber.Ctx) error {
 	id := c.Params("id")
 	type Req struct {
-		Name        string   `json:"name"`
-		Description string   `json:"description"`
-		Price       float64  `json:"price"`
-		Discount    float64  `json:"discount"`
-		Stock       int      `json:"stock"`
-		Type        string   `json:"type"`
-		Images      []string `json:"images"`
-		// Payment Configuration
-		UseCoreApi     bool     `json:"useCoreApi"`
+		Name           string   `json:"name"`
+		Description    string   `json:"description"`
+		Price          float64  `json:"price"`
+		Discount       float64  `json:"discount"`
+		Stock          int      `json:"stock"`
+		Type           string   `json:"type"`
+		Images         []string `json:"images"`
 		PaymentMethods []string `json:"paymentMethods"`
 	}
 	var req Req
@@ -101,7 +96,6 @@ func UpdateProduct(c *fiber.Ctx) error {
 	product.Stock = req.Stock
 	product.Type = req.Type
 	product.Images = pq.StringArray(req.Images)
-	product.UseCoreApi = req.UseCoreApi
 	product.PaymentMethods = pq.StringArray(req.PaymentMethods)
 
 	database.DB.Save(&product)

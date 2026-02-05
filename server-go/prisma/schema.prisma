@@ -38,6 +38,19 @@ enum DiscountType {
   FIXED
 }
 
+enum MidtransMode {
+  SNAP
+  CORE
+}
+
+model PaymentSetting {
+  id            String       @id @default(cuid())
+  mode          MidtransMode @default(SNAP)
+  activeMethods String[] // For Core API, e.g., ["gopay", "qris", "bca_va"]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -95,27 +108,23 @@ model Category {
 }
 
 model Product {
-  id             String      @id @default(cuid())
-  name           String
-  description    String
-  price          Float
-  discount       Float       @default(0)
-  stock          Int         @default(0)
-  type           ProductType @default(BARANG)
-  images         String[]
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  discount    Float       @default(0)
+  stock       Int         @default(0)
+  type        ProductType @default(BARANG)
+  images      String[]
   categoryId     String?
   category       Category?   @relation(fields: [categoryId], references: [id])
-  
-  // Payment Configuration
-  useCoreApi     Boolean     @default(false)
-  paymentMethods String[]    @default([])
-  
+  paymentMethods String[] // Override global if Core API
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
-  cartItems      CartItem[]
-  orderItems     OrderItem[]
-  reviews        Review[]
-  flashSales     FlashSale[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  reviews     Review[]
+  flashSales  FlashSale[]
 }
 
 model Service {
@@ -146,24 +155,15 @@ model Order {
   invoiceNumber String      @unique
   userId        String
   user          User        @relation(fields: [userId], references: [id])
-  totalAmount   Float
-  status        OrderStatus @default(PENDING)
-  paymentType   String?
+  totalAmount     Float
+  status          OrderStatus @default(PENDING)
+  paymentType     String?
+  paymentMethod   String? // E.g., bca, mandiri, qris
+  paymentDetails  Json? // Store VA numbers, QRIS URL, Expiry
+  snapToken       String?
+  snapUrl         String?
+  address         String?
   
-  // Snap Payment Fields
-  snapToken     String?
-  snapUrl       String?
-  
-  // Core API Payment Fields
-  useCoreApi          Boolean   @default(false)
-  coreApiPaymentMethod String?
-  coreApiVaNumber     String?
-  coreApiBankCode     String?
-  coreApiQrisUrl      String?
-  coreApiDeeplinkUrl  String?
-  paymentExpiredAt    DateTime?
-  
-  address       String?
   deliveryInfo  String?
   refundReason  String?
   refundAccount String?
@@ -244,13 +244,4 @@ model Review {
   comment   String?
   isVisible Boolean  @default(true)
   createdAt DateTime @default(now())
-}
-
-model Settings {
-  id                    String   @id @default(cuid())
-  key                   String   @unique
-  paymentMode           String   @default("snap") // "snap" or "core_api"
-  defaultPaymentMethods String[] @default([])
-  updatedAt             DateTime @updatedAt
-  createdAt             DateTime @default(now())
 }

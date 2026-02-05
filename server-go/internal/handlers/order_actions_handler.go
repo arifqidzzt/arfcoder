@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/midtrans/midtrans-go"
+	"github.com/midtrans/midtrans-go/coreapi"
 	"github.com/midtrans/midtrans-go/snap"
 	"gorm.io/gorm"
 )
@@ -93,35 +94,116 @@ func RegeneratePaymentToken(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"message": "Order already paid/cancelled"})
 	}
 
-	// Logic: < 24 Hours reuse token
-	timeDiff := time.Since(order.UpdatedAt)
-	if order.SnapToken != "" && timeDiff < 23*time.Hour+59*time.Minute {
-		return c.JSON(fiber.Map{"snapToken": order.SnapToken})
+	// 1. Expiration Logic
+	timeSinceCreated := time.Since(order.CreatedAt)
+	if timeSinceCreated > 24*time.Hour {
+		database.DB.Model(&order).Update("status", models.OrderStatusCancelled)
+		return c.Status(400).JSON(fiber.Map{"message": "Order expired (> 24h)"})
 	}
 
-	// Generate New Token
-	newTxId := fmt.Sprintf("%s-%d", order.ID, time.Now().Unix()) // Unique ID
-	
-	reqSnap := &snap.Request{
-		TransactionDetails: midtrans.TransactionDetails{
-			OrderID:  newTxId, 
-			GrossAmt: int64(order.TotalAmount),
-		},
-		CustomerDetail: &midtrans.CustomerDetails{ // Fixed field name
-			FName: userClaims.UserID,
-		},
+	// 2. Fetch Payment Settings
+	var paymentSetting models.PaymentSetting
+	database.DB.First(&paymentSetting)
+
+	// Generate New ID (Midtrans requires unique order_id for new transactions)
+	newTxId := fmt.Sprintf("%s-%d", order.ID, time.Now().Unix())
+
+	if paymentSetting.Mode == models.MidtransModeCore {
+		if order.PaymentType == "" {
+			return c.Status(400).JSON(fiber.Map{"message": "Original order has no payment type"})
+		}
+
+		coreReq := &coreapi.ChargeReq{
+			PaymentType: coreapi.CoreapiPaymentType(order.PaymentType),
+			TransactionDetails: midtrans.TransactionDetails{
+				OrderID:  newTxId,
+				GrossAmt: int64(order.TotalAmount),
+			},
+			CustomerDetails: &midtrans.CustomerDetails{
+				FName: userClaims.UserID,
+			},
+		}
+
+		// Handle specific payment methods
+		switch order.PaymentType {
+		case string(coreapi.PaymentTypeBankTransfer):
+			coreReq.BankTransfer = &coreapi.BankTransferDetails{
+				Bank: midtrans.Bank(order.PaymentMethod),
+			}
+		case string(coreapi.PaymentTypeEChannel):
+			coreReq.EChannel = &coreapi.EChannelDetail{
+				BillInfo1: "Payment for Order",
+				BillInfo2: order.InvoiceNumber,
+			}
+		case string(coreapi.PaymentTypeGopay):
+			coreReq.Gopay = &coreapi.GopayDetails{
+				EnableCallback: true,
+			}
+		case string(coreapi.PaymentTypeQris):
+		}
+
+		resp, err := CoreClient.ChargeTransaction(coreReq)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"message": "Failed to regenerate payment"})
+		}
+
+		// Store Payment Details
+		details := make(utils.JSONField)
+		if len(resp.VaNumbers) > 0 {
+			details["va_number"] = resp.VaNumbers[0].VANumber
+			details["bank"] = resp.VaNumbers[0].Bank
+		}
+		if resp.PaymentType == string(coreapi.PaymentTypeQris) || resp.PaymentType == string(coreapi.PaymentTypeGopay) {
+			for _, action := range resp.Actions {
+				if action.Name == "generate-qr-code" {
+					details["qr_url"] = action.URL
+				}
+				if action.Name == "deeplink-redirect" {
+					details["deeplink"] = action.URL
+				}
+			}
+		}
+		if resp.BillKey != "" {
+			details["bill_key"] = resp.BillKey
+			details["biller_code"] = resp.BillerCode
+		}
+		details["expiry_time"] = resp.ExpiryTime
+
+		database.DB.Model(&order).Updates(models.Order{
+			PaymentDetails: details,
+		})
+
+		return c.JSON(fiber.Map{
+			"mode":           "CORE",
+			"paymentDetails": details,
+		})
+
+	} else {
+		// Midtrans Snap
+		reqSnap := &snap.Request{
+			TransactionDetails: midtrans.TransactionDetails{
+				OrderID:  newTxId,
+				GrossAmt: int64(order.TotalAmount),
+			},
+			CustomerDetail: &midtrans.CustomerDetails{
+				FName: userClaims.UserID,
+			},
+		}
+
+		resp, err := SnapClient.CreateTransaction(reqSnap)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"message": "Failed to regenerate token"})
+		}
+
+		database.DB.Model(&order).Updates(models.Order{
+			SnapToken: resp.Token,
+			SnapUrl:   resp.RedirectURL,
+		})
+
+		return c.JSON(fiber.Map{
+			"mode":      "SNAP",
+			"snapToken": resp.Token,
+			"snapUrl":   resp.RedirectURL,
+		})
 	}
-
-	// Use exported SnapClient from order_handler.go
-	resp, err := SnapClient.CreateTransaction(reqSnap)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"message": "Failed to regenerate token"})
-	}
-
-	database.DB.Model(&order).Updates(models.Order{
-		SnapToken: resp.Token,
-		SnapUrl:   resp.RedirectURL,
-	})
-
-	return c.JSON(fiber.Map{"snapToken": resp.Token})
 }
