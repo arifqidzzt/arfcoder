@@ -63,6 +63,10 @@
     </div>
 
     <!-- Scripts -->
+    <script>
+        // Inject secret key from backend for API security
+        window.APP_SECRET_KEY = '{{.SecretKey}}';
+    </script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/app.js"></script>
     <script>

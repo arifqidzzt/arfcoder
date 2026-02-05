@@ -294,6 +294,7 @@ func renderPage(page, layout string) fiber.Handler {
 			"Title":             getPageTitle(page),
 			"MidtransClientKey": config.MidtransClientKey,
 			"CurrentPath":       c.Path(),
+			"SecretKey":         config.AppSecretKey,
 		}
 
 		tmpl, ok := templates[page]
