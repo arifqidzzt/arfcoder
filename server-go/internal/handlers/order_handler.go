@@ -61,6 +61,12 @@ func CreateOrder(c *fiber.Ctx) error {
 			useCoreApi = true
 			if len(product.PaymentMethods) > 0 {
 				availablePaymentMethods = product.PaymentMethods
+			} else {
+				// If no specific methods, allow ALL payment methods
+				availablePaymentMethods = []string{
+					"bca", "bni", "bri", "permata", "cimb", "mandiri",
+					"qris", "gopay", "shopeepay", "credit_card",
+				}
 			}
 		}
 

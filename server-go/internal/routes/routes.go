@@ -120,6 +120,10 @@ func SetupRoutes(app *fiber.App) {
 	admin.Post("/timeline/:id", handlers.UpdateOrderTimeline)
 	admin.Delete("/timeline/:id", handlers.DeleteOrderTimeline)
 
+	// --- SETTINGS ---
+	api.Get("/settings", middleware.SecureMiddleware, handlers.GetSettings)
+	api.Put("/settings", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly, handlers.UpdateSettings)
+
 	// --- LOGS ---
 	api.Get("/logs", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetLogs)
 }

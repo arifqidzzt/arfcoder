@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
+import { GROUPED_PAYMENT_METHODS } from '@/lib/paymentMethods';
 
 interface ProductFormProps {
   initialData?: any;
@@ -168,37 +169,40 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
 
             {formData.useCoreApi && (
               <div>
-                <label className="block text-sm font-bold mb-2">Metode Pembayaran (Minimal 1)</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: 'bca_va', label: 'BCA VA' },
-                    { id: 'bni_va', label: 'BNI VA' },
-                    { id: 'bri_va', label: 'BRI VA' },
-                    { id: 'mandiri_bill', label: 'Mandiri Bill' },
-                    { id: 'permata_va', label: 'Permata VA' },
-                    { id: 'qris', label: 'QRIS' },
-                    { id: 'gopay', label: 'GoPay' },
-                    { id: 'shopeepay', label: 'ShopeePay' },
-                  ].map(method => (
-                    <label key={method.id} className="flex items-center gap-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.paymentMethods.includes(method.id)}
-                        onChange={(e) => {
-                          const newMethods = e.target.checked
-                            ? [...formData.paymentMethods, method.id]
-                            : formData.paymentMethods.filter((m: string) => m !== method.id);
-                          setFormData(prev => ({ ...prev, paymentMethods: newMethods }));
-                        }}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm">{method.label}</span>
-                    </label>
-                  ))}
+                <label className="block text-sm font-bold mb-2">Metode Pembayaran</label>
+                <p className="text-xs text-gray-500 mb-3">Kosongkan untuk menggunakan SEMUA metode pembayaran. Pilih spesifik hanya jika ingin membatasi.</p>
+
+                {Object.entries(GROUPED_PAYMENT_METHODS).map(([groupName, methods]) => (
+                  <div key={groupName} className="mb-4">
+                    <h4 className="text-xs font-semibold text-gray-700 mb-2">{groupName}</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {methods.map(method => (
+                        <label key={method.id} className="flex items-center gap-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.paymentMethods.includes(method.id)}
+                            onChange={(e) => {
+                              const newMethods = e.target.checked
+                                ? [...formData.paymentMethods, method.id]
+                                : formData.paymentMethods.filter((m: string) => m !== method.id);
+                              setFormData(prev => ({ ...prev, paymentMethods: newMethods }));
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">{method.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
+                  <p className="text-xs text-blue-700">
+                    <strong>📌 Tip:</strong> {formData.paymentMethods.length === 0
+                      ? 'Semua metode pembayaran akan tersedia'
+                      : `${formData.paymentMethods.length} metode terpilih`}
+                  </p>
                 </div>
-                {formData.paymentMethods.length === 0 && (
-                  <p className="text-xs text-red-500 mt-2">⚠️ Pilih minimal 1 metode pembayaran</p>
-                )}
               </div>
             )}
           </div>

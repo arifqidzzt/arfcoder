@@ -65,44 +65,36 @@ func CreateCoreApiCharge(c *fiber.Ctx) error {
 	}
 
 	// Set payment-specific parameters
-	switch {
-	case req.PaymentMethod == "bca_va":
-		chargeReq.BankTransfer = &coreapi.BankTransferDetails{
-			Bank: midtrans.BankBca,
-		}
-	case req.PaymentMethod == "bni_va":
-		chargeReq.BankTransfer = &coreapi.BankTransferDetails{
-			Bank: midtrans.BankBni,
-		}
-	case req.PaymentMethod == "bri_va":
-		chargeReq.BankTransfer = &coreapi.BankTransferDetails{
-			Bank: midtrans.BankBri,
-		}
-	case req.PaymentMethod == "mandiri_bill":
+	switch req.PaymentMethod {
+	case "bca":
+		chargeReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.BankBca}
+	case "bni":
+		chargeReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.BankBni}
+	case "bri":
+		chargeReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.BankBri}
+	case "permata":
+		chargeReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.BankPermata}
+	case "cimb":
+		chargeReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.BankCimb}
+	case "mandiri":
 		chargeReq.EChannel = &coreapi.EChannelDetail{
 			BillInfo1: "Payment:",
 			BillInfo2: order.InvoiceNumber,
 		}
-	case req.PaymentMethod == "permata_va":
-		chargeReq.BankTransfer = &coreapi.BankTransferDetails{
-			Bank: midtrans.BankPermata,
-		}
-	case req.PaymentMethod == "qris":
+	case "qris":
 		chargeReq.PaymentType = coreapi.PaymentTypeQris
-		chargeReq.Qris = &coreapi.QrisDetails{
-			Acquirer: "gopay",
-		}
-	case req.PaymentMethod == "gopay":
+		chargeReq.Qris = &coreapi.QrisDetails{Acquirer: "gopay"}
+	case "gopay":
 		chargeReq.PaymentType = coreapi.PaymentTypeGopay
 		chargeReq.Gopay = &coreapi.GopayDetails{
 			EnableCallback: true,
 			CallbackUrl:    config.ClientURL + "/orders/" + order.ID,
 		}
-	case req.PaymentMethod == "shopeepay":
+	case "shopeepay":
 		chargeReq.PaymentType = coreapi.PaymentTypeShopeepay
-		chargeReq.ShopeePay = &coreapi.ShopeePayDetails{
-			CallbackUrl: config.ClientURL + "/orders/" + order.ID,
-		}
+		chargeReq.ShopeePay = &coreapi.ShopeePayDetails{CallbackUrl: config.ClientURL + "/orders/" + order.ID}
+	case "credit_card":
+		chargeReq.PaymentType = coreapi.PaymentTypeCreditCard
 	default:
 		return c.Status(400).JSON(fiber.Map{"message": "Payment method tidak didukung"})
 	}
@@ -257,16 +249,18 @@ func RegenerateCoreApiPayment(c *fiber.Ctx) error {
 
 	// Set payment-specific parameters (same as CreateCoreApiCharge)
 	switch order.CoreApiPaymentMethod {
-	case "bca_va":
+	case "bca":
 		chargeReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.BankBca}
-	case "bni_va":
+	case "bni":
 		chargeReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.BankBni}
-	case "bri_va":
+	case "bri":
 		chargeReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.BankBri}
-	case "mandiri_bill":
-		chargeReq.EChannel = &coreapi.EChannelDetail{BillInfo1: "Payment:", BillInfo2: order.InvoiceNumber}
-	case "permata_va":
+	case "permata":
 		chargeReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.BankPermata}
+	case "cimb":
+		chargeReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.BankCimb}
+	case "mandiri":
+		chargeReq.EChannel = &coreapi.EChannelDetail{BillInfo1: "Payment:", BillInfo2: order.InvoiceNumber}
 	case "qris":
 		chargeReq.PaymentType = coreapi.PaymentTypeQris
 		chargeReq.Qris = &coreapi.QrisDetails{Acquirer: "gopay"}
@@ -276,6 +270,8 @@ func RegenerateCoreApiPayment(c *fiber.Ctx) error {
 	case "shopeepay":
 		chargeReq.PaymentType = coreapi.PaymentTypeShopeepay
 		chargeReq.ShopeePay = &coreapi.ShopeePayDetails{CallbackUrl: config.ClientURL + "/orders/" + order.ID}
+	case "credit_card":
+		chargeReq.PaymentType = coreapi.PaymentTypeCreditCard
 	}
 
 	resp, err := CoreApiClient.ChargeTransaction(chargeReq)
@@ -356,5 +352,5 @@ func getPaymentType(method string) coreapi.CoreapiPaymentType {
 }
 
 func isInstantPayment(method string) bool {
-	return method == "qris" || method == "gopay" || method == "shopeepay"
+	return method == "qris" || method == "gopay" || method == "shopeepay" || method == "credit_card"
 }

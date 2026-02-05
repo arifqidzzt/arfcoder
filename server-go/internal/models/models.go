@@ -3,9 +3,10 @@ package models
 import (
 	"time"
 
+	"arfcoder-go/internal/utils"
+
 	"github.com/lib/pq"
 	"gorm.io/gorm"
-	"arfcoder-go/internal/utils"
 )
 
 // Enums (mapped as strings)
@@ -39,22 +40,22 @@ const (
 )
 
 type User struct {
-	ID               string    `gorm:"primaryKey;column:id" json:"id"`
-	Email            string    `gorm:"uniqueIndex;not null;column:email" json:"email"`
-	Password         string    `gorm:"type:text;column:password" json:"-"`
-	Name             string    `gorm:"column:name" json:"name"`
-	Role             string    `gorm:"default:'USER';column:role" json:"role"`
-	IsVerified       bool      `gorm:"default:false;column:isVerified" json:"isVerified"`
-	GoogleID         string    `gorm:"uniqueIndex;column:googleId" json:"googleId"`
-	Avatar           string    `gorm:"column:avatar" json:"avatar"`
-	PhoneNumber      string    `gorm:"column:phoneNumber" json:"phoneNumber"`
-	WABotNumber      string    `gorm:"column:waBotNumber" json:"waBotNumber"`
-	ResetToken       string    `gorm:"column:resetToken" json:"-"`
+	ID               string     `gorm:"primaryKey;column:id" json:"id"`
+	Email            string     `gorm:"uniqueIndex;not null;column:email" json:"email"`
+	Password         string     `gorm:"type:text;column:password" json:"-"`
+	Name             string     `gorm:"column:name" json:"name"`
+	Role             string     `gorm:"default:'USER';column:role" json:"role"`
+	IsVerified       bool       `gorm:"default:false;column:isVerified" json:"isVerified"`
+	GoogleID         string     `gorm:"uniqueIndex;column:googleId" json:"googleId"`
+	Avatar           string     `gorm:"column:avatar" json:"avatar"`
+	PhoneNumber      string     `gorm:"column:phoneNumber" json:"phoneNumber"`
+	WABotNumber      string     `gorm:"column:waBotNumber" json:"waBotNumber"`
+	ResetToken       string     `gorm:"column:resetToken" json:"-"`
 	ResetTokenExpiry *time.Time `gorm:"column:resetTokenExpiry" json:"-"`
-	TwoFactorSecret  string    `gorm:"column:twoFactorSecret" json:"-"`
-	TwoFactorEnabled bool      `gorm:"default:false;column:twoFactorEnabled" json:"twoFactorEnabled"`
-	CreatedAt        time.Time `gorm:"autoCreateTime;column:createdAt" json:"createdAt"`
-	UpdatedAt        time.Time `gorm:"autoUpdateTime;column:updatedAt" json:"updatedAt"`
+	TwoFactorSecret  string     `gorm:"column:twoFactorSecret" json:"-"`
+	TwoFactorEnabled bool       `gorm:"default:false;column:twoFactorEnabled" json:"twoFactorEnabled"`
+	CreatedAt        time.Time  `gorm:"autoCreateTime;column:createdAt" json:"createdAt"`
+	UpdatedAt        time.Time  `gorm:"autoUpdateTime;column:updatedAt" json:"updatedAt"`
 
 	// Relations
 	Otps         []Otp         `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"otps,omitempty"`
@@ -141,16 +142,16 @@ type Product struct {
 	Discount    float64        `gorm:"default:0;column:discount" json:"discount"`
 	Stock       int            `gorm:"default:0;column:stock" json:"stock"`
 	Type        string         `gorm:"default:'BARANG';column:type" json:"type"`
-	Images      pq.StringArray `gorm:"type:text[];column:images" json:"images"` 
+	Images      pq.StringArray `gorm:"type:text[];column:images" json:"images"`
 	CategoryID  *string        `gorm:"column:categoryId" json:"categoryId"`
 	Category    Category       `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
-	
+
 	// Payment Configuration
 	UseCoreApi     bool           `gorm:"default:false;column:useCoreApi" json:"useCoreApi"`
 	PaymentMethods pq.StringArray `gorm:"type:text[];column:paymentMethods;default:'{}'" json:"paymentMethods"`
-	
-	CreatedAt   time.Time      `gorm:"autoCreateTime;column:createdAt" json:"createdAt"`
-	UpdatedAt   time.Time      `gorm:"autoUpdateTime;column:updatedAt" json:"updatedAt"`
+
+	CreatedAt time.Time `gorm:"autoCreateTime;column:createdAt" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime;column:updatedAt" json:"updatedAt"`
 
 	CartItems  []CartItem  `gorm:"foreignKey:ProductID" json:"cartItems,omitempty"`
 	OrderItems []OrderItem `gorm:"foreignKey:ProductID" json:"orderItems,omitempty"`
@@ -213,32 +214,32 @@ func (CartItem) TableName() string {
 }
 
 type Order struct {
-	ID            string    `gorm:"primaryKey;column:id" json:"id"`
-	InvoiceNumber string    `gorm:"uniqueIndex;not null;column:invoiceNumber" json:"invoiceNumber"`
-	UserID        string    `gorm:"not null;column:userId" json:"userId"`
-	User          User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	TotalAmount   float64   `gorm:"not null;column:totalAmount" json:"totalAmount"`
-	Status        string    `gorm:"default:'PENDING';column:status" json:"status"`
-	PaymentType   string    `gorm:"column:paymentType" json:"paymentType"`
-	
+	ID            string  `gorm:"primaryKey;column:id" json:"id"`
+	InvoiceNumber string  `gorm:"uniqueIndex;not null;column:invoiceNumber" json:"invoiceNumber"`
+	UserID        string  `gorm:"not null;column:userId" json:"userId"`
+	User          User    `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	TotalAmount   float64 `gorm:"not null;column:totalAmount" json:"totalAmount"`
+	Status        string  `gorm:"default:'PENDING';column:status" json:"status"`
+	PaymentType   string  `gorm:"column:paymentType" json:"paymentType"`
+
 	// Snap Payment Fields
-	SnapToken     string    `gorm:"column:snapToken" json:"snapToken"`
-	SnapUrl       string    `gorm:"column:snapUrl" json:"snapUrl"`
-	
+	SnapToken string `gorm:"column:snapToken" json:"snapToken"`
+	SnapUrl   string `gorm:"column:snapUrl" json:"snapUrl"`
+
 	// Core API Payment Fields
-	UseCoreApi          bool       `gorm:"default:false;column:useCoreApi" json:"useCoreApi"`
-	CoreApiPaymentMethod string    `gorm:"column:coreApiPaymentMethod" json:"coreApiPaymentMethod"`
-	CoreApiVaNumber     string    `gorm:"column:coreApiVaNumber" json:"coreApiVaNumber"`
-	CoreApiBankCode     string    `gorm:"column:coreApiBankCode" json:"coreApiBankCode"`
-	CoreApiQrisUrl      string    `gorm:"column:coreApiQrisUrl" json:"coreApiQrisUrl"`
-	CoreApiDeeplinkUrl  string    `gorm:"column:coreApiDeeplinkUrl" json:"coreApiDeeplinkUrl"`
-	PaymentExpiredAt    *time.Time `gorm:"column:paymentExpiredAt" json:"paymentExpiredAt"`
-	
-	Address       string    `gorm:"column:address" json:"address"`
-	DeliveryInfo  string    `gorm:"column:deliveryInfo" json:"deliveryInfo"`
-	RefundReason  string    `gorm:"column:refundReason" json:"refundReason"`
-	RefundAccount string    `gorm:"column:refundAccount" json:"refundAccount"`
-	RefundProof   string    `gorm:"column:refundProof" json:"refundProof"`
+	UseCoreApi           bool       `gorm:"default:false;column:useCoreApi" json:"useCoreApi"`
+	CoreApiPaymentMethod string     `gorm:"column:coreApiPaymentMethod" json:"coreApiPaymentMethod"`
+	CoreApiVaNumber      string     `gorm:"column:coreApiVaNumber" json:"coreApiVaNumber"`
+	CoreApiBankCode      string     `gorm:"column:coreApiBankCode" json:"coreApiBankCode"`
+	CoreApiQrisUrl       string     `gorm:"column:coreApiQrisUrl" json:"coreApiQrisUrl"`
+	CoreApiDeeplinkUrl   string     `gorm:"column:coreApiDeeplinkUrl" json:"coreApiDeeplinkUrl"`
+	PaymentExpiredAt     *time.Time `gorm:"column:paymentExpiredAt" json:"paymentExpiredAt"`
+
+	Address         string  `gorm:"column:address" json:"address"`
+	DeliveryInfo    string  `gorm:"column:deliveryInfo" json:"deliveryInfo"`
+	RefundReason    string  `gorm:"column:refundReason" json:"refundReason"`
+	RefundAccount   string  `gorm:"column:refundAccount" json:"refundAccount"`
+	RefundProof     string  `gorm:"column:refundProof" json:"refundProof"`
 	DiscountApplied float64 `gorm:"default:0;column:discountApplied" json:"discountApplied"`
 	VoucherCode     string  `gorm:"column:voucherCode" json:"voucherCode"`
 
@@ -391,3 +392,23 @@ func (Review) TableName() string {
 	return "Review"
 }
 
+// Settings model for global configuration
+type Settings struct {
+	ID                    string         `gorm:"primaryKey;column:id" json:"id"`
+	Key                   string         `gorm:"unique;not null;column:key" json:"key"`
+	PaymentMode           string         `gorm:"default:snap;column:paymentMode" json:"paymentMode"` // "snap" or "core_api"
+	DefaultPaymentMethods pq.StringArray `gorm:"type:text[];column:defaultPaymentMethods" json:"defaultPaymentMethods"`
+	UpdatedAt             time.Time      `gorm:"autoUpdateTime;column:updatedAt" json:"updatedAt"`
+	CreatedAt             time.Time      `gorm:"autoCreateTime;column:createdAt" json:"createdAt"`
+}
+
+func (s *Settings) BeforeCreate(tx *gorm.DB) (err error) {
+	if s.ID == "" {
+		s.ID = utils.GenerateRandomString(12)
+	}
+	return
+}
+
+func (Settings) TableName() string {
+	return "Settings"
+}

@@ -245,3 +245,12 @@ model Review {
   isVisible Boolean  @default(true)
   createdAt DateTime @default(now())
 }
+
+model Settings {
+  id                    String   @id @default(cuid())
+  key                   String   @unique
+  paymentMode           String   @default("snap") // "snap" or "core_api"
+  defaultPaymentMethods String[] @default([])
+  updatedAt             DateTime @updatedAt
+  createdAt             DateTime @default(now())
+}
