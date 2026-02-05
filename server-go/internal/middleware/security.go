@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"strings"
 
 	"arfcoder-go/internal/utils"
 
@@ -9,13 +10,13 @@ import (
 )
 
 func SecureMiddleware(c *fiber.Ctx) error {
-	// --- PENGECEKAN WEBHOOK (SPESIFIK) ---
-	// Hanya izinkan path eksak untuk webhook Midtrans
-	if c.Path() == "/api/orders/webhook" {
+	// --- KARTU PASS WEBHOOK ---
+	// Jika URL mengandung "webhook", biarkan Midtrans masuk tanpa header rahasia
+	if strings.Contains(c.Path(), "webhook") {
 		return c.Next()
 	}
 
-	// 1. Check Header Keamanan
+	// 1. Check Header Keamanan untuk User
 	secureHeader := c.Get("x-arf-secure-token")
 	if !utils.VerifySecureHeader(secureHeader) {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{

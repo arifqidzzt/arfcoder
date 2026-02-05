@@ -8,11 +8,6 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	// --- WEBHOOK (POSISI PALING ATAS & BEBAS MIDDLEWARE) ---
-	// Menggunakan path asli agar Nginx mengenalinya
-	app.Post("/api/orders/webhook", handlers.HandleMidtransWebhook)
-
-	// --- PROTECTED API ---
 	api := app.Group("/api", middleware.RateLimitAPI())
 
 	// --- AUTH ---
@@ -44,19 +39,20 @@ func SetupRoutes(app *fiber.App) {
 	// --- ORDERS ---
 	orders := api.Group("/orders", middleware.SecureMiddleware)
 	orders.Post("/", middleware.AuthMiddleware, handlers.CreateOrder)
-	// Webhook di dalam sini dihapus karena sudah ada di paling atas
+	orders.Post("/webhook", handlers.HandleMidtransWebhook) // KEMBALI KE SINI (URL: /api/orders/webhook)
 	orders.Get("/my", middleware.AuthMiddleware, handlers.GetMyOrders)
 	orders.Get("/:id", middleware.AuthMiddleware, handlers.GetOrderById)
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
 	orders.Post("/:id/refund", middleware.AuthMiddleware, handlers.RequestRefund)
 
-	// --- VOUCHERS & LAINNYA ---
+	// --- VOUCHERS ---
 	vouchers := api.Group("/vouchers", middleware.SecureMiddleware)
 	vouchers.Get("/", handlers.GetAllVouchers)
 	vouchers.Post("/check", handlers.CheckVoucher)
 	vouchers.Post("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.CreateVoucher)
 	vouchers.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteVoucher)
 
+	// --- sisanya tetap sama ---
 	fs := api.Group("/flash-sales", middleware.SecureMiddleware)
 	fs.Get("/active", handlers.GetActiveFlashSales)
 	fs.Get("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetAllFlashSales)
