@@ -335,3 +335,10 @@ func HandleMidtransWebhook(c *fiber.Ctx) error {
 
 	return c.Status(200).SendString("OK")
 }
+
+func GetMyOrders(c *fiber.Ctx) error {
+	userClaims := c.Locals("user").(*utils.JWTClaims)
+	var orders []models.Order
+	database.DB.Preload("Items.Product").Where("\"userId\" = ?", userClaims.UserID).Order("\"createdAt\" desc").Find(&orders)
+	return c.JSON(orders)
+}
