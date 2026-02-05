@@ -168,6 +168,7 @@ model Order {
   paymentUrl      String? // QR Image URL or Deep Link
   paymentExpiry   DateTime?
 
+  address       String?
   deliveryInfo  String?
   refundReason  String?
   refundAccount String?
