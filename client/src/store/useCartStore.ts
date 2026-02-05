@@ -9,6 +9,7 @@ interface CartItem {
   price: number;
   quantity: number;
   image?: string;
+  paymentMethods?: string[];
 }
 
 interface CartStore {
@@ -38,7 +39,8 @@ export const useCartStore = create<CartStore>()(
             // CALC DISCOUNT: Original * (1 - Disc/100)
             price: ci.product.price * (1 - (ci.product.discount || 0) / 100),
             quantity: ci.quantity,
-            image: ci.product.images?.[0]
+            image: ci.product.images?.[0],
+            paymentMethods: ci.product.paymentMethods || []
           }));
           set({ items: mappedItems });
         } catch (e) { console.error('Failed to sync cart', e); }
