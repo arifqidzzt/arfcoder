@@ -4,13 +4,8 @@ import (
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
 	"arfcoder-go/internal/utils"
-	"fmt"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/midtrans/midtrans-go"
-	"github.com/midtrans/midtrans-go/coreapi"
-	"github.com/midtrans/midtrans-go/snap"
 	"gorm.io/gorm"
 )
 
