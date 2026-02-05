@@ -18,7 +18,7 @@ func GetPublicServices(c *fiber.Ctx) error {
 
 func GetAllProducts(c *fiber.Ctx) error {
 	var products []models.Product
-	if err := database.DB.Order("\"createdAt\" desc").Find(&products).Error; err != nil {
+	if err := database.DB.Preload("PaymentMethods").Order("\"createdAt\" desc").Find(&products).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"message": "Error fetching products"})
 	}
 	return c.JSON(products)
@@ -27,7 +27,7 @@ func GetAllProducts(c *fiber.Ctx) error {
 func GetProductById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var product models.Product
-	if err := database.DB.First(&product, "id = ?", id).Error; err != nil {
+	if err := database.DB.Preload("PaymentMethods").First(&product, "id = ?", id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"message": "Product not found"})
 	}
 	return c.JSON(product)
@@ -35,14 +35,15 @@ func GetProductById(c *fiber.Ctx) error {
 
 func CreateProduct(c *fiber.Ctx) error {
 	type Req struct {
-		Name        string   `json:"name"`
-		Description string   `json:"description"`
-		Price       float64  `json:"price"`
-		Discount    float64  `json:"discount"`
-		Stock       int      `json:"stock"`
-		Type        string   `json:"type"`
-		Images      []string `json:"images"`
-		CategoryId  string   `json:"categoryId"`
+		Name             string   `json:"name"`
+		Description      string   `json:"description"`
+		Price            float64  `json:"price"`
+		Discount         float64  `json:"discount"`
+		Stock            int      `json:"stock"`
+		Type             string   `json:"type"`
+		Images           []string `json:"images"`
+		CategoryId       string   `json:"categoryId"`
+		PaymentMethodIds []string `json:"paymentMethodIds"` // Added
 	}
 	var req Req
 	if err := c.BodyParser(&req); err != nil {
@@ -56,11 +57,18 @@ func CreateProduct(c *fiber.Ctx) error {
 		Discount:    req.Discount,
 		Stock:       req.Stock,
 		Type:        req.Type,
-		Images:      pq.StringArray(req.Images), // Cast to pq.StringArray
+		Images:      pq.StringArray(req.Images), 
 	}
 	
 	if req.CategoryId != "" {
 		product.CategoryID = &req.CategoryId
+	}
+
+	// Association
+	if len(req.PaymentMethodIds) > 0 {
+		var methods []models.PaymentMethod
+		database.DB.Where("id IN ?", req.PaymentMethodIds).Find(&methods)
+		product.PaymentMethods = methods
 	}
 
 	database.DB.Create(&product)
@@ -70,19 +78,20 @@ func CreateProduct(c *fiber.Ctx) error {
 func UpdateProduct(c *fiber.Ctx) error {
 	id := c.Params("id")
 	type Req struct {
-		Name        string   `json:"name"`
-		Description string   `json:"description"`
-		Price       float64  `json:"price"`
-		Discount    float64  `json:"discount"`
-		Stock       int      `json:"stock"`
-		Type        string   `json:"type"`
-		Images      []string `json:"images"`
+		Name             string   `json:"name"`
+		Description      string   `json:"description"`
+		Price            float64  `json:"price"`
+		Discount         float64  `json:"discount"`
+		Stock            int      `json:"stock"`
+		Type             string   `json:"type"`
+		Images           []string `json:"images"`
+		PaymentMethodIds []string `json:"paymentMethodIds"` // Added
 	}
 	var req Req
 	c.BodyParser(&req)
 
 	var product models.Product
-	if err := database.DB.First(&product, "id = ?", id).Error; err != nil {
+	if err := database.DB.Preload("PaymentMethods").First(&product, "id = ?", id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"message": "Not found"})
 	}
 
@@ -93,6 +102,14 @@ func UpdateProduct(c *fiber.Ctx) error {
 	product.Stock = req.Stock
 	product.Type = req.Type
 	product.Images = pq.StringArray(req.Images)
+
+	// Update Association
+	database.DB.Model(&product).Association("PaymentMethods").Clear()
+	if len(req.PaymentMethodIds) > 0 {
+		var methods []models.PaymentMethod
+		database.DB.Where("id IN ?", req.PaymentMethodIds).Find(&methods)
+		database.DB.Model(&product).Association("PaymentMethods").Append(methods)
+	}
 
 	database.DB.Save(&product)
 	return c.JSON(product)

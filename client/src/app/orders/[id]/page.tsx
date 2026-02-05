@@ -14,6 +14,13 @@ interface OrderDetail {
   totalAmount: number;
   status: string;
   snapToken?: string;
+  
+  // Core API Fields
+  paymentMethod?: string;
+  paymentCode?: string;
+  paymentUrl?: string;
+  paymentExpiry?: string;
+
   deliveryInfo?: string;
   refundReason?: string;
   refundAccount?: string; 
@@ -32,10 +39,16 @@ interface OrderDetail {
 }
 
 // Helper Countdown
-const CountdownTimer = ({ dateString }: { dateString: string }) => {
+const CountdownTimer = ({ dateString, label = "Batas" }: { dateString: string, label?: string }) => {
   const [timeLeft, setTimeLeft] = useState('');
   useEffect(() => {
-    const target = new Date(dateString).getTime() + 24 * 60 * 60 * 1000;
+    // If dateString is for payment expiry (15 mins), use it directly
+    // If it's for order expiry (24h), add 24h
+    let target = new Date(dateString).getTime();
+    if (label === "Batas") { // Order Expiry
+       target += 24 * 60 * 60 * 1000;
+    }
+
     const interval = setInterval(() => {
       const now = new Date().getTime();
       const distance = target - now;
@@ -43,12 +56,16 @@ const CountdownTimer = ({ dateString }: { dateString: string }) => {
       else {
         const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        setTimeLeft(`${h}j ${m}m`);
+        const s = Math.floor((distance % (1000 * 60)) / 1000);
+        if (h > 0) setTimeLeft(`${h}j ${m}m`);
+        else setTimeLeft(`${m}m ${s}s`);
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [dateString]);
-  return <span className="ml-2 text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">Batas: {timeLeft}</span>;
+  }, [dateString, label]);
+  
+  if (timeLeft === 'Expired') return <span className="ml-2 text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">Expired</span>;
+  return <span className="ml-2 text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">{label}: {timeLeft}</span>;
 };
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -64,7 +81,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [showRefundForm, setShowRefundForm] = useState(false);
 
   useEffect(() => {
-    // Load Midtrans Snap script
     const script = document.createElement('script');
     const isProduction = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true';
     script.src = isProduction 
@@ -87,14 +103,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const handlePay = async () => {
+  const handlePaySnap = async () => {
     if (!window.snap) return toast.error("Sistem pembayaran sedang memuat...");
+    if (!order?.snapToken) return; // Should not happen
 
-    try {
-      const res = await api.post(`/orders/${id}/pay`, {});
-      const { snapToken } = res.data;
-
-      window.snap.pay(snapToken, {
+    window.snap.pay(order.snapToken, {
         onSuccess: () => { 
           toast.success('Pembayaran Berhasil!'); 
           window.location.reload(); 
@@ -105,9 +118,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         },
         onError: () => { toast.error('Pembayaran Gagal'); },
         onClose: () => { toast('Pembayaran belum selesai'); }
-      });
-    } catch (error) {
-      toast.error('Gagal memuat pembayaran');
+    });
+  };
+
+  const handleRegeneratePayment = async () => {
+    try {
+      setLoading(true);
+      await api.post(`/orders/${id}/pay`, {});
+      toast.success('Kode pembayaran diperbarui!');
+      fetchOrder();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal memperbarui pembayaran');
+      setLoading(false);
     }
   };
 
@@ -136,6 +158,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       toast.error('Gagal mengajukan refund');
     }
   };
+  
+  // Payment Expiry Checker
+  const isPaymentExpired = order?.paymentExpiry && new Date(order.paymentExpiry).getTime() < new Date().getTime();
 
   if (loading) return <div className="min-h-screen bg-gray-50 pt-24 text-center">Memuat...</div>;
   if (!order) return <div className="min-h-screen bg-gray-50 pt-24 text-center">Pesanan tidak ditemukan</div>;
@@ -161,7 +186,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
               <span className="text-sm text-gray-500 mr-2">Status Pesanan</span>
-              {order.status === 'PENDING' && <CountdownTimer dateString={order.createdAt} />}
+              {order.status === 'PENDING' && <CountdownTimer dateString={order.createdAt} label="Batas Order" />}
             </div>
             <span className={`px-3 py-1 rounded-full text-xs font-bold 
               ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 
@@ -172,12 +197,64 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
           
           {order.status === 'PENDING' && (
-            <div className="flex gap-3">
-              <button onClick={handlePay} className="flex-1 bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors">
-                Bayar Sekarang
-              </button>
-              <button onClick={handleCancel} className="flex-1 bg-white border border-red-200 text-red-600 py-3 rounded-lg font-bold hover:bg-red-50 transition-colors">
-                Batalkan
+            <div className="flex flex-col gap-4">
+              
+              {/* CORE API DISPLAY */}
+              {order.paymentMethod && (
+                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="font-bold text-sm uppercase">{order.paymentMethod.replace('_', ' ')}</span>
+                        {order.paymentExpiry && <CountdownTimer dateString={order.paymentExpiry} label="Bayar Dalam" />}
+                    </div>
+
+                    {isPaymentExpired ? (
+                        <div className="text-center py-4">
+                            <p className="text-red-500 font-bold mb-2">Kode Pembayaran Kadaluarsa</p>
+                            <button onClick={handleRegeneratePayment} className="bg-black text-white px-4 py-2 rounded-lg text-sm">
+                                Buat Kode Baru
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {/* VA NUMBER */}
+                            {order.paymentCode && (
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Nomor Virtual Account / Kode Bayar</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xl font-mono font-bold tracking-widest">{order.paymentCode}</span>
+                                        <button onClick={() => {navigator.clipboard.writeText(order.paymentCode || ''); toast.success('Disalin!')}} className="p-1 hover:bg-gray-200 rounded">
+                                            <Copy size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* QRIS / DEEPLINK */}
+                            {order.paymentUrl && (
+                                <div className="flex flex-col items-center">
+                                    <p className="text-xs text-gray-500 mb-2">Scan QRIS / Link Pembayaran</p>
+                                    <img src={order.paymentUrl} alt="QRIS" className="w-48 h-48 object-contain bg-white p-2 rounded border" />
+                                    <a href={order.paymentUrl} target="_blank" className="mt-2 text-blue-600 text-xs underline">Buka Link Pembayaran</a>
+                                </div>
+                            )}
+                            
+                            <div className="text-xs text-gray-500 mt-2">
+                                <p>Silakan lakukan pembayaran sebelum waktu habis.</p>
+                            </div>
+                        </div>
+                    )}
+                 </div>
+              )}
+
+              {/* SNAP BUTTON */}
+              {order.snapToken && !order.paymentMethod && (
+                <button onClick={handlePaySnap} className="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors">
+                  Bayar Sekarang
+                </button>
+              )}
+
+              <button onClick={handleCancel} className="w-full bg-white border border-red-200 text-red-600 py-3 rounded-lg font-bold hover:bg-red-50 transition-colors">
+                Batalkan Pesanan
               </button>
             </div>
           )}

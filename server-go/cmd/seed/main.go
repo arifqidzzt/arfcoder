@@ -84,5 +84,37 @@ func main() {
 		fmt.Println("\nℹ️ Admin account already exists (Role updated to SUPER_ADMIN)")
 	}
 
+	// 4. Seed Payment Methods
+	methods := []models.PaymentMethod{
+		{Code: "bca_va", Name: "BCA Virtual Account", Type: "VA", IsActive: true},
+		{Code: "bni_va", Name: "BNI Virtual Account", Type: "VA", IsActive: true},
+		{Code: "bri_va", Name: "BRI Virtual Account", Type: "VA", IsActive: true},
+		{Code: "gopay", Name: "GoPay", Type: "EWALLET", IsActive: true},
+		{Code: "shopeepay", Name: "ShopeePay", Type: "EWALLET", IsActive: true},
+		{Code: "qris", Name: "QRIS", Type: "QRIS", IsActive: true},
+	}
+
+	for _, m := range methods {
+		var exist int64
+		database.DB.Model(&models.PaymentMethod{}).Where("code = ?", m.Code).Count(&exist)
+		if exist == 0 {
+			database.DB.Create(&m)
+			fmt.Printf("✅ Payment Method '%s' created\n", m.Name)
+		}
+	}
+
+	// 5. Seed System Config
+	configs := []models.SystemConfig{
+		{Key: "payment_gateway_mode", Value: "SNAP"}, // Default SNAP
+	}
+	for _, c := range configs {
+		var exist int64
+		database.DB.Model(&models.SystemConfig{}).Where("key = ?", c.Key).Count(&exist)
+		if exist == 0 {
+			database.DB.Create(&c)
+			fmt.Printf("✅ Config '%s' created\n", c.Key)
+		}
+	}
+
 	fmt.Println("\n✨ Seeding Completed!")
 }

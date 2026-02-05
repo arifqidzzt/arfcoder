@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
 interface ProductFormProps {
@@ -17,6 +17,8 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
   const router = useRouter();
   const { token } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const [availableMethods, setAvailableMethods] = useState<any[]>([]);
+  
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     description: initialData?.description || '',
@@ -24,8 +26,16 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
     stock: initialData?.stock || 0,
     type: initialData?.type || 'BARANG',
     discount: initialData?.discount || 0,
-    images: initialData?.images?.[0] || '', 
+    images: initialData?.images?.[0] || '',
+    paymentMethodIds: initialData?.paymentMethods?.map((m: any) => m.id) || [] 
   });
+
+  useEffect(() => {
+    // Fetch available payment methods
+    api.get('/admin/payment-methods').then(res => {
+        setAvailableMethods(res.data);
+    }).catch(() => {});
+  }, []);
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -33,6 +43,17 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
       ...prev,
       [name]: name === 'price' || name === 'stock' || name === 'discount' ? parseFloat(value) : value
     }));
+  };
+
+  const handlePaymentMethodToggle = (id: string) => {
+    setFormData(prev => {
+        const current = prev.paymentMethodIds || [];
+        if (current.includes(id)) {
+            return { ...prev, paymentMethodIds: current.filter((i: string) => i !== id) };
+        } else {
+            return { ...prev, paymentMethodIds: [...current, id] };
+        }
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,6 +166,30 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
               <option value="BARANG">Barang Fisik / Digital</option>
               <option value="JASA">Jasa / Layanan</option>
             </select>
+          </div>
+          
+          {/* Payment Methods Section */}
+          <div className="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
+             <label className="block text-sm font-bold mb-3 flex items-center gap-2">
+                <CreditCard size={18} /> Metode Pembayaran Khusus (Core API)
+             </label>
+             <p className="text-xs text-gray-500 mb-4">Pilih metode pembayaran yang diizinkan untuk produk ini. Jika kosong, tidak ada metode yang muncul (kecuali Snap default).</p>
+             
+             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {availableMethods.map(m => (
+                    <div 
+                        key={m.id} 
+                        onClick={() => handlePaymentMethodToggle(m.id)}
+                        className={`p-3 rounded-lg border cursor-pointer text-sm font-medium transition-all ${
+                            (formData.paymentMethodIds || []).includes(m.id) 
+                            ? 'bg-black text-white border-black' 
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                        }`}
+                    >
+                        {m.name}
+                    </div>
+                ))}
+             </div>
           </div>
 
           <div className="md:col-span-2">

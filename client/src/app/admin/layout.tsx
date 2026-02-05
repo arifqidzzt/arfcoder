@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare, Settings, History, Layers, Menu, X } from 'lucide-react';
+import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare, Settings, History, Layers, Menu, X, CreditCard } from 'lucide-react';
 import AuthGuard from '@/components/AuthGuard';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -17,6 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin', icon: <BarChart3 size={20} />, label: 'Dashboard' },
     { href: '/admin/products', icon: <Package size={20} />, label: 'Produk' },
     { href: '/admin/orders', icon: <ShoppingBag size={20} />, label: 'Pesanan' },
+    { href: '/admin/payments', icon: <CreditCard size={20} />, label: 'Metode Pembayaran' }, // Added
     { href: '/admin/users', icon: <Users size={20} />, label: 'Pengguna' },
     { href: '/admin/vouchers', icon: <Ticket size={20} />, label: 'Vouchers' },
     { href: '/admin/flash-sale', icon: <Zap size={20} />, label: 'Flash Sale' },

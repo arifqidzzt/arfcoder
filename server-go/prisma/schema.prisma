@@ -111,6 +111,21 @@ model Product {
   orderItems  OrderItem[]
   reviews     Review[]
   flashSales  FlashSale[]
+  paymentMethods PaymentMethod[] @relation("ProductPaymentMethods")
+}
+
+model SystemConfig {
+  key   String @id
+  value String
+}
+
+model PaymentMethod {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  name      String
+  type      String
+  isActive  Boolean   @default(true)
+  products  Product[] @relation("ProductPaymentMethods")
 }
 
 model Service {
@@ -146,8 +161,13 @@ model Order {
   paymentType   String?
   snapToken     String?
   snapUrl       String?
-  address       String?
   
+  // Core API Fields
+  paymentMethod   String? // e.g., "bca", "gopay"
+  paymentCode     String? // VA Number or formatted code
+  paymentUrl      String? // QR Image URL or Deep Link
+  paymentExpiry   DateTime?
+
   deliveryInfo  String?
   refundReason  String?
   refundAccount String?
