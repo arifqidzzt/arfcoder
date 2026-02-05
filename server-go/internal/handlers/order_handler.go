@@ -326,6 +326,8 @@ func HandleMidtransWebhook(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"message": "Invalid signature"})
 	}
 
+	transactionStatus := fmt.Sprintf("%v", notification["transaction_status"])
+
 	// --- PROSES LANJUTAN ---
 	// Strip suffix jika ada (misal: UUID-timestamp)
 	orderId := orderIdRaw

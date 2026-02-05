@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"encoding/json"
-	"strings"
 
 	"arfcoder-go/internal/utils"
 
