@@ -7,7 +7,6 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -284,10 +283,4 @@ func GenerateRandomString(n int) string {
 	b := make([]byte, n)
 	rand.Read(b)
 	return hex.EncodeToString(b)
-}
-
-func SHA512Hash(data string) string {
-	h := sha512.New()
-	h.Write([]byte(data))
-	return hex.EncodeToString(h.Sum(nil))
 }

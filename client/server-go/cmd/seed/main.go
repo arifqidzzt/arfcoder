@@ -1,0 +1,88 @@
+package main
+
+import (
+	"arfcoder-go/internal/config"
+	"arfcoder-go/internal/database"
+	"arfcoder-go/internal/models"
+	"fmt"
+	"log"
+
+	"golang.org/x/crypto/bcrypt"
+)
+
+func main() {
+	config.LoadConfig()
+	database.Connect()
+
+	fmt.Println("🌱 Starting Seeding Process...")
+
+	// 1. Seed Category
+	var category models.Category
+	if err := database.DB.Where("name = ?", "Software").First(&category).Error; err != nil {
+		category = models.Category{Name: "Software"}
+		database.DB.Create(&category)
+		fmt.Println("✅ Category 'Software' created")
+	} else {
+		fmt.Println("ℹ️ Category 'Software' already exists")
+	}
+
+	// 2. Seed Products
+	products := []models.Product{
+		{
+			Name:        "ArfCoder E-Commerce Template",
+			Description: "Template e-commerce siap pakai dengan desain minimalis.",
+			Price:       1500000,
+			Type:        models.ProductTypeBarang,
+			Stock:       100,
+			Images:      []string{"https://placehold.co/600x400/000000/FFFFFF?text=E-Commerce+Template"},
+			CategoryID:  &category.ID,
+		},
+		{
+			Name:        "Custom Web Development",
+			Description: "Jasa pembuatan website kustom sesuai kebutuhan Anda.",
+			Price:       5000000,
+			Type:        models.ProductTypeJasa,
+			Stock:       999,
+			Images:      []string{"https://placehold.co/600x400/000000/FFFFFF?text=Custom+Web"},
+			CategoryID:  &category.ID,
+		},
+	}
+
+	for _, p := range products {
+		var exist int64
+		database.DB.Model(&models.Product{}).Where("name = ?", p.Name).Count(&exist)
+		if exist == 0 {
+			database.DB.Create(&p)
+			fmt.Printf("✅ Product '%s' created\n", p.Name)
+		}
+	}
+
+	// 3. Create Super Admin
+	email := "admin@arfcoder.com"
+	password := "admin123"
+	
+	var user models.User
+	if err := database.DB.Where("email = ?", email).First(&user).Error; err != nil {
+		hashed, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
+		admin := models.User{
+			Email:      email,
+			Password:   string(hashed),
+			Name:       "Super Admin",
+			Role:       models.RoleSuperAdmin,
+			IsVerified: true,
+		}
+		database.DB.Create(&admin)
+		
+		fmt.Println("\n✅ Admin Created Successfully!")
+		fmt.Println("---------------------------")
+		fmt.Printf("Email: %s\n", email)
+		fmt.Printf("Pass : %s\n", password)
+		fmt.Println("---------------------------")
+	} else {
+		// Ensure role is Super Admin
+		database.DB.Model(&user).Update("role", models.RoleSuperAdmin)
+		fmt.Println("\nℹ️ Admin account already exists (Role updated to SUPER_ADMIN)")
+	}
+
+	fmt.Println("\n✨ Seeding Completed!")
+}
