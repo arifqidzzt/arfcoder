@@ -8,14 +8,16 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	api := app.Group("/api", middleware.RateLimitAPI())
-
-	// --- WEBHOOK PUBLIK (URL BARU: /api/callback/midtrans) ---
-	// Bebas dari SecureMiddleware agar Midtrans bisa masuk
-	api.Post("/callback/midtrans", handlers.HandleMidtransWebhook)
-	api.Get("/callback/midtrans", func(c *fiber.Ctx) error {
-		return c.SendString("Midtrans Callback is active!")
+	// --- WEBHOOK PALING LUAR (TEMBUS SEMUA) ---
+	// URL: https://arfzxdev.com/api/callback/midtrans
+	app.All("/api/callback/midtrans", func(c *fiber.Ctx) error {
+		if c.Method() == "GET" {
+			return c.SendString("Midtrans Callback is active and reachable!")
+		}
+		return handlers.HandleMidtransWebhook(c)
 	})
+
+	api := app.Group("/api", middleware.RateLimitAPI())
 
 	// --- AUTH ---
 	auth := api.Group("/auth", middleware.RateLimitAuth(), middleware.SecureMiddleware)
@@ -51,7 +53,7 @@ func SetupRoutes(app *fiber.App) {
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
 	orders.Post("/:id/refund", middleware.AuthMiddleware, handlers.RequestRefund)
 
-	// --- VOUCHERS ---
+	// --- VOUCHERS & LAINNYA ---
 	vouchers := api.Group("/vouchers", middleware.SecureMiddleware)
 	vouchers.Get("/", handlers.GetAllVouchers)
 	vouchers.Post("/check", handlers.CheckVoucher)
