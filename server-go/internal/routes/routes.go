@@ -38,9 +38,11 @@ func SetupRoutes(app *fiber.App) {
 	products.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteProduct)
 
 	// --- ORDERS ---
+	// Public Webhook (No SecureMiddleware)
+	api.Post("/orders/webhook", handlers.HandleMidtransWebhook)
+
 	orders := api.Group("/orders", middleware.SecureMiddleware)
 	orders.Post("/", middleware.AuthMiddleware, handlers.CreateOrder)
-	orders.Post("/webhook", handlers.HandleMidtransWebhook)
 	orders.Get("/my", middleware.AuthMiddleware, handlers.GetMyOrders)
 	orders.Get("/:id", middleware.AuthMiddleware, handlers.GetOrderById)
 	// Order Actions

@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"encoding/json"
-	"strings"
 
 	"arfcoder-go/internal/utils"
 
@@ -10,13 +9,7 @@ import (
 )
 
 func SecureMiddleware(c *fiber.Ctx) error {
-	// 1. Skip Webhook Security Checks
-	path := c.Path()
-	if strings.Contains(path, "webhook") {
-		return c.Next()
-	}
-
-	// 2. Check Header
+	// 1. Check Header
 	secureHeader := c.Get("x-arf-secure-token")
 	if !utils.VerifySecureHeader(secureHeader) {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
@@ -24,7 +17,7 @@ func SecureMiddleware(c *fiber.Ctx) error {
 		})
 	}
 
-	// 3. Handle Body Decryption for POST/PUT/PATCH
+	// 2. Handle Body Decryption for POST/PUT/PATCH
 	method := c.Method()
 	if method == "POST" || method == "PUT" || method == "PATCH" {
 		// Read Body as generic Interface
