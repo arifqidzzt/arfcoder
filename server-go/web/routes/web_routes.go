@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -19,42 +20,33 @@ import (
 
 var templates map[string]*template.Template
 var templateDir string
+var loadErrors []string
 
 // InitTemplates loads and parses all HTML templates
 func InitTemplates() {
 	templates = make(map[string]*template.Template)
+	loadErrors = []string{}
 
 	// Find the template directory - try multiple locations
 	possibleDirs := []string{
 		"web/templates",
 		"./web/templates",
-		"../web/templates",
-		"../../web/templates",
-	}
-
-	// Also try relative to executable
-	if execPath, err := os.Executable(); err == nil {
-		execDir := filepath.Dir(execPath)
-		possibleDirs = append(possibleDirs,
-			filepath.Join(execDir, "web", "templates"),
-			filepath.Join(execDir, "..", "web", "templates"),
-			filepath.Join(execDir, "..", "..", "web", "templates"),
-		)
 	}
 
 	// Try to find the templates directory
 	for _, dir := range possibleDirs {
-		if _, err := os.Stat(dir); err == nil {
-			templateDir = dir
+		absPath, _ := filepath.Abs(dir)
+		if info, err := os.Stat(absPath); err == nil && info.IsDir() {
+			templateDir = absPath
 			break
 		}
 	}
 
 	if templateDir == "" {
-		// Get current working directory for debugging
 		wd, _ := os.Getwd()
-		log.Printf("FATAL: Could not find template directory. CWD: %s", wd)
-		log.Printf("Tried: %v", possibleDirs)
+		errMsg := fmt.Sprintf("Could not find template directory. CWD: %s", wd)
+		log.Printf("FATAL: %s", errMsg)
+		loadErrors = append(loadErrors, errMsg)
 		return
 	}
 
@@ -88,29 +80,58 @@ func InitTemplates() {
 
 	// Check if layouts exist
 	if _, err := os.Stat(baseLayout); os.IsNotExist(err) {
-		log.Printf("ERROR: base.html not found at %s", baseLayout)
+		errMsg := fmt.Sprintf("base.html not found at %s", baseLayout)
+		log.Printf("ERROR: %s", errMsg)
+		loadErrors = append(loadErrors, errMsg)
+	} else {
+		log.Printf("Found base layout: %s", baseLayout)
 	}
+
 	if _, err := os.Stat(adminLayout); os.IsNotExist(err) {
-		log.Printf("ERROR: admin.html not found at %s", adminLayout)
+		errMsg := fmt.Sprintf("admin.html not found at %s", adminLayout)
+		log.Printf("ERROR: %s", errMsg)
+		loadErrors = append(loadErrors, errMsg)
+	} else {
+		log.Printf("Found admin layout: %s", adminLayout)
 	}
 
 	// Load partials
-	partials, err := filepath.Glob(filepath.Join(templateDir, "partials", "*.html"))
+	partialsPattern := filepath.Join(templateDir, "partials", "*.html")
+	partials, err := filepath.Glob(partialsPattern)
 	if err != nil {
-		log.Printf("Error loading partials: %v", err)
+		errMsg := fmt.Sprintf("Error loading partials from %s: %v", partialsPattern, err)
+		log.Printf("ERROR: %s", errMsg)
+		loadErrors = append(loadErrors, errMsg)
 	}
-	log.Printf("Found %d partials", len(partials))
+	log.Printf("Found %d partials from pattern %s", len(partials), partialsPattern)
+	for _, p := range partials {
+		log.Printf("  Partial: %s", p)
+	}
 
 	// Load public page templates
-	publicPages, _ := filepath.Glob(filepath.Join(templateDir, "pages", "*.html"))
-	log.Printf("Found %d public pages", len(publicPages))
+	pagesPattern := filepath.Join(templateDir, "pages", "*.html")
+	publicPages, err := filepath.Glob(pagesPattern)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error loading pages from %s: %v", pagesPattern, err)
+		log.Printf("ERROR: %s", errMsg)
+		loadErrors = append(loadErrors, errMsg)
+	}
+	log.Printf("Found %d public pages from pattern %s", len(publicPages), pagesPattern)
+	for _, p := range publicPages {
+		log.Printf("  Page: %s", p)
+	}
 
 	for _, page := range publicPages {
 		name := strings.TrimSuffix(filepath.Base(page), ".html")
 		files := append([]string{baseLayout, page}, partials...)
+
+		log.Printf("Parsing template %s with %d files", name, len(files))
+
 		tmpl, err := template.New("").Funcs(funcMap).ParseFiles(files...)
 		if err != nil {
-			log.Printf("Error parsing template %s: %v", name, err)
+			errMsg := fmt.Sprintf("Error parsing template %s: %v", name, err)
+			log.Printf("ERROR: %s", errMsg)
+			loadErrors = append(loadErrors, errMsg)
 			continue
 		}
 		templates[name] = tmpl
@@ -118,15 +139,24 @@ func InitTemplates() {
 	}
 
 	// Load admin page templates
-	adminPages, _ := filepath.Glob(filepath.Join(templateDir, "pages", "admin", "*.html"))
-	log.Printf("Found %d admin pages", len(adminPages))
+	adminPagesPattern := filepath.Join(templateDir, "pages", "admin", "*.html")
+	adminPages, err := filepath.Glob(adminPagesPattern)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error loading admin pages from %s: %v", adminPagesPattern, err)
+		log.Printf("ERROR: %s", errMsg)
+		loadErrors = append(loadErrors, errMsg)
+	}
+	log.Printf("Found %d admin pages from pattern %s", len(adminPages), adminPagesPattern)
 
 	for _, page := range adminPages {
 		name := "admin/" + strings.TrimSuffix(filepath.Base(page), ".html")
 		files := append([]string{adminLayout, page}, partials...)
+
 		tmpl, err := template.New("").Funcs(funcMap).ParseFiles(files...)
 		if err != nil {
-			log.Printf("Error parsing admin template %s: %v", name, err)
+			errMsg := fmt.Sprintf("Error parsing admin template %s: %v", name, err)
+			log.Printf("ERROR: %s", errMsg)
+			loadErrors = append(loadErrors, errMsg)
 			continue
 		}
 		templates[name] = tmpl
@@ -134,11 +164,6 @@ func InitTemplates() {
 	}
 
 	log.Printf("Total templates loaded: %d", len(templates))
-
-	// List all loaded templates for debugging
-	for name := range templates {
-		log.Printf("  - %s", name)
-	}
 }
 
 func formatIDR(amount float64) string {
@@ -175,7 +200,6 @@ func GetStaticDir() string {
 
 // SetupWebRoutes sets up all web routes for template rendering
 func SetupWebRoutes(app *fiber.App) {
-	// Serve static files
 	staticDir := GetStaticDir()
 	log.Printf("Static files directory: %s", staticDir)
 
@@ -223,19 +247,42 @@ func SetupWebRoutes(app *fiber.App) {
 	// Debug endpoint
 	app.Get("/debug/templates", func(c *fiber.Ctx) error {
 		wd, _ := os.Getwd()
-		info := map[string]interface{}{
-			"working_dir":  wd,
-			"template_dir": templateDir,
-			"static_dir":   GetStaticDir(),
-			"templates":    []string{},
-			"go_version":   runtime.Version(),
+
+		// List files in template directory
+		var dirContents []string
+		if templateDir != "" {
+			if files, err := ioutil.ReadDir(templateDir); err == nil {
+				for _, f := range files {
+					dirContents = append(dirContents, f.Name())
+				}
+			}
 		}
+
+		// List pages directory
+		var pagesContents []string
+		pagesDir := filepath.Join(templateDir, "pages")
+		if files, err := ioutil.ReadDir(pagesDir); err == nil {
+			for _, f := range files {
+				pagesContents = append(pagesContents, f.Name())
+			}
+		}
+
 		names := []string{}
 		for name := range templates {
 			names = append(names, name)
 		}
-		info["templates"] = names
-		info["template_count"] = len(templates)
+
+		info := map[string]interface{}{
+			"working_dir":    wd,
+			"template_dir":   templateDir,
+			"static_dir":     GetStaticDir(),
+			"templates":      names,
+			"template_count": len(templates),
+			"go_version":     runtime.Version(),
+			"errors":         loadErrors,
+			"dir_contents":   dirContents,
+			"pages_contents": pagesContents,
+		}
 		return c.JSON(info)
 	})
 }
