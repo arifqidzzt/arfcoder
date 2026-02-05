@@ -48,7 +48,7 @@ export default function CheckoutPage() {
 
     try {
       const res = await api.post('/orders', {
-        items: items.map(i => ({ productId: i.product.id, quantity: i.quantity })),
+        items: items.map(i => ({ productId: i.id, quantity: i.quantity })),
         voucherCode: appliedVoucher
       });
 
@@ -204,18 +204,18 @@ export default function CheckoutPage() {
           <h2 className="font-bold mb-4">Pesanan Anda</h2>
           <div className="space-y-4">
             {items.map((item) => (
-              <div key={item.product.id} className="flex gap-4">
+              <div key={item.id} className="flex gap-4">
                 <Image
-                  src={item.product.images[0] || '/placeholder.png'}
-                  alt={item.product.name}
+                  src={item.image || '/placeholder.png'}
+                  alt={item.name}
                   width={80}
                   height={80}
                   className="rounded-lg object-cover"
                 />
                 <div className="flex-1">
-                  <h3 className="font-bold">{item.product.name}</h3>
+                  <h3 className="font-bold">{item.name}</h3>
                   <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
-                  <p className="font-bold text-accent">Rp {(item.product.price * item.quantity).toLocaleString('id-ID')}</p>
+                  <p className="font-bold text-accent">Rp {(item.price * item.quantity).toLocaleString('id-ID')}</p>
                 </div>
               </div>
             ))}
