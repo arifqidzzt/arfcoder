@@ -76,11 +76,11 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
   return (
     <div className="max-w-3xl mx-auto">
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 space-y-6">
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-2">Nama Produk</label>
-            <input 
+            <input
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -91,7 +91,7 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
 
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-2">Deskripsi</label>
-            <textarea 
+            <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
@@ -103,7 +103,7 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
 
           <div>
             <label className="block text-sm font-bold mb-2">Harga (Rp)</label>
-            <input 
+            <input
               type="number"
               name="price"
               value={formData.price}
@@ -115,7 +115,7 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
 
           <div>
             <label className="block text-sm font-bold mb-2">Diskon (%)</label>
-            <input 
+            <input
               type="number"
               name="discount"
               value={formData.discount}
@@ -126,7 +126,7 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
 
           <div>
             <label className="block text-sm font-bold mb-2">Stok</label>
-            <input 
+            <input
               type="number"
               name="stock"
               value={formData.stock}
@@ -138,7 +138,7 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
 
           <div>
             <label className="block text-sm font-bold mb-2">Tipe Produk</label>
-            <select 
+            <select
               name="type"
               value={formData.type}
               onChange={handleChange}
@@ -150,13 +150,13 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
           </div>
 
           {/* Payment Configuration */}
-          <div className="md:col-span-2" bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="md:col-span-2 bg-gray-50 p-4 rounded-lg border border-gray-200">
             <h3 className="font-bold mb-4">Konfigurasi Pembayaran</h3>
-            
+
             <div className="mb-4">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={formData.useCoreApi}
                   onChange={(e) => setFormData(prev => ({ ...prev, useCoreApi: e.target.checked, paymentMethods: [] }))}
                   className="w-4 h-4"
@@ -205,13 +205,13 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
 
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-2">Gambar Produk</label>
-            
+
             {formData.images && (
               <img src={formData.images} alt="Preview" className="w-32 h-32 object-cover rounded-lg mb-4 border border-gray-200" />
             )}
-            
+
             <div className="flex gap-4">
-              <input 
+              <input
                 type="text"
                 name="images"
                 value={formData.images}
@@ -220,8 +220,8 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
                 className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-black"
               />
               <div className="relative">
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   onChange={handleImageUpload}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   accept="image/*"
@@ -239,8 +239,8 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
           <Link href="/admin/products" className="px-6 py-3 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">
             Batal
           </Link>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
           >

@@ -95,7 +95,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     // Otherwise use Snap (existing flow)
-    if (!window.snap) return toast.error("Sistem pembayaran sedang memuat...');
+    if (!window.snap) return toast.error("Sistem pembayaran sedang memuat...");
 
     try {
       const res = await api.post(`/orders/${id}/pay`, {});
