@@ -1,0 +1,70 @@
+{{define "content"}}
+<!-- FAQ PAGE -->
+<div class="min-h-screen bg-background" x-data="{ open: null }">
+    <div class="bg-black text-white py-16">
+        <div class="container-custom text-center">
+            <h1 class="text-4xl font-bold">Pusat Bantuan</h1>
+            <p class="text-gray-400 mt-2">Pertanyaan yang sering ditanyakan</p>
+        </div>
+    </div>
+    <div class="container-custom py-12">
+        <div class="max-w-3xl mx-auto space-y-4">
+            <div class="bg-white rounded-2xl border border-border overflow-hidden">
+                <button @click="open = open === 1 ? null : 1"
+                    class="w-full p-6 text-left flex justify-between items-center">
+                    <span class="font-bold">Apa itu ArfCoder?</span>
+                    <span x-text="open === 1 ? '-' : '+'" class="text-2xl"></span>
+                </button>
+                <div x-show="open === 1" x-collapse class="px-6 pb-6 text-gray-600">
+                    ArfCoder adalah platform yang menyediakan produk digital dan layanan pengembangan software
+                    profesional untuk kebutuhan bisnis Anda.
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl border border-border overflow-hidden">
+                <button @click="open = open === 2 ? null : 2"
+                    class="w-full p-6 text-left flex justify-between items-center">
+                    <span class="font-bold">Bagaimana cara melakukan pembelian?</span>
+                    <span x-text="open === 2 ? '-' : '+'" class="text-2xl"></span>
+                </button>
+                <div x-show="open === 2" x-collapse class="px-6 pb-6 text-gray-600">
+                    Pilih produk, tambahkan ke keranjang, lakukan checkout, dan bayar menggunakan metode pembayaran yang
+                    tersedia.
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl border border-border overflow-hidden">
+                <button @click="open = open === 3 ? null : 3"
+                    class="w-full p-6 text-left flex justify-between items-center">
+                    <span class="font-bold">Metode pembayaran apa yang tersedia?</span>
+                    <span x-text="open === 3 ? '-' : '+'" class="text-2xl"></span>
+                </button>
+                <div x-show="open === 3" x-collapse class="px-6 pb-6 text-gray-600">
+                    Kami menerima transfer bank, e-wallet (GoPay, OVO, DANA), kartu kredit/debit, dan virtual account
+                    melalui Midtrans.
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl border border-border overflow-hidden">
+                <button @click="open = open === 4 ? null : 4"
+                    class="w-full p-6 text-left flex justify-between items-center">
+                    <span class="font-bold">Bagaimana cara menghubungi support?</span>
+                    <span x-text="open === 4 ? '-' : '+'" class="text-2xl"></span>
+                </button>
+                <div x-show="open === 4" x-collapse class="px-6 pb-6 text-gray-600">
+                    Anda dapat menghubungi kami melalui live chat, email di arfzxcoder@gmail.com, atau WhatsApp di
+                    08988289551.
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl border border-border overflow-hidden">
+                <button @click="open = open === 5 ? null : 5"
+                    class="w-full p-6 text-left flex justify-between items-center">
+                    <span class="font-bold">Apakah ada garansi?</span>
+                    <span x-text="open === 5 ? '-' : '+'" class="text-2xl"></span>
+                </button>
+                <div x-show="open === 5" x-collapse class="px-6 pb-6 text-gray-600">
+                    Ya, produk digital kami dilengkapi dengan support teknis selama 30 hari. Untuk layanan custom,
+                    garansi sesuai kontrak.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

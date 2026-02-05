@@ -1,0 +1,56 @@
+{{define "admin_content"}}
+<!-- ADMIN DASHBOARD -->
+<div x-data="adminDashboard()">
+    <h1 class="text-2xl font-bold mb-8">Dashboard</h1>
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-2xl border border-border p-6">
+            <p class="text-sm text-gray-500 mb-1">Total Penjualan</p>
+            <p class="text-3xl font-bold" x-text="formatPrice(stats.totalSales || 0)"></p>
+        </div>
+        <div class="bg-white rounded-2xl border border-border p-6">
+            <p class="text-sm text-gray-500 mb-1">Total Produk</p>
+            <p class="text-3xl font-bold" x-text="stats.totalProducts || 0"></p>
+        </div>
+        <div class="bg-white rounded-2xl border border-border p-6">
+            <p class="text-sm text-gray-500 mb-1">Total Pengguna</p>
+            <p class="text-3xl font-bold" x-text="stats.totalUsers || 0"></p>
+        </div>
+        <div class="bg-white rounded-2xl border border-border p-6">
+            <p class="text-sm text-gray-500 mb-1">Total Pesanan</p>
+            <p class="text-3xl font-bold" x-text="stats.totalOrders || 0"></p>
+        </div>
+    </div>
+    <!-- Revenue Chart -->
+    <div class="bg-white rounded-2xl border border-border p-6">
+        <h2 class="font-bold text-lg mb-4">Grafik Pendapatan</h2>
+        <canvas id="revenueChart" height="100"></canvas>
+    </div>
+</div>
+<script>
+    function adminDashboard() {
+        return {
+            stats: {},
+            async init() {
+                try {
+                    const data = await api.get('/admin/stats');
+                    this.stats = data || {};
+                    this.renderChart(data.revenueData || []);
+                } catch (e) { console.error(e); }
+            },
+            renderChart(data) {
+                const ctx = document.getElementById('revenueChart')?.getContext('2d');
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.month),
+                        datasets: [{ label: 'Pendapatan', data: data.map(d => d.revenue), borderColor: '#000', backgroundColor: 'rgba(0,0,0,0.1)', fill: true, tension: 0.4 }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+            }
+        };
+    }
+</script>
+{{end}}

@@ -1,0 +1,56 @@
+{{define "admin_content"}}
+<!-- ADMIN SERVICES -->
+<div x-data="adminServices()">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold">Kelola Layanan</h1>
+        <button @click="showModal = true; editing = null; form = { name: '', description: '', price: '', icon: '' }"
+            class="px-4 py-2 bg-black text-white rounded-lg font-medium">+ Layanan</button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <template x-for="service in services" :key="service.id">
+            <div class="bg-white rounded-2xl border border-border p-6">
+                <div class="text-3xl mb-4" x-text="service.icon || '💼'"></div>
+                <h3 class="font-bold text-lg mb-2" x-text="service.name"></h3>
+                <p class="text-muted-foreground text-sm mb-4 line-clamp-2" x-text="service.description"></p>
+                <p class="font-bold mb-4" x-text="service.price ? formatPrice(service.price) : 'Hubungi'"></p>
+                <div class="flex gap-2"><button @click="editService(service)"
+                        class="px-3 py-1 border rounded-lg text-sm">Edit</button><button
+                        @click="deleteService(service.id)"
+                        class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-sm">Hapus</button></div>
+            </div>
+        </template>
+    </div>
+    <div x-show="showModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        @click.self="showModal = false">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg">
+            <h2 class="text-xl font-bold mb-4" x-text="editing ? 'Edit Layanan' : 'Tambah Layanan'"></h2>
+            <div class="space-y-4">
+                <div><label class="text-sm">Nama</label><input type="text" x-model="form.name"
+                        class="w-full mt-1 p-3 border rounded-xl"></div>
+                <div><label class="text-sm">Deskripsi</label><textarea x-model="form.description" rows="3"
+                        class="w-full mt-1 p-3 border rounded-xl"></textarea></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-sm">Harga</label><input type="number" x-model="form.price"
+                            class="w-full mt-1 p-3 border rounded-xl"></div>
+                    <div><label class="text-sm">Icon (emoji)</label><input type="text" x-model="form.icon"
+                            class="w-full mt-1 p-3 border rounded-xl" placeholder="💼"></div>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6"><button @click="showModal = false"
+                    class="flex-1 py-3 border rounded-xl">Batal</button><button @click="saveService()"
+                    class="flex-1 py-3 bg-black text-white rounded-xl font-medium">Simpan</button></div>
+        </div>
+    </div>
+</div>
+<script>
+    function adminServices() {
+        return {
+            services: [], showModal: false, editing: null, form: { name: '', description: '', price: '', icon: '' },
+            async init() { try { const data = await api.get('/admin/services'); this.services = data || []; } catch (e) { } },
+            editService(s) { this.editing = s; this.form = { ...s }; this.showModal = true; },
+            async saveService() { try { if (this.editing) await api.put(`/admin/services/${this.editing.id}`, this.form); else await api.post('/admin/services', this.form); showToast('Layanan disimpan', 'success'); this.showModal = false; await this.init(); } catch (e) { showToast(e.message, 'error'); } },
+            async deleteService(id) { if (!confirm('Hapus layanan?')) return; try { await api.delete(`/admin/services/${id}`); showToast('Layanan dihapus', 'success'); await this.init(); } catch (e) { showToast(e.message, 'error'); } }
+        };
+    }
+</script>
+{{end}}

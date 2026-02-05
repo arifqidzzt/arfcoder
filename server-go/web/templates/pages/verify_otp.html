@@ -1,0 +1,57 @@
+{{define "content"}}
+<!-- VERIFY OTP PAGE -->
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div class="max-w-md w-full" x-data="verifyOtpPage()">
+        <div class="text-center mb-8">
+            <a href="/" class="text-3xl font-bold tracking-tighter">ARFCODER</a>
+            <h1 class="text-2xl font-bold mt-6 mb-2">Verifikasi OTP</h1>
+            <p class="text-muted-foreground">Masukkan kode yang dikirim ke email Anda</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-lg border border-border p-8">
+            <div class="flex justify-center gap-3 mb-6">
+                <template x-for="(digit, idx) in otp" :key="idx">
+                    <input type="text" maxlength="1" x-model="otp[idx]" @input="handleInput($event, idx)"
+                        @keydown.backspace="handleBackspace($event, idx)"
+                        class="w-12 h-14 text-center text-2xl font-bold border border-border rounded-xl focus:border-black focus:outline-none"
+                        :id="'otp-' + idx">
+                </template>
+            </div>
+            <button @click="verify()" :disabled="loading || otp.join('').length < 6"
+                class="w-full py-3 bg-black text-white rounded-xl font-bold disabled:bg-gray-400">
+                <span x-text="loading ? 'Memverifikasi...' : 'Verifikasi'"></span>
+            </button>
+            <div class="text-center mt-6">
+                <button @click="resendOtp()" :disabled="countdown > 0"
+                    class="text-accent text-sm disabled:text-gray-400">
+                    <span x-text="countdown > 0 ? 'Kirim ulang dalam ' + countdown + 's' : 'Kirim ulang kode'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function verifyOtpPage() {
+        return {
+            otp: ['', '', '', '', '', ''], loading: false, countdown: 60, userId: '',
+            init() {
+                const params = new URLSearchParams(window.location.search);
+                this.userId = params.get('userId') || '';
+                this.startCountdown();
+            },
+            startCountdown() { const interval = setInterval(() => { if (--this.countdown <= 0) clearInterval(interval); }, 1000); },
+            handleInput(e, idx) { if (e.target.value && idx < 5) document.getElementById('otp-' + (idx + 1)).focus(); },
+            handleBackspace(e, idx) { if (!this.otp[idx] && idx > 0) document.getElementById('otp-' + (idx - 1)).focus(); },
+            async verify() {
+                this.loading = true;
+                try {
+                    const data = await api.post('/auth/verify-otp', { userId: this.userId, otp: this.otp.join('') });
+                    localStorage.setItem('auth-storage', JSON.stringify({ state: { user: data.user, token: data.token } }));
+                    showToast('Verifikasi berhasil!', 'success');
+                    window.location.href = '/';
+                } catch (e) { showToast(e.message, 'error'); } finally { this.loading = false; }
+            },
+            async resendOtp() { try { await api.post('/auth/resend-otp', { userId: this.userId }); showToast('Kode terkirim', 'success'); this.countdown = 60; this.startCountdown(); } catch (e) { showToast(e.message, 'error'); } }
+        };
+    }
+</script>
+{{end}}

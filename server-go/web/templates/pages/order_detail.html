@@ -1,0 +1,94 @@
+{{define "content"}}
+<!-- ORDER DETAIL PAGE -->
+<div class="min-h-screen bg-gray-50" x-data="orderDetailPage()">
+    <div class="container-custom py-12">
+        <a href="/orders" hx-get="/orders" hx-target="#content" hx-push-url="true"
+            class="inline-flex items-center gap-2 text-gray-600 hover:text-black mb-6">← Kembali</a>
+        <template x-if="loading">
+            <div class="text-center py-12">Memuat...</div>
+        </template>
+        <template x-if="!loading && order">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Order Info -->
+                    <div class="bg-white rounded-2xl border border-border p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h1 class="text-2xl font-bold" x-text="'#' + order.invoiceNumber"></h1>
+                                <p class="text-gray-500" x-text="formatDate(order.createdAt)"></p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm font-bold"
+                                :class="order.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : order.status === 'UNPAID' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'"
+                                x-text="order.status"></span>
+                        </div>
+                        <template x-if="order.address">
+                            <div class="border-t pt-4">
+                                <h3 class="font-medium mb-2">Alamat Pengiriman</h3>
+                                <p class="text-gray-600" x-text="order.address"></p>
+                            </div>
+                        </template>
+                        <template x-if="order.notes">
+                            <div class="border-t pt-4 mt-4">
+                                <h3 class="font-medium mb-2">Catatan</h3>
+                                <p class="text-gray-600" x-text="order.notes"></p>
+                            </div>
+                        </template>
+                    </div>
+                    <!-- Order Items -->
+                    <div class="bg-white rounded-2xl border border-border p-6">
+                        <h2 class="font-bold text-lg mb-4">Item Pesanan</h2>
+                        <div class="space-y-4">
+                            <template x-for="item in order.items" :key="item.id">
+                                <div class="flex items-center gap-4 pb-4 border-b last:border-0">
+                                    <div class="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden"><img
+                                            :src="item.product?.images?.[0] || 'https://placehold.co/100'"
+                                            class="w-full h-full object-cover"></div>
+                                    <div class="flex-1">
+                                        <h3 class="font-medium" x-text="item.product?.name"></h3>
+                                        <p class="text-sm text-gray-500" x-text="'x' + item.quantity"></p>
+                                    </div>
+                                    <p class="font-bold" x-text="formatPrice(item.price * item.quantity)"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <!-- Summary -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-2xl border border-border p-6 sticky top-24">
+                        <h2 class="font-bold text-lg mb-4">Ringkasan</h2>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between"><span>Subtotal</span><span
+                                    x-text="formatPrice(order.subtotal || order.total)"></span></div>
+                            <template x-if="order.discount">
+                                <div class="flex justify-between text-green-600"><span>Diskon</span><span
+                                        x-text="'-' + formatPrice(order.discount)"></span></div>
+                            </template>
+                        </div>
+                        <div class="border-t pt-4 mt-4">
+                            <div class="flex justify-between font-bold text-lg"><span>Total</span><span
+                                    x-text="formatPrice(order.total)"></span></div>
+                        </div>
+                        <template x-if="order.status === 'UNPAID' && order.snapToken">
+                            <button @click="payNow()"
+                                class="w-full mt-6 py-3 bg-black text-white rounded-xl font-bold">Bayar
+                                Sekarang</button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{.MidtransClientKey}}"></script>
+<script>
+    function orderDetailPage() {
+        return {
+            order: null, loading: true,
+            async init() { const id = window.location.pathname.split('/').pop(); await this.loadOrder(id); },
+            async loadOrder(id) { this.loading = true; try { this.order = await api.get(`/orders/${id}`); } catch (e) { showToast('Gagal memuat pesanan', 'error'); } finally { this.loading = false; } },
+            payNow() { window.snap.pay(this.order.snapToken, { onSuccess: () => { showToast('Berhasil!', 'success'); this.loadOrder(this.order.id); }, onError: () => showToast('Gagal', 'error') }); }
+        };
+    }
+</script>
+{{end}}

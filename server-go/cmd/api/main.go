@@ -6,6 +6,7 @@ import (
 	"arfcoder-go/internal/handlers"
 	"arfcoder-go/internal/routes"
 	"arfcoder-go/internal/services/whatsapp"
+	web "arfcoder-go/web/routes"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -36,12 +37,15 @@ func main() {
 		}
 	}()
 
-	// 4. Fiber App
+	// 4. Init Web Templates
+	web.InitTemplates()
+
+	// 5. Fiber App
 	app := fiber.New(fiber.Config{
 		BodyLimit: 50 * 1024 * 1024, // 50MB
 	})
 
-	// 5. Global Middleware
+	// 6. Global Middleware
 	app.Use(logger.New())
 	app.Use(helmet.New())
 	app.Use(cors.New(cors.Config{
@@ -50,9 +54,13 @@ func main() {
 		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
 	}))
 
-	// 6. Routes
+	// 7. API Routes
 	routes.SetupRoutes(app)
 
-	// 7. Start
+	// 8. Web Routes (Go Templates)
+	web.SetupWebRoutes(app)
+
+	// 9. Start
 	log.Fatal(app.Listen(":" + config.Port))
 }
+

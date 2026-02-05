@@ -1,0 +1,71 @@
+{{define "admin_content"}}
+<!-- ADMIN CHAT -->
+<div x-data="adminChat()">
+    <h1 class="text-2xl font-bold mb-8">Live Chat</h1>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Chat List -->
+        <div class="bg-white rounded-2xl border border-border p-4 h-[600px] overflow-y-auto">
+            <h3 class="font-bold mb-4">Percakapan</h3>
+            <div class="space-y-2">
+                <template x-for="chat in chats" :key="chat.id">
+                    <button @click="selectChat(chat)" class="w-full p-3 rounded-lg text-left transition-colors"
+                        :class="selectedChat?.id === chat.id ? 'bg-black text-white' : 'hover:bg-gray-100'">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold"
+                                x-text="chat.userName?.charAt(0) || '?'"></div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium truncate" x-text="chat.userName || 'Anonymous'"></p>
+                                <p class="text-sm truncate opacity-70" x-text="chat.lastMessage"></p>
+                            </div>
+                        </div>
+                    </button>
+                </template>
+                <template x-if="chats.length === 0">
+                    <p class="text-gray-400 text-center py-4">Tidak ada chat</p>
+                </template>
+            </div>
+        </div>
+        <!-- Chat Window -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-border flex flex-col h-[600px]">
+            <template x-if="!selectedChat">
+                <div class="flex-1 flex items-center justify-center text-gray-400">Pilih percakapan</div>
+            </template>
+            <template x-if="selectedChat">
+                <div class="flex flex-col h-full">
+                    <div class="p-4 border-b">
+                        <h3 class="font-bold" x-text="selectedChat.userName"></h3>
+                    </div>
+                    <div class="flex-1 p-4 overflow-y-auto space-y-3" id="chat-messages">
+                        <template x-for="msg in messages" :key="msg.id">
+                            <div :class="msg.isAdmin ? 'ml-auto bg-black text-white' : 'bg-gray-100'"
+                                class="max-w-[70%] p-3 rounded-2xl">
+                                <p x-text="msg.message"></p>
+                                <p class="text-xs opacity-50 mt-1" x-text="formatTime(msg.createdAt)"></p>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="p-4 border-t">
+                        <form @submit.prevent="sendMessage()" class="flex gap-3">
+                            <input type="text" x-model="newMessage" placeholder="Ketik pesan..."
+                                class="flex-1 p-3 border rounded-xl">
+                            <button type="submit"
+                                class="px-6 py-3 bg-black text-white rounded-xl font-medium">Kirim</button>
+                        </form>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+<script>
+    function adminChat() {
+        return {
+            chats: [], selectedChat: null, messages: [], newMessage: '',
+            async init() { try { this.chats = await api.get('/admin/chats') || []; } catch (e) { } },
+            async selectChat(chat) { this.selectedChat = chat; try { this.messages = await api.get(`/admin/chats/${chat.id}/messages`) || []; } catch (e) { } },
+            async sendMessage() { if (!this.newMessage.trim()) return; try { await api.post(`/admin/chats/${this.selectedChat.id}/messages`, { message: this.newMessage }); this.messages.push({ message: this.newMessage, isAdmin: true, createdAt: new Date() }); this.newMessage = ''; } catch (e) { showToast(e.message, 'error'); } },
+            formatTime(d) { return new Date(d).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); }
+        };
+    }
+</script>
+{{end}}

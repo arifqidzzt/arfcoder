@@ -1,0 +1,63 @@
+{{define "admin_content"}}
+<!-- ADMIN LOGS -->
+<div x-data="adminLogs()">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold">Activity Logs</h1>
+        <select x-model="filter" @change="loadLogs()" class="px-4 py-2 border rounded-lg">
+            <option value="">Semua</option>
+            <option value="login">Login</option>
+            <option value="order">Order</option>
+            <option value="product">Product</option>
+            <option value="user">User</option>
+        </select>
+    </div>
+    <div class="bg-white rounded-2xl border border-border overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="p-4 text-left text-sm font-medium">Waktu</th>
+                    <th class="p-4 text-left text-sm font-medium">User</th>
+                    <th class="p-4 text-left text-sm font-medium">Action</th>
+                    <th class="p-4 text-left text-sm font-medium">Details</th>
+                    <th class="p-4 text-left text-sm font-medium">IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="log in logs" :key="log.id">
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-4 text-sm" x-text="formatDate(log.createdAt)"></td>
+                        <td class="p-4" x-text="log.user?.name || log.userId || '-'"></td>
+                        <td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold"
+                                :class="getActionClass(log.action)" x-text="log.action"></span></td>
+                        <td class="p-4 text-sm text-gray-600 max-w-md truncate" x-text="log.details"></td>
+                        <td class="p-4 text-sm font-mono text-gray-400" x-text="log.ipAddress"></td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+        <template x-if="logs.length === 0">
+            <div class="p-8 text-center text-gray-400">Tidak ada log</div>
+        </template>
+    </div>
+    <div class="flex justify-between items-center mt-6">
+        <p class="text-sm text-gray-500">Menampilkan <span x-text="logs.length"></span> log</p>
+        <div class="flex gap-2">
+            <button @click="prevPage()" :disabled="page <= 1" class="px-4 py-2 border rounded-lg disabled:opacity-50">←
+                Prev</button>
+            <button @click="nextPage()" class="px-4 py-2 border rounded-lg">Next →</button>
+        </div>
+    </div>
+</div>
+<script>
+    function adminLogs() {
+        return {
+            logs: [], filter: '', page: 1,
+            async init() { await this.loadLogs(); },
+            async loadLogs() { try { const url = `/admin/logs?page=${this.page}` + (this.filter ? `&action=${this.filter}` : ''); this.logs = await api.get(url) || []; } catch (e) { } },
+            getActionClass(action) { const classes = { login: 'bg-blue-100 text-blue-700', order: 'bg-green-100 text-green-700', product: 'bg-purple-100 text-purple-700', user: 'bg-orange-100 text-orange-700' }; return classes[action] || 'bg-gray-100'; },
+            prevPage() { if (this.page > 1) { this.page--; this.loadLogs(); } },
+            nextPage() { this.page++; this.loadLogs(); }
+        };
+    }
+</script>
+{{end}}

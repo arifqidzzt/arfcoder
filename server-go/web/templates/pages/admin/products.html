@@ -1,0 +1,87 @@
+{{define "admin_content"}}
+<!-- ADMIN PRODUCTS -->
+<div x-data="adminProducts()">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold">Kelola Produk</h1>
+        <button
+            @click="showModal = true; editing = null; form = { name: '', description: '', price: '', stock: '', type: 'BARANG', images: [] }"
+            class="px-4 py-2 bg-black text-white rounded-lg font-medium">+ Tambah Produk</button>
+    </div>
+    <!-- Products Table -->
+    <div class="bg-white rounded-2xl border border-border overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="p-4 text-left text-sm font-medium">Produk</th>
+                    <th class="p-4 text-left text-sm font-medium">Tipe</th>
+                    <th class="p-4 text-left text-sm font-medium">Harga</th>
+                    <th class="p-4 text-left text-sm font-medium">Stok</th>
+                    <th class="p-4 text-left text-sm font-medium">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="product in products" :key="product.id">
+                    <tr class="border-b">
+                        <td class="p-4">
+                            <div class="flex items-center gap-3"><img
+                                    :src="product.images?.[0] || 'https://placehold.co/60'"
+                                    class="w-12 h-12 rounded-lg object-cover"><span x-text="product.name"></span></div>
+                        </td>
+                        <td class="p-4" x-text="product.type"></td>
+                        <td class="p-4" x-text="formatPrice(product.price)"></td>
+                        <td class="p-4" x-text="product.stock"></td>
+                        <td class="p-4"><button @click="editProduct(product)"
+                                class="text-blue-600 mr-3">Edit</button><button @click="deleteProduct(product.id)"
+                                class="text-red-600">Hapus</button></td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </div>
+    <!-- Modal -->
+    <div x-show="showModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        @click.self="showModal = false">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4" x-text="editing ? 'Edit Produk' : 'Tambah Produk'"></h2>
+            <div class="space-y-4">
+                <div><label class="text-sm">Nama</label><input type="text" x-model="form.name"
+                        class="w-full mt-1 p-3 border rounded-xl"></div>
+                <div><label class="text-sm">Deskripsi</label><textarea x-model="form.description" rows="3"
+                        class="w-full mt-1 p-3 border rounded-xl"></textarea></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-sm">Harga</label><input type="number" x-model="form.price"
+                            class="w-full mt-1 p-3 border rounded-xl"></div>
+                    <div><label class="text-sm">Stok</label><input type="number" x-model="form.stock"
+                            class="w-full mt-1 p-3 border rounded-xl"></div>
+                </div>
+                <div><label class="text-sm">Tipe</label><select x-model="form.type"
+                        class="w-full mt-1 p-3 border rounded-xl">
+                        <option value="BARANG">Barang</option>
+                        <option value="JASA">Jasa</option>
+                    </select></div>
+            </div>
+            <div class="flex gap-3 mt-6"><button @click="showModal = false"
+                    class="flex-1 py-3 border rounded-xl">Batal</button><button @click="saveProduct()"
+                    class="flex-1 py-3 bg-black text-white rounded-xl font-medium">Simpan</button></div>
+        </div>
+    </div>
+</div>
+<script>
+    function adminProducts() {
+        return {
+            products: [], showModal: false, editing: null, form: { name: '', description: '', price: '', stock: '', type: 'BARANG', images: [] },
+            async init() { await this.loadProducts(); },
+            async loadProducts() { try { const data = await api.get('/admin/products'); this.products = data || []; } catch (e) { } },
+            editProduct(p) { this.editing = p; this.form = { ...p }; this.showModal = true; },
+            async saveProduct() {
+                try {
+                    if (this.editing) await api.put(`/admin/products/${this.editing.id}`, this.form);
+                    else await api.post('/admin/products', this.form);
+                    showToast('Produk disimpan', 'success'); this.showModal = false; await this.loadProducts();
+                } catch (e) { showToast(e.message, 'error'); }
+            },
+            async deleteProduct(id) { if (!confirm('Hapus produk ini?')) return; try { await api.delete(`/admin/products/${id}`); showToast('Produk dihapus', 'success'); await this.loadProducts(); } catch (e) { showToast(e.message, 'error'); } }
+        };
+    }
+</script>
+{{end}}

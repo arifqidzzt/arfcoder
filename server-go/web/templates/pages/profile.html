@@ -1,0 +1,78 @@
+{{define "content"}}
+<!-- PROFILE PAGE -->
+<div class="min-h-screen bg-gray-50" x-data="profilePage()">
+    <div class="container-custom py-12">
+        <h1 class="text-3xl font-bold mb-8">Profil Saya</h1>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Avatar Section -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl border border-border p-8 text-center">
+                    <div class="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-gray-100 mb-4">
+                        <img :src="user?.avatar || 'https://placehold.co/200'" alt="Avatar"
+                            class="w-full h-full object-cover">
+                    </div>
+                    <h2 class="text-xl font-bold" x-text="user?.name"></h2>
+                    <p class="text-gray-500" x-text="user?.email"></p>
+                    <input type="file" id="avatar-input" class="hidden" @change="uploadAvatar($event)" accept="image/*">
+                    <button @click="document.getElementById('avatar-input').click()"
+                        class="mt-4 px-4 py-2 border rounded-lg text-sm">Ubah Foto</button>
+                </div>
+            </div>
+            <!-- Info Section -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-2xl border border-border p-6">
+                    <h3 class="font-bold mb-4">Informasi Akun</h3>
+                    <div class="space-y-4">
+                        <div><label class="text-sm text-gray-500">Nama</label><input type="text" x-model="form.name"
+                                class="w-full mt-1 p-3 border rounded-xl"></div>
+                        <div><label class="text-sm text-gray-500">Email</label><input type="email" :value="user?.email"
+                                disabled class="w-full mt-1 p-3 border rounded-xl bg-gray-50"></div>
+                        <div><label class="text-sm text-gray-500">Telepon</label><input type="text" x-model="form.phone"
+                                class="w-full mt-1 p-3 border rounded-xl"></div>
+                    </div>
+                    <button @click="updateProfile()"
+                        class="mt-6 px-6 py-3 bg-black text-white rounded-xl font-medium">Simpan Perubahan</button>
+                </div>
+                <div class="bg-white rounded-2xl border border-border p-6">
+                    <h3 class="font-bold mb-4">Ubah Password</h3>
+                    <div class="space-y-4">
+                        <div><label class="text-sm text-gray-500">Password Lama</label><input type="password"
+                                x-model="password.old" class="w-full mt-1 p-3 border rounded-xl"></div>
+                        <div><label class="text-sm text-gray-500">Password Baru</label><input type="password"
+                                x-model="password.new" class="w-full mt-1 p-3 border rounded-xl"></div>
+                        <div><label class="text-sm text-gray-500">Konfirmasi</label><input type="password"
+                                x-model="password.confirm" class="w-full mt-1 p-3 border rounded-xl"></div>
+                    </div>
+                    <button @click="changePassword()"
+                        class="mt-6 px-6 py-3 bg-black text-white rounded-xl font-medium">Ubah Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function profilePage() {
+        return {
+            get user() { return Alpine.store('app')?.user; },
+            form: { name: '', phone: '' },
+            password: { old: '', new: '', confirm: '' },
+            init() { if (this.user) { this.form.name = this.user.name; this.form.phone = this.user.phone || ''; } },
+            async updateProfile() {
+                try { await api.put('/user/profile', this.form); showToast('Profil diperbarui', 'success'); Alpine.store('app').checkAuth(); }
+                catch (e) { showToast(e.message, 'error'); }
+            },
+            async changePassword() {
+                if (this.password.new !== this.password.confirm) { showToast('Password tidak cocok', 'error'); return; }
+                try { await api.put('/user/password', { oldPassword: this.password.old, newPassword: this.password.new }); showToast('Password diubah', 'success'); this.password = { old: '', new: '', confirm: '' }; }
+                catch (e) { showToast(e.message, 'error'); }
+            },
+            async uploadAvatar(e) {
+                const file = e.target.files[0]; if (!file) return;
+                const formData = new FormData(); formData.append('avatar', file);
+                try { await api.upload('/user/avatar', formData); showToast('Foto diperbarui', 'success'); Alpine.store('app').checkAuth(); }
+                catch (e) { showToast(e.message, 'error'); }
+            }
+        };
+    }
+</script>
+{{end}}

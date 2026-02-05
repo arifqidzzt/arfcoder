@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .Title}}{{.Title}} | {{end}}ARF ADMIN</title>
+    <link rel="icon" href="/static/images/app_icon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="font-sans antialiased bg-gray-50" x-data="adminState()" x-init="init()" hx-boost="true">
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[100] space-y-2"></div>
+
+    <div class="min-h-screen">
+        <!-- Mobile Header -->
+        <div
+            class="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
+            <a href="/" class="text-xl font-bold tracking-tighter">ARF ADMIN</a>
+            <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                <i x-show="!sidebarOpen" data-lucide="menu" class="w-6 h-6"></i>
+                <i x-show="sidebarOpen" data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar -->
+        {{template "admin_sidebar" .}}
+
+        <!-- Overlay (Mobile) -->
+        <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-30 md:hidden"
+            x-transition:enter="transition-opacity ease-out duration-300"
+            x-transition:leave="transition-opacity ease-in duration-200"></div>
+
+        <!-- Main Content -->
+        <div class="md:ml-64 min-h-screen transition-all duration-300 pt-20 md:pt-0 overflow-x-hidden w-full">
+            <div id="admin-content" class="w-full max-w-full" hx-swap="innerHTML" hx-target="this">
+                {{template "content" .}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script>
+        lucide.createIcons();
+        document.body.addEventListener('htmx:afterSwap', function () {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,72 @@
+{{define "admin_content"}}
+<!-- ADMIN FLASH SALES -->
+<div x-data="adminFlashSales()">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold">Flash Sale</h1>
+        <button
+            @click="showModal = true; editing = null; form = { productId: '', discountPrice: '', startTime: '', endTime: '' }"
+            class="px-4 py-2 bg-black text-white rounded-lg font-medium">+ Flash Sale</button>
+    </div>
+    <div class="bg-white rounded-2xl border border-border overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="p-4 text-left text-sm font-medium">Produk</th>
+                    <th class="p-4 text-left text-sm font-medium">Harga Asli</th>
+                    <th class="p-4 text-left text-sm font-medium">Harga Diskon</th>
+                    <th class="p-4 text-left text-sm font-medium">Mulai</th>
+                    <th class="p-4 text-left text-sm font-medium">Berakhir</th>
+                    <th class="p-4 text-left text-sm font-medium">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="fs in flashSales" :key="fs.id">
+                    <tr class="border-b">
+                        <td class="p-4" x-text="fs.product?.name"></td>
+                        <td class="p-4" x-text="formatPrice(fs.product?.price)"></td>
+                        <td class="p-4 text-green-600 font-medium" x-text="formatPrice(fs.discountPrice)"></td>
+                        <td class="p-4 text-sm" x-text="formatDate(fs.startTime)"></td>
+                        <td class="p-4 text-sm" x-text="formatDate(fs.endTime)"></td>
+                        <td class="p-4"><button @click="deleteFlashSale(fs.id)" class="text-red-600">Hapus</button></td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </div>
+    <div x-show="showModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        @click.self="showModal = false">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg">
+            <h2 class="text-xl font-bold mb-4">Tambah Flash Sale</h2>
+            <div class="space-y-4">
+                <div><label class="text-sm">Produk</label><select x-model="form.productId"
+                        class="w-full mt-1 p-3 border rounded-xl">
+                        <option value="">Pilih Produk</option><template x-for="p in products" :key="p.id">
+                            <option :value="p.id" x-text="p.name"></option>
+                        </template>
+                    </select></div>
+                <div><label class="text-sm">Harga Diskon</label><input type="number" x-model="form.discountPrice"
+                        class="w-full mt-1 p-3 border rounded-xl"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-sm">Mulai</label><input type="datetime-local" x-model="form.startTime"
+                            class="w-full mt-1 p-3 border rounded-xl"></div>
+                    <div><label class="text-sm">Berakhir</label><input type="datetime-local" x-model="form.endTime"
+                            class="w-full mt-1 p-3 border rounded-xl"></div>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6"><button @click="showModal = false"
+                    class="flex-1 py-3 border rounded-xl">Batal</button><button @click="saveFlashSale()"
+                    class="flex-1 py-3 bg-black text-white rounded-xl font-medium">Simpan</button></div>
+        </div>
+    </div>
+</div>
+<script>
+    function adminFlashSales() {
+        return {
+            flashSales: [], products: [], showModal: false, form: { productId: '', discountPrice: '', startTime: '', endTime: '' },
+            async init() { try { const [fs, p] = await Promise.all([api.get('/admin/flash-sales'), api.get('/admin/products')]); this.flashSales = fs || []; this.products = p || []; } catch (e) { } },
+            async saveFlashSale() { try { await api.post('/admin/flash-sales', this.form); showToast('Flash sale dibuat', 'success'); this.showModal = false; await this.init(); } catch (e) { showToast(e.message, 'error'); } },
+            async deleteFlashSale(id) { if (!confirm('Hapus flash sale?')) return; try { await api.delete(`/admin/flash-sales/${id}`); showToast('Flash sale dihapus', 'success'); await this.init(); } catch (e) { showToast(e.message, 'error'); } }
+        };
+    }
+</script>
+{{end}}

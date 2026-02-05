@@ -1,0 +1,246 @@
+{{define "content"}}
+<!-- PRODUCT DETAIL PAGE -->
+<div class="min-h-screen bg-background" x-data="productDetailPage()">
+    <!-- Loading State -->
+    <template x-if="loading">
+        <div class="container-custom py-12">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="skeleton aspect-square rounded-2xl"></div>
+                <div class="space-y-4">
+                    <div class="skeleton h-8 w-3/4 rounded"></div>
+                    <div class="skeleton h-6 w-1/4 rounded"></div>
+                    <div class="skeleton h-24 w-full rounded"></div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Product Content -->
+    <template x-if="!loading && product">
+        <div class="container-custom py-12">
+            <!-- Breadcrumb -->
+            <nav class="flex items-center gap-2 text-sm text-muted-foreground mb-8">
+                <a href="/" hx-get="/" hx-target="#content" hx-push-url="true" class="hover:text-black">Beranda</a>
+                <span>/</span>
+                <a href="/products" hx-get="/products" hx-target="#content" hx-push-url="true"
+                    class="hover:text-black">Produk</a>
+                <span>/</span>
+                <span class="text-black font-medium" x-text="product.name"></span>
+            </nav>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <!-- Product Images -->
+                <div class="space-y-4">
+                    <div class="aspect-square rounded-2xl overflow-hidden bg-gray-100 border border-border">
+                        <img :src="currentImage || product.images?.[0] || 'https://placehold.co/600x600'"
+                            :alt="product.name" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex gap-3 overflow-x-auto pb-2" x-show="product.images?.length > 1">
+                        <template x-for="(img, idx) in product.images" :key="idx">
+                            <button @click="currentImage = img" :class="currentImage === img ? 'ring-2 ring-black' : ''"
+                                class="w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-border">
+                                <img :src="img" class="w-full h-full object-cover" alt="">
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Product Info -->
+                <div>
+                    <!-- Type Badge -->
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-4"
+                        :class="product.type === 'JASA' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+                        x-text="product.type === 'JASA' ? 'Jasa' : 'Barang'"></span>
+
+                    <h1 class="text-3xl font-bold mb-4" x-text="product.name"></h1>
+
+                    <!-- Rating -->
+                    <div class="flex items-center gap-2 mb-6">
+                        <div class="flex items-center text-yellow-400">
+                            <template x-for="i in 5" :key="i">
+                                <i data-lucide="star" class="w-4 h-4"
+                                    :class="i <= Math.round(avgRating) ? 'fill-current' : ''"></i>
+                            </template>
+                        </div>
+                        <span class="text-sm text-muted-foreground" x-text="'(' + reviews.length + ' ulasan)'"></span>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="flex items-end gap-4 mb-6">
+                        <template x-if="product.discount > 0">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl font-bold" x-text="formatPrice(product.discountedPrice)"></span>
+                                <span class="text-lg text-gray-400 line-through"
+                                    x-text="formatPrice(product.price)"></span>
+                                <span class="bg-red-100 text-red-600 text-sm font-bold px-2 py-1 rounded"
+                                    x-text="'-' + product.discount + '%'"></span>
+                            </div>
+                        </template>
+                        <template x-if="!product.discount || product.discount === 0">
+                            <span class="text-3xl font-bold" x-text="formatPrice(product.price)"></span>
+                        </template>
+                    </div>
+
+                    <!-- Stock -->
+                    <div class="flex items-center gap-2 mb-6" x-show="product.type === 'BARANG'">
+                        <span class="text-sm text-muted-foreground">Stok:</span>
+                        <span class="font-medium" :class="product.stock > 0 ? 'text-green-600' : 'text-red-600'"
+                            x-text="product.stock > 0 ? product.stock + ' tersedia' : 'Habis'"></span>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="flex items-center gap-4 mb-8">
+                        <span class="text-sm font-medium">Jumlah:</span>
+                        <div class="flex items-center border border-border rounded-lg">
+                            <button @click="quantity = Math.max(1, quantity - 1)"
+                                class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                                <i data-lucide="minus" class="w-4 h-4"></i>
+                            </button>
+                            <span class="w-12 text-center font-medium" x-text="quantity"></span>
+                            <button @click="quantity++"
+                                class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add to Cart Button -->
+                    <button @click="addToCart()" :disabled="product.type === 'BARANG' && product.stock <= 0"
+                        class="w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                        <span>Tambah ke Keranjang</span>
+                    </button>
+
+                    <!-- Description -->
+                    <div class="mt-8 pt-8 border-t border-border">
+                        <h3 class="font-bold text-lg mb-4">Deskripsi Produk</h3>
+                        <div class="prose prose-sm text-muted-foreground" x-html="product.description"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="mt-16">
+                <h2 class="text-2xl font-bold mb-8">Ulasan Pelanggan</h2>
+
+                <!-- Write Review (if logged in) -->
+                <template x-if="$store.app?.user">
+                    <div class="bg-gray-50 rounded-2xl p-6 mb-8">
+                        <h3 class="font-bold mb-4">Tulis Ulasan</h3>
+                        <div class="flex items-center gap-1 mb-4">
+                            <template x-for="i in 5" :key="i">
+                                <button @click="newReview.rating = i" class="text-2xl"
+                                    :class="i <= newReview.rating ? 'text-yellow-400' : 'text-gray-300'">
+                                    ★
+                                </button>
+                            </template>
+                        </div>
+                        <textarea x-model="newReview.comment" rows="3"
+                            placeholder="Bagikan pengalaman Anda dengan produk ini..."
+                            class="w-full p-4 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 mb-4"></textarea>
+                        <button @click="submitReview()" :disabled="!newReview.rating || !newReview.comment"
+                            class="px-6 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            Kirim Ulasan
+                        </button>
+                    </div>
+                </template>
+
+                <!-- Reviews List -->
+                <div class="space-y-6">
+                    <template x-if="reviews.length === 0">
+                        <div class="text-center py-12 text-muted-foreground">
+                            <i data-lucide="message-square" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                            <p>Belum ada ulasan untuk produk ini</p>
+                        </div>
+                    </template>
+                    <template x-for="review in reviews" :key="review.id">
+                        <div class="border-b border-border pb-6 last:border-0">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm"
+                                    x-text="review.user?.name?.charAt(0).toUpperCase() || 'U'"></div>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="font-medium" x-text="review.user?.name || 'Anonymous'"></span>
+                                        <div class="flex text-yellow-400 text-sm">
+                                            <template x-for="i in 5" :key="i">
+                                                <span x-text="i <= review.rating ? '★' : '☆'"></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground mb-2" x-text="formatDate(review.createdAt)">
+                                    </p>
+                                    <p class="text-gray-700" x-text="review.comment"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+    function productDetailPage() {
+        return {
+            product: null,
+            reviews: [],
+            loading: true,
+            currentImage: null,
+            quantity: 1,
+            avgRating: 0,
+            newReview: { rating: 0, comment: '' },
+
+            async init() {
+                const productId = window.location.pathname.split('/').pop();
+                await this.loadProduct(productId);
+            },
+
+            async loadProduct(id) {
+                this.loading = true;
+                try {
+                    const [productRes, reviewsRes] = await Promise.all([
+                        api.get(`/products/${id}`),
+                        api.get(`/products/${id}/reviews`).catch(() => [])
+                    ]);
+                    this.product = productRes;
+                    this.reviews = reviewsRes || [];
+                    this.currentImage = this.product.images?.[0];
+                    this.avgRating = this.reviews.length > 0
+                        ? this.reviews.reduce((sum, r) => sum + r.rating, 0) / this.reviews.length
+                        : 0;
+                } catch (e) {
+                    console.error('Failed to load product:', e);
+                    showToast('Gagal memuat produk', 'error');
+                } finally {
+                    this.loading = false;
+                    this.$nextTick(() => lucide.createIcons());
+                }
+            },
+
+            async addToCart() {
+                const app = Alpine.store('app');
+                if (app && app.addToCart) {
+                    await app.addToCart(this.product, this.quantity);
+                }
+            },
+
+            async submitReview() {
+                try {
+                    await api.post(`/products/${this.product.id}/reviews`, {
+                        rating: this.newReview.rating,
+                        comment: this.newReview.comment
+                    });
+                    showToast('Ulasan berhasil dikirim!', 'success');
+                    this.newReview = { rating: 0, comment: '' };
+                    // Reload reviews
+                    const reviewsRes = await api.get(`/products/${this.product.id}/reviews`);
+                    this.reviews = reviewsRes || [];
+                } catch (e) {
+                    showToast(e.message || 'Gagal mengirim ulasan', 'error');
+                }
+            }
+        };
+    }
+</script>
+{{end}}

@@ -1,0 +1,46 @@
+{{define "content"}}
+<!-- VERIFY ADMIN 2FA PAGE -->
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div class="max-w-md w-full" x-data="verifyAdminPage()">
+        <div class="text-center mb-8">
+            <a href="/" class="text-3xl font-bold tracking-tighter">ARFCODER</a>
+            <h1 class="text-2xl font-bold mt-6 mb-2">Verifikasi Admin</h1>
+            <p class="text-muted-foreground">Masukkan kode 2FA dari aplikasi authenticator</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-lg border border-border p-8">
+            <div class="flex justify-center gap-3 mb-6">
+                <template x-for="(digit, idx) in code" :key="idx">
+                    <input type="text" maxlength="1" x-model="code[idx]" @input="handleInput($event, idx)"
+                        @keydown.backspace="handleBackspace($event, idx)"
+                        class="w-12 h-14 text-center text-2xl font-bold border border-border rounded-xl focus:border-black focus:outline-none"
+                        :id="'code-' + idx">
+                </template>
+            </div>
+            <button @click="verify()" :disabled="loading || code.join('').length < 6"
+                class="w-full py-3 bg-black text-white rounded-xl font-bold disabled:bg-gray-400">
+                <span x-text="loading ? 'Memverifikasi...' : 'Verifikasi'"></span>
+            </button>
+            <p class="text-center text-sm text-gray-500 mt-6">Kode dikirim ke email admin Anda</p>
+        </div>
+    </div>
+</div>
+<script>
+    function verifyAdminPage() {
+        return {
+            code: ['', '', '', '', '', ''], loading: false, userId: '',
+            init() { this.userId = new URLSearchParams(window.location.search).get('userId') || ''; },
+            handleInput(e, idx) { if (e.target.value && idx < 5) document.getElementById('code-' + (idx + 1)).focus(); },
+            handleBackspace(e, idx) { if (!this.code[idx] && idx > 0) document.getElementById('code-' + (idx - 1)).focus(); },
+            async verify() {
+                this.loading = true;
+                try {
+                    const data = await api.post('/auth/verify-admin-2fa', { userId: this.userId, code: this.code.join('') });
+                    localStorage.setItem('auth-storage', JSON.stringify({ state: { user: data.user, token: data.token } }));
+                    showToast('Verifikasi berhasil!', 'success');
+                    window.location.href = '/admin';
+                } catch (e) { showToast(e.message, 'error'); } finally { this.loading = false; }
+            }
+        };
+    }
+</script>
+{{end}}
