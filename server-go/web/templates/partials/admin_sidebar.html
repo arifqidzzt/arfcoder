@@ -16,77 +16,61 @@
 
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
             <a href="/admin" hx-get="/admin" hx-target="#admin-content" hx-push-url="true" @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin"}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin`}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
                 <span class="font-medium">Dashboard</span>
             </a>
             <a href="/admin/products" hx-get="/admin/products" hx-target="#admin-content" hx-push-url="true"
                 @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin/products"}}bg-black text-white font-medium shadow-md{{else}}text-gray-600
-                hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin/products`}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <i data-lucide="package" class="w-5 h-5"></i>
                 <span class="font-medium">Produk</span>
             </a>
             <a href="/admin/orders" hx-get="/admin/orders" hx-target="#admin-content" hx-push-url="true"
                 @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin/orders"}}bg-black text-white font-medium shadow-md{{else}}text-gray-600
-                hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin/orders`}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <i data-lucide="shopping-bag" class="w-5 h-5"></i>
                 <span class="font-medium">Pesanan</span>
             </a>
             <a href="/admin/users" hx-get="/admin/users" hx-target="#admin-content" hx-push-url="true"
                 @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin/users"}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin/users`}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <i data-lucide="users" class="w-5 h-5"></i>
                 <span class="font-medium">Pengguna</span>
             </a>
             <a href="/admin/vouchers" hx-get="/admin/vouchers" hx-target="#admin-content" hx-push-url="true"
                 @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin/vouchers"}}bg-black text-white font-medium shadow-md{{else}}text-gray-600
-                hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin/vouchers`}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <i data-lucide="ticket" class="w-5 h-5"></i>
                 <span class="font-medium">Vouchers</span>
             </a>
             <a href="/admin/flash-sales" hx-get="/admin/flash-sales" hx-target="#admin-content" hx-push-url="true"
                 @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin/flash-sales"}}bg-black text-white font-medium shadow-md{{else}}text-gray-600
-                hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin/flash-sales`}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <i data-lucide="zap" class="w-5 h-5"></i>
                 <span class="font-medium">Flash Sale</span>
             </a>
             <a href="/admin/services" hx-get="/admin/services" hx-target="#admin-content" hx-push-url="true"
                 @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin/services"}}bg-black text-white font-medium shadow-md{{else}}text-gray-600
-                hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin/services`}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <i data-lucide="layers" class="w-5 h-5"></i>
                 <span class="font-medium">Layanan</span>
             </a>
             <a href="/admin/chat" hx-get="/admin/chat" hx-target="#admin-content" hx-push-url="true"
                 @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin/chat"}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin/chat`}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <i data-lucide="message-square" class="w-5 h-5"></i>
                 <span class="font-medium">Live Chat</span>
             </a>
             <a href="/admin/whatsapp" hx-get="/admin/whatsapp" hx-target="#admin-content" hx-push-url="true"
                 @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin/whatsapp"}}bg-black text-white font-medium shadow-md{{else}}text-gray-600
-                hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin/whatsapp`}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <span class="w-5 h-5 flex items-center justify-center font-bold text-lg">📱</span>
                 <span class="font-medium">WhatsApp Bot</span>
             </a>
             <a href="/admin/logs" hx-get="/admin/logs" hx-target="#admin-content" hx-push-url="true"
                 @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin/logs"}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin/logs`}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <i data-lucide="history" class="w-5 h-5"></i>
                 <span class="font-medium">Audit Logs</span>
             </a>
@@ -95,10 +79,9 @@
 
             <a href="/admin/profile" hx-get="/admin/profile" hx-target="#admin-content" hx-push-url="true"
                 @click="sidebarOpen = false"
-                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath "
-                /admin/profile"}}bg-black text-white{{else}}text-gray-600 hover:bg-gray-100{{end}}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .CurrentPath `/admin/profile`}}bg-black text-white{{else}}text-gray-600 hover:bg-gray-100{{end}}">
                 <i data-lucide="settings" class="w-5 h-5"></i>
-                <span class="font-medium">Pengaturan & 2FA</span>
+                <span class="font-medium">Pengaturan &amp; 2FA</span>
             </a>
             <a href="/" target="_blank"
                 class="flex items-center space-x-3 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
