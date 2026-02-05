@@ -8,15 +8,14 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	// --- WEBHOOK AREA (PUBLIC & TESTABLE) ---
-	// Bisa dites di browser: https://arfzxdev.com/api/orders/webhook
-	app.Get("/api/orders/webhook", func(c *fiber.Ctx) error {
-		return c.Status(200).SendString("Webhook endpoint is active! Please use POST for Midtrans.")
-	})
-	app.Post("/api/orders/webhook", handlers.HandleMidtransWebhook)
-
-	// --- PROTECTED API ---
 	api := app.Group("/api", middleware.RateLimitAPI())
+
+	// --- WEBHOOK PUBLIK (URL BARU: /api/callback/midtrans) ---
+	// Bebas dari SecureMiddleware agar Midtrans bisa masuk
+	api.Post("/callback/midtrans", handlers.HandleMidtransWebhook)
+	api.Get("/callback/midtrans", func(c *fiber.Ctx) error {
+		return c.SendString("Midtrans Callback is active!")
+	})
 
 	// --- AUTH ---
 	auth := api.Group("/auth", middleware.RateLimitAuth(), middleware.SecureMiddleware)
