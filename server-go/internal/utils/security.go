@@ -210,6 +210,12 @@ func computeSHA256(data string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+func ComputeSHA512(data string) string {
+	h := sha512.New()
+	h.Write([]byte(data))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 // decryptAES decrypts OpenSSL-compatible (CryptoJS) AES strings
 func decryptAES(ciphertextB64 string, passphrase string) (string, error) {
 	data, err := base64.StdEncoding.DecodeString(ciphertextB64)

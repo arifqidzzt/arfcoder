@@ -311,13 +311,26 @@ func HandleMidtransWebhook(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid request"})
 	}
 
-	rawOrderId := fmt.Sprintf("%v", notification["order_id"])
-	transactionStatus := fmt.Sprintf("%v", notification["transaction_status"])
-	
-	// Strip suffix if exists (e.g., UUID-timestamp)
-	orderId := rawOrderId
-	if len(rawOrderId) > 36 {
-		orderId = rawOrderId[:36]
+	// --- KEAMANAN: Verifikasi Signature Key ---
+	// Rumus: sha512(order_id + status_code + gross_amount + server_key)
+	orderIdRaw := fmt.Sprintf("%v", notification["order_id"])
+	statusCode := fmt.Sprintf("%v", notification["status_code"])
+	grossAmount := fmt.Sprintf("%v", notification["gross_amount"])
+	signatureKey := fmt.Sprintf("%v", notification["signature_key"])
+
+	payload := orderIdRaw + statusCode + grossAmount + config.MidtransServerKey
+	expectedSignature := utils.ComputeSHA512(payload)
+
+	if signatureKey != expectedSignature {
+		fmt.Println("SECURITY ALERT: Invalid Midtrans Signature!")
+		return c.Status(401).JSON(fiber.Map{"message": "Invalid signature"})
+	}
+
+	// --- PROSES LANJUTAN ---
+	// Strip suffix jika ada (misal: UUID-timestamp)
+	orderId := orderIdRaw
+	if len(orderIdRaw) > 36 {
+		orderId = orderIdRaw[:36]
 	}
 
 	var orderStatus string = models.OrderStatusPending

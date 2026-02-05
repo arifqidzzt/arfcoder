@@ -10,9 +10,9 @@ import (
 )
 
 func SecureMiddleware(c *fiber.Ctx) error {
-	// --- PENGECEKAN WEBHOOK (WAJIB DI ATAS) ---
-	// Jika URL mengandung kata "webhook", abaikan semua proteksi keamanan
-	if strings.Contains(c.Path(), "webhook") {
+	// --- PENGECEKAN WEBHOOK (SPESIFIK) ---
+	// Hanya izinkan path eksak untuk webhook Midtrans
+	if c.Path() == "/api/orders/webhook" {
 		return c.Next()
 	}
 
