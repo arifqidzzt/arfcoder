@@ -11,20 +11,13 @@ import (
 
 func SecureMiddleware(c *fiber.Ctx) error {
 	// 1. Check Header
-	secureHeader := c.Get("x-arf-secure-token")
-	if !utils.VerifySecureHeader(secureHeader) {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"message": "Access Denied: Invalid Security Header",
-		})
+	path := c.Path()
+	// Skip Webhook Security Checks
+	if strings.Contains(path, "webhook") {
+		return c.Next()
 	}
 
-	// 2. Handle Body Decryption for POST/PUT/PATCH
-	method := c.Method()
-	if method == "POST" || method == "PUT" || method == "PATCH" {
-		// Skip Webhook
-		if strings.Contains(c.Path(), "midtrans-webhook") {
-			return c.Next()
-		}
+	secureHeader := c.Get("x-arf-secure-token")
 
 		// Read Body as generic Interface to check if it's the Array[5] format
 		var rawBody interface{}

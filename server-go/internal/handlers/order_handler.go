@@ -239,89 +239,99 @@ func CreateOrder(c *fiber.Ctx) error {
 	}
 }
 
+func GetOrderById(c *fiber.Ctx) error {
+	id := c.Params("id")
+	userClaims := c.Locals("user").(*utils.JWTClaims)
+
+	var order models.Order
+	if err := database.DB.Preload("Items.Product").Preload("User").Preload("Timeline").First(&order, "id = ?", id).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
+	}
+
+	// 1. Security Check: Only owner or admin
+	if userClaims.Role != "ADMIN" && userClaims.Role != "SUPER_ADMIN" && order.UserID != userClaims.UserID {
+		return c.Status(403).JSON(fiber.Map{"message": "Forbidden"})
+	}
+
+	// 2. Expiration Logic (Auto-Regenerate)
+	if order.Status == models.OrderStatusPending {
+		timeSinceCreated := time.Since(order.CreatedAt)
+		if timeSinceCreated > 24*time.Hour {
+			database.DB.Model(&order).Update("status", models.OrderStatusCancelled)
+			order.Status = models.OrderStatusCancelled
+		} else {
+			// Check if Core API payment is expired
+			expiryStr, ok := order.PaymentDetails["expiry_time"].(string)
+			if ok && expiryStr != "" {
+				expiryTime, _ := time.Parse("2006-01-02 15:04:05", expiryStr)
+				if !expiryTime.IsZero() && time.Now().After(expiryTime) {
+					// AUTO REGENERATE
+					fmt.Println("DEBUG: Payment expired, auto-regenerating...")
+					newTxId := fmt.Sprintf("%s-%d", order.ID, time.Now().Unix())
+					coreReq := &coreapi.ChargeReq{
+						PaymentType: coreapi.CoreapiPaymentType(order.PaymentType),
+						TransactionDetails: midtrans.TransactionDetails{
+							OrderID:  newTxId,
+							GrossAmt: int64(order.TotalAmount),
+						},
+					}
+					// Handle specific bank details if needed
+					if order.PaymentType == string(coreapi.PaymentTypeBankTransfer) {
+						coreReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.Bank(order.PaymentMethod)}
+					}
+
+					resp, err := CoreClient.ChargeTransaction(coreReq)
+					if err == nil {
+						details := make(utils.JSONField)
+						if len(resp.VaNumbers) > 0 {
+							details["va_number"] = resp.VaNumbers[0].VANumber
+							details["bank"] = resp.VaNumbers[0].Bank
+						}
+						if resp.PaymentType == "qris" || resp.PaymentType == "gopay" {
+							for _, action := range resp.Actions {
+								if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
+								if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
+							}
+						}
+						details["expiry_time"] = resp.ExpiryTime
+						database.DB.Model(&order).Update("paymentDetails", details)
+						order.PaymentDetails = details
+					}
+				}
+			}
+		}
+	}
+
+	return c.JSON(order)
+}
+
 func HandleMidtransWebhook(c *fiber.Ctx) error {
 	var notification map[string]interface{}
 	if err := c.BodyParser(&notification); err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid request"})
 	}
 
-	orderId := fmt.Sprintf("%v", notification["order_id"])
+	rawOrderId := fmt.Sprintf("%v", notification["order_id"])
 	transactionStatus := fmt.Sprintf("%v", notification["transaction_status"])
-	fraudStatus := fmt.Sprintf("%v", notification["fraud_status"])
+	
+	// Strip suffix if exists (e.g., UUID-timestamp)
+	orderId := rawOrderId
+	if len(rawOrderId) > 36 {
+		orderId = rawOrderId[:36]
+	}
 
 	var orderStatus string = models.OrderStatusPending
 
-	if transactionStatus == "capture" {
-		if fraudStatus == "challenge" {
-			orderStatus = models.OrderStatusPending
-		} else if fraudStatus == "accept" {
-			orderStatus = models.OrderStatusPaid
-		}
-	} else if transactionStatus == "settlement" {
+	if transactionStatus == "settlement" || transactionStatus == "capture" {
 		orderStatus = models.OrderStatusPaid
 	} else if transactionStatus == "cancel" || transactionStatus == "deny" || transactionStatus == "expire" {
 		orderStatus = models.OrderStatusCancelled
-	} else if transactionStatus == "pending" {
-		orderStatus = models.OrderStatusPending
 	}
 
-	// Extract real Order ID if suffixed (for regenerate logic)
-	// Example: ORDERID-1234567890
-	// We should just use the ID as is if we stored the unique ID, 
-	// BUT our DB ID is UUID usually. 
-	// If regenerate logic creates "ORDERID-TIMESTAMP", we need to update that specific transaction?
-	// Actually, Update only by ID. If ID in DB is UUID, and Midtrans sends "UUID-TIME", we need to strip suffix.
-	// But `RegeneratePaymentToken` updates `SnapToken` on the *original* order row.
-	// So we should find the order by the prefix.
-	// Simple fix: Try finding exact ID first.
-	
-	// Assuming orderId matches DB ID for now as per `CreateOrder`. 
-	// `RegeneratePaymentToken` uses `newTxId` which is different. 
-	// We need to parse it.
-	
-	// Quick parse:
-	// If ID contains "-", split? No, UUID has dashes.
-	// We'll rely on the fact that `order_handler` used `order.ID` directly.
-	// `Regenerate` used `order.ID + "-" + timestamp`.
-	// So we take first 36 chars if it looks like UUID? Or split by last dash?
-	// Let's keep it simple: Try update. If 0 rows affected, try stripping suffix.
-	
-	// Simple approach: Use raw ID.
-	if dbRes := database.DB.Model(&models.Order{}).Where("id = ?", orderId).Update("status", orderStatus); dbRes.RowsAffected == 0 {
-		// Try stripping suffix (UUID is 36 chars)
-		if len(orderId) > 36 {
-			realId := orderId[:36]
-			database.DB.Model(&models.Order{}).Where("id = ?", realId).Update("status", orderStatus)
-		}
+	// Update Order
+	if err := database.DB.Model(&models.Order{}).Where("id = ?", orderId).Update("status", orderStatus).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"message": "Database error"})
 	}
 
-	return c.JSON(fiber.Map{"message": "Webhook received", "status": orderStatus})
-}
-
-// Fixed GetMyOrders (Moved from separate file to avoid conflict or just ensuring correct imports)
-func GetMyOrders(c *fiber.Ctx) error {
-	userClaims := c.Locals("user").(*utils.JWTClaims)
-	var orders []models.Order
-	database.DB.Preload("Items.Product").Where("\"userId\" = ?", userClaims.UserID).Order("\"createdAt\" desc").Find(&orders)
-	return c.JSON(orders)
-}
-
-func GetOrderById(c *fiber.Ctx) error {
-	id := c.Params("id")
-	userClaims := c.Locals("user").(*utils.JWTClaims)
-	
-	var order models.Order
-	
-	// Logic: Admin can see all, User can see own
-	if userClaims.Role == "ADMIN" || userClaims.Role == "SUPER_ADMIN" {
-		if err := database.DB.Preload("Items.Product").Preload("User").Preload("Timeline").First(&order, "id = ?", id).Error; err != nil {
-			return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
-		}
-	} else {
-		if err := database.DB.Preload("Items.Product").Preload("User").Preload("Timeline").Where("id = ? AND \"userId\" = ?", id, userClaims.UserID).First(&order).Error; err != nil {
-			return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
-		}
-	}
-	
-	return c.JSON(order)
+	return c.Status(200).SendString("OK")
 }

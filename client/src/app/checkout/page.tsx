@@ -98,32 +98,33 @@ export default function CheckoutPage() {
         paymentMethod: methodDetails?.method
       });
 
+      const orderId = res.data.order.id;
+      clearCart();
+
       if (paymentMode === "CORE") {
         toast.success('Pesanan dibuat!');
-        clearCart();
-        router.push(`/orders/${res.data.order.id}`);
+        router.push(`/orders/${orderId}`);
         return;
       }
 
       const { snapToken } = res.data;
       if (snapToken && window.snap) {
-// ... existing snap logic ...
         window.snap.pay(snapToken, {
           onSuccess: () => { 
             toast.success('Pembayaran Berhasil!'); 
-            clearCart(); 
-            window.location.href = '/orders'; 
+            window.location.href = `/orders/${orderId}`; 
           },
           onPending: () => { 
             toast('Menunggu pembayaran...'); 
-            clearCart(); 
-            router.push('/orders'); 
+            router.push(`/orders/${orderId}`); 
           },
-          onError: () => { toast.error('Pembayaran Gagal'); setLoading(false); },
+          onError: () => { 
+            toast.error('Pembayaran Gagal'); 
+            router.push(`/orders/${orderId}`);
+          },
           onClose: () => { 
             toast('Selesaikan pembayaran di menu Pesanan'); 
-            clearCart(); 
-            router.push('/orders'); 
+            router.push(`/orders/${orderId}`); 
           }
         });
       }

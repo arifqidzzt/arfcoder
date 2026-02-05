@@ -71,7 +71,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const { token } = useAuthStore();
+  const { user, token } = useAuthStore();
   const router = useRouter();
 
   // Refund State
@@ -80,50 +80,31 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [showRefundForm, setShowRefundForm] = useState(false);
 
   useEffect(() => {
-    // Load Midtrans Snap script
-    const script = document.createElement('script');
-    const isProduction = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true';
-    script.src = isProduction 
-      ? "https://app.midtrans.com/snap/snap.js" 
-      : "https://app.sandbox.midtrans.com/snap/snap.js";
-    script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '');
-    document.body.appendChild(script);
-
     if (token) fetchOrder();
+    else router.push('/login');
   }, [id, token]);
 
   const fetchOrder = async () => {
     try {
       const res = await api.get(`/orders/${id}`);
+      
+      // Client-side Security: Double check owner
+      if (user && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && res.data.userId !== user.id) {
+        toast.error('Anda tidak memiliki akses ke pesanan ini');
+        router.push('/orders');
+        return;
+      }
+
       setOrder(res.data);
-    } catch (error) {
-      toast.error('Gagal memuat pesanan');
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        toast.error('Akses ditolak');
+        router.push('/orders');
+      } else {
+        toast.error('Gagal memuat pesanan');
+      }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePay = async () => {
-    if (!window.snap) return toast.error("Sistem pembayaran sedang memuat...");
-
-    try {
-      const res = await api.post(`/orders/${id}/pay`, {});
-      const { snapToken } = res.data;
-
-      window.snap.pay(snapToken, {
-        onSuccess: () => { 
-          toast.success('Pembayaran Berhasil!'); 
-          window.location.reload(); 
-        },
-        onPending: () => { 
-          toast('Menunggu pembayaran...'); 
-          window.location.reload(); 
-        },
-        onError: () => { toast.error('Pembayaran Gagal'); },
-        onClose: () => { toast('Pembayaran belum selesai'); }
-      });
-    } catch (error) {
-      toast.error('Gagal memuat pembayaran');
     }
   };
 
@@ -163,7 +144,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <button onClick={() => router.back()} className="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-100">
+          <button onClick={() => router.push('/orders')} className="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-100">
             <ArrowLeft size={20} />
           </button>
           <div>
@@ -262,25 +243,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           
           {order.status === 'PENDING' && (
             <div className="flex gap-3">
-              {/* Only show "Bayar Sekarang" for SNAP, or if CORE but no payment details yet */}
-              {(!order.paymentDetails && order.snapToken) ? (
-                <button onClick={handlePay} className="flex-1 bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors">
-                  Bayar Sekarang (Snap)
-                </button>
-              ) : (
-                <button 
-                  onClick={async () => {
-                    const res = await api.post(`/orders/${id}/pay`, {});
-                    if (res.data.mode === "SNAP") handlePay();
-                    else fetchOrder(); // Refresh for CORE
-                  }} 
-                  className="flex-1 bg-white border border-black text-black py-3 rounded-lg font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                >
-                  <RefreshCcw size={18} /> Regenerate Pembayaran
-                </button>
-              )}
-              <button onClick={handleCancel} className="flex-1 bg-white border border-red-200 text-red-600 py-3 rounded-lg font-bold hover:bg-red-50 transition-colors">
-                Batalkan
+              <button onClick={handleCancel} className="w-full bg-white border border-red-200 text-red-600 py-3 rounded-lg font-bold hover:bg-red-50 transition-colors">
+                Batalkan Pesanan
               </button>
             </div>
           )}
