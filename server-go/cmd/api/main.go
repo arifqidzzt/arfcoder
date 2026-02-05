@@ -51,6 +51,9 @@ func main() {
 	engine.AddFunc("discountedPrice", func(price float64, discount int) float64 {
 		return price * (1 - float64(discount)/100)
 	})
+	engine.AddFunc("isOdd", func(i int) bool {
+		return i%2 != 0
+	})
 
 	// 5. Fiber App with Template Engine
 	app := fiber.New(fiber.Config{
