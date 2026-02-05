@@ -10,6 +10,10 @@ import (
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api", middleware.RateLimitAPI())
 
+	// --- PUBLIC WEBHOOK (Pastikan ini di LUAR grup yang memakai SecureMiddleware) ---
+	// URL tetap: https://arfzxdev.com/api/orders/webhook
+	api.Post("/orders/webhook", handlers.HandleMidtransWebhook)
+
 	// --- AUTH ---
 	auth := api.Group("/auth", middleware.RateLimitAuth(), middleware.SecureMiddleware)
 	auth.Post("/register", handlers.Register)
@@ -36,16 +40,15 @@ func SetupRoutes(app *fiber.App) {
 	products.Put("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.UpdateProduct)
 	products.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteProduct)
 
-	// --- ORDERS ---
+	// --- PROTECTED ORDERS ---
 	orders := api.Group("/orders", middleware.SecureMiddleware)
 	orders.Post("/", middleware.AuthMiddleware, handlers.CreateOrder)
-	orders.Post("/webhook", handlers.HandleMidtransWebhook) // Kembali ke path /api/orders/webhook
 	orders.Get("/my", middleware.AuthMiddleware, handlers.GetMyOrders)
 	orders.Get("/:id", middleware.AuthMiddleware, handlers.GetOrderById)
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
 	orders.Post("/:id/refund", middleware.AuthMiddleware, handlers.RequestRefund)
 
-	// --- sisanya tetap sama ---
+	// --- VOUCHERS & LAINNYA ---
 	vouchers := api.Group("/vouchers", middleware.SecureMiddleware)
 	vouchers.Get("/", handlers.GetAllVouchers)
 	vouchers.Post("/check", handlers.CheckVoucher)
