@@ -15,7 +15,7 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/register", handlers.Register)
 	auth.Post("/login", handlers.Login)
 	auth.Post("/verify-otp", handlers.VerifyOtp)
-	auth.Post("/verify-login-otp", handlers.VerifyLoginOtp) // FIX: Added Route
+	auth.Post("/verify-login-otp", handlers.VerifyLoginOtp)
 	auth.Post("/resend-otp", handlers.ResendOtp)
 	auth.Post("/google", handlers.GoogleLogin)
 	auth.Post("/forgot-password", handlers.ForgotPassword)
@@ -32,49 +32,41 @@ func SetupRoutes(app *fiber.App) {
 	products.Get("/services", handlers.GetPublicServices)
 	products.Get("/", handlers.GetAllProducts)
 	products.Get("/:id", handlers.GetProductById)
-	// Admin Product CRUD
 	products.Post("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.CreateProduct)
 	products.Put("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.UpdateProduct)
 	products.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteProduct)
 
 	// --- ORDERS ---
-	// Public Webhook (No SecureMiddleware)
-	api.Post("/orders/webhook", handlers.HandleMidtransWebhook)
-
 	orders := api.Group("/orders", middleware.SecureMiddleware)
 	orders.Post("/", middleware.AuthMiddleware, handlers.CreateOrder)
+	orders.Post("/webhook", handlers.HandleMidtransWebhook) // Kembali ke path /api/orders/webhook
 	orders.Get("/my", middleware.AuthMiddleware, handlers.GetMyOrders)
 	orders.Get("/:id", middleware.AuthMiddleware, handlers.GetOrderById)
-	// Order Actions
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
 	orders.Post("/:id/refund", middleware.AuthMiddleware, handlers.RequestRefund)
 
-	// --- VOUCHERS ---
+	// --- sisanya tetap sama ---
 	vouchers := api.Group("/vouchers", middleware.SecureMiddleware)
 	vouchers.Get("/", handlers.GetAllVouchers)
 	vouchers.Post("/check", handlers.CheckVoucher)
 	vouchers.Post("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.CreateVoucher)
 	vouchers.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteVoucher)
 
-	// --- FLASH SALES ---
 	fs := api.Group("/flash-sales", middleware.SecureMiddleware)
 	fs.Get("/active", handlers.GetActiveFlashSales)
-	fs.Get("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetAllFlashSales) // FIX: Added
+	fs.Get("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetAllFlashSales)
 	fs.Post("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.CreateFlashSale)
 	fs.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteFlashSale)
 
-	// --- REVIEWS ---
 	reviews := api.Group("/reviews", middleware.SecureMiddleware)
 	reviews.Get("/:productId", handlers.GetProductReviews)
 	reviews.Post("/", middleware.AuthMiddleware, handlers.CreateReview)
 
-	// --- USER PROFILE ---
 	user := api.Group("/user", middleware.SecureMiddleware, middleware.AuthMiddleware)
 	user.Get("/profile", handlers.GetProfile)
 	user.Put("/profile", handlers.UpdateProfile)
 	user.Put("/change-password", handlers.ChangePassword)
 	user.Put("/phone-direct", handlers.UpdatePhoneDirect)
-	// Flows
 	user.Post("/email/request", handlers.RequestEmailChange)
 	user.Post("/email/verify-old", handlers.VerifyOldEmail)
 	user.Post("/email/verify-new", handlers.VerifyNewEmail)
@@ -83,18 +75,15 @@ func SetupRoutes(app *fiber.App) {
 	user.Post("/phone/request-new", handlers.RequestNewPhoneOtp)
 	user.Post("/phone/verify-new", handlers.VerifyNewPhone)
 
-	// --- CART ---
 	cart := user.Group("/cart")
 	cart.Get("/", handlers.GetCart)
 	cart.Post("/", handlers.AddToCart)
 	cart.Put("/:productId", handlers.UpdateCartQuantity)
 	cart.Delete("/:productId", handlers.RemoveFromCart)
 
-	// --- CHAT ---
 	user.Post("/chat/send", handlers.SendMessage)
 	user.Get("/chat/history/:userId", handlers.GetUserChatHistory)
 
-	// --- ADMIN DASHBOARD ---
 	admin := api.Group("/admin", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly)
 	admin.Get("/stats", handlers.GetDashboardStats)
 	admin.Get("/orders", handlers.GetAllOrders)
@@ -102,23 +91,17 @@ func SetupRoutes(app *fiber.App) {
 	admin.Put("/orders/:id/delivery", handlers.UpdateDeliveryInfo)
 	admin.Get("/users", handlers.GetAllUsers)
 	admin.Delete("/users/:id", handlers.DeleteUser)
-	
 	admin.Get("/chat/:userId", handlers.GetUserChatHistory)
-
 	admin.Get("/services", handlers.GetAdminServices)
 	admin.Post("/services", handlers.UpsertService)
 	admin.Delete("/services/:id", handlers.DeleteService)
-	
 	admin.Get("/wa/status", handlers.GetWaStatus)
 	admin.Post("/wa/logout", handlers.LogoutWa)
 	admin.Post("/wa/start", handlers.StartWa)
-	
 	admin.Get("/payment-settings", handlers.GetPaymentSettings)
 	admin.Post("/payment-settings", handlers.UpdatePaymentSettings)
-	
 	admin.Post("/timeline/:id", handlers.UpdateOrderTimeline)
 	admin.Delete("/timeline/:id", handlers.DeleteOrderTimeline)
 	
-	// --- LOGS ---
 	api.Get("/logs", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetLogs)
 }

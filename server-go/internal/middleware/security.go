@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"strings"
 
 	"arfcoder-go/internal/utils"
 
@@ -9,7 +10,12 @@ import (
 )
 
 func SecureMiddleware(c *fiber.Ctx) error {
-	// 1. Check Header
+	// 1. Skip Webhook (Midtrans tidak mengirim x-arf-secure-token)
+	if strings.Contains(c.Path(), "webhook") {
+		return c.Next()
+	}
+
+	// 2. Check Header Keamanan untuk User Biasa
 	secureHeader := c.Get("x-arf-secure-token")
 	if !utils.VerifySecureHeader(secureHeader) {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
@@ -17,10 +23,9 @@ func SecureMiddleware(c *fiber.Ctx) error {
 		})
 	}
 
-	// 2. Handle Body Decryption for POST/PUT/PATCH
+	// 3. Handle Body Decryption for POST/PUT/PATCH
 	method := c.Method()
 	if method == "POST" || method == "PUT" || method == "PATCH" {
-		// Read Body as generic Interface
 		var rawBody interface{}
 		if err := json.Unmarshal(c.Body(), &rawBody); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -42,7 +47,6 @@ func SecureMiddleware(c *fiber.Ctx) error {
 			})
 		}
 
-		// Replace Body with Decrypted JSON
 		newBody, err := json.Marshal(decrypted)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Re-marshal failed"})
