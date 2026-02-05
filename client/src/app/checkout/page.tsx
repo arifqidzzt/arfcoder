@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useCart } from '@/store/useCartStore';
+import { useCartStore } from '@/store/useCartStore';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -13,7 +13,7 @@ import { ALL_PAYMENT_METHODS, GROUPED_PAYMENT_METHODS } from '@/lib/paymentMetho
 
 export default function CheckoutPage() {
   const { token } = useAuthStore();
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, total, clearCart } = useCartStore();
   const [voucher, setVoucher] = useState('');
   const [discount, setDiscount] = useState(0);
   const [appliedVoucher, setAppliedVoucher] = useState('');
@@ -110,6 +110,7 @@ export default function CheckoutPage() {
     }
   };
 
+  const totalPrice = total();
   const finalAmount = totalPrice - discount;
 
   // Payment Method Selector Modal
