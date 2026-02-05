@@ -187,7 +187,7 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
                         onChange={(e) => {
                           const newMethods = e.target.checked
                             ? [...formData.paymentMethods, method.id]
-                            : formData.paymentMethods.filter(m => m !== method.id);
+                            : formData.paymentMethods.filter((m: string) => m !== method.id);
                           setFormData(prev => ({ ...prev, paymentMethods: newMethods }));
                         }}
                         className="w-4 h-4"
