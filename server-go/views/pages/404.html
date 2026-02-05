@@ -1,0 +1,20 @@
+{{define "content"}}
+<div class="min-h-screen bg-background flex flex-col">
+    {{template "navbar" .}}
+
+    <main class="flex-grow flex items-center justify-center py-20">
+        <div class="text-center px-4">
+            <h1 class="text-9xl font-bold text-gray-200">404</h1>
+            <h2 class="text-2xl font-bold mb-4">Halaman Tidak Ditemukan</h2>
+            <p class="text-muted-foreground mb-8 text-lg">
+                Maaf, halaman yang Anda cari tidak ada atau telah dipindahkan.
+            </p>
+            <a href="/" class="px-8 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors">
+                Kembali ke Beranda
+            </a>
+        </div>
+    </main>
+
+    {{template "footer" .}}
+</div>
+{{end}}

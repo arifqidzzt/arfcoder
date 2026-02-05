@@ -1,0 +1,83 @@
+{{define "content"}}
+<div class="min-h-screen bg-background flex flex-col">
+    {{template "navbar" .}}
+
+    <main class="flex-grow py-16">
+        <div class="container-custom max-w-4xl">
+            <h1 class="text-3xl font-bold tracking-tight mb-8">FAQ</h1>
+
+            <div class="space-y-6" x-data="{ active: null }">
+                <div class="border border-border rounded-xl bg-white overflow-hidden">
+                    <button @click="active === 1 ? active = null : active = 1"
+                        class="w-full flex justify-between items-center p-6 text-left font-bold hover:bg-gray-50 transition-colors">
+                        <span>Apakah ada garansi untuk setiap pembuatan website?</span>
+                        <svg class="w-5 h-5 transform transition-transform" :class="active === 1 ? 'rotate-180' : ''"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div x-show="active === 1"
+                        class="p-6 border-t border-border bg-gray-50 text-muted-foreground text-sm leading-relaxed">
+                        Ya, kami memberikan garansi maintenance selama 3 bulan untuk setiap project website yang kami
+                        kerjakan. Ini mencakup perbaikan bug dan error teknis.
+                    </div>
+                </div>
+
+                <div class="border border-border rounded-xl bg-white overflow-hidden">
+                    <button @click="active === 2 ? active = null : active = 2"
+                        class="w-full flex justify-between items-center p-6 text-left font-bold hover:bg-gray-50 transition-colors">
+                        <span>Berapa lama proses pengerjaan?</span>
+                        <svg class="w-5 h-5 transform transition-transform" :class="active === 2 ? 'rotate-180' : ''"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div x-show="active === 2"
+                        class="p-6 border-t border-border bg-gray-50 text-muted-foreground text-sm leading-relaxed">
+                        Waktu pengerjaan bervariasi tergantung kompleksitas project. Untuk landing page sederhana butuh
+                        3-5 hari, sedangkan untuk aplikasi web kompleks bisa memakan waktu 2-4 minggu.
+                    </div>
+                </div>
+
+                <div class="border border-border rounded-xl bg-white overflow-hidden">
+                    <button @click="active === 3 ? active = null : active = 3"
+                        class="w-full flex justify-between items-center p-6 text-left font-bold hover:bg-gray-50 transition-colors">
+                        <span>Metode pembayaran apa saja yang tersedia?</span>
+                        <svg class="w-5 h-5 transform transition-transform" :class="active === 3 ? 'rotate-180' : ''"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div x-show="active === 3"
+                        class="p-6 border-t border-border bg-gray-50 text-muted-foreground text-sm leading-relaxed">
+                        Kami menerima pembayaran melalui transfer bank (BCA, Mandiri, BNI), E-Wallet (GoPay, OVO, Dana),
+                        dan QRIS dengan bantuan Midtrans Payment Gateway.
+                    </div>
+                </div>
+
+                <div class="border border-border rounded-xl bg-white overflow-hidden">
+                    <button @click="active === 4 ? active = null : active = 4"
+                        class="w-full flex justify-between items-center p-6 text-left font-bold hover:bg-gray-50 transition-colors">
+                        <span>Apakah source code menjadi hak milik klien?</span>
+                        <svg class="w-5 h-5 transform transition-transform" :class="active === 4 ? 'rotate-180' : ''"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div x-show="active === 4"
+                        class="p-6 border-t border-border bg-gray-50 text-muted-foreground text-sm leading-relaxed">
+                        Ya, setelah pelunasan pembayaran, seluruh source code dan aset project akan menjadi hak milik
+                        penuh klien tanpa biaya lisensi bulanan/tahunan.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {{template "footer" .}}
+</div>
+{{end}}

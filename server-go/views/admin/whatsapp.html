@@ -1,0 +1,46 @@
+{{define "content"}}
+<div class="min-h-screen bg-gray-50 flex">
+    <div class="flex-1 flex flex-col min-h-screen">
+        <main class="flex-1 p-8">
+            <h1 class="text-2xl font-bold mb-8">WhatsApp Bot Configuration</h1>
+
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-2xl mx-auto">
+                <div class="flex items-center gap-4 mb-8 p-4 bg-green-50 border border-green-100 rounded-xl">
+                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-8.683-2.031-9.667-.272-.099-.47-.149-.669-.149-.198 0-.42.001-.643.001-.223 0-.585.085-.891.42-.306.335-1.177 1.151-1.177 2.807 0 1.656 1.203 3.256 1.37 3.479.167.222 2.368 3.618 5.736 5.071 3.368 1.453 3.368.967 3.977.905.609-.062 1.956-.799 2.228-1.569.272-.77.272-1.429.198-1.554z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg">Status: Terhubung</h3>
+                        <p class="text-sm text-green-700">Bot aktif dan siap melayani pelanggan.</p>
+                    </div>
+                    <button
+                        class="ml-auto px-4 py-2 bg-red-100 text-red-600 rounded-lg text-sm font-bold hover:bg-red-200 transition-colors">Putus</button>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="font-bold">Nomor WhatsApp Admin</label>
+                        <input type="text" value="+62 898-8289-551"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 mb-2">
+                        <p class="text-xs text-muted-foreground">Semua notifikasi pesanan akan dikirim ke nomor ini.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="font-bold">Pesan Sambutan Otomatis</label>
+                        <textarea rows="4"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl">Halo! Terima kasih telah menghubungi ArfCoder. Ada yang bisa kami bantu?</textarea>
+                    </div>
+
+                    <button
+                        class="w-full py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors">
+                        Simpan Konfigurasi
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{{end}}

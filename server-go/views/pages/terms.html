@@ -1,0 +1,37 @@
+{{define "content"}}
+<div class="min-h-screen bg-background flex flex-col">
+    {{template "navbar" .}}
+
+    <main class="flex-grow py-16">
+        <div class="container-custom max-w-4xl">
+            <h1 class="text-3xl font-bold tracking-tight mb-8">Syarat & Ketentuan</h1>
+
+            <div class="prose prose-lg max-w-none text-muted-foreground">
+                <p>Selamat datang di ArfCoder. Dengan mengakses website ini, Anda dianggap telah memahami dan menyetujui
+                    seluruh syarat dan ketentuan yang berlaku.</p>
+
+                <h3>1. Layanan Kami</h3>
+                <p>ArfCoder menyediakan layanan pengembangan software, website, dan aplikasi mobile. Kami juga menjual
+                    produk digital seperti template, module, dan source code.</p>
+
+                <h3>2. Pembayaran</h3>
+                <p>Pembayaran dilakukan melalui gateway pembayaran yang tersedia. Kami tidak menyimpan informasi kartu
+                    kredit Anda.</p>
+
+                <h3>3. Hak Kekayaan Intelektual</h3>
+                <p>Seluruh konten dalam website ini adalah milik ArfCoder. Dilarang menyalin, mendistribusikan ulang,
+                    atau menggunakan konten tanpa izin tertulis.</p>
+
+                <h3>4. Batasan Tanggung Jawab</h3>
+                <p>ArfCoder tidak bertanggung jawab atas kerugian tidak langsung yang timbul dari penggunaan layanan
+                    kami.</p>
+
+                <h3>5. Perubahan Syarat</h3>
+                <p>Kami berhak mengubah syarat dan ketentuan ini sewaktu-waktu tanpa pemberitahuan sebelumnya.</p>
+            </div>
+        </div>
+    </main>
+
+    {{template "footer" .}}
+</div>
+{{end}}

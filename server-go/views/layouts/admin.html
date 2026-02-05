@@ -1,0 +1,136 @@
+{{define "content"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{.MetaDescription}}">
+    <title>{{if .Title}}{{.Title}} | {{end}}ArfCoder Admin</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/images/app_icon.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- CryptoJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="font-sans antialiased bg-gray-50" 
+      x-data="adminLayout()" 
+      x-init="$store.auth.init()">
+    
+    <div class="min-h-screen">
+        <!-- MOBILE HEADER -->
+        <div class="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
+            <a href="/" class="text-xl font-bold tracking-tighter">ARF ADMIN</a>
+            <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                <template x-if="sidebarOpen">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </template>
+                <template x-if="!sidebarOpen">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </template>
+            </button>
+        </div>
+
+        <!-- SIDEBAR -->
+        <aside class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-40 transition-transform duration-300 ease-in-out"
+               :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
+            <div class="flex flex-col h-full">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center shrink-0">
+                    <div>
+                        <a href="/" class="text-xl font-bold tracking-tighter hover:text-gray-600 transition-colors">ARF ADMIN</a>
+                        <p class="text-xs text-gray-400 mt-1">Management Console</p>
+                    </div>
+                    <button @click="sidebarOpen = false" class="md:hidden p-1 text-gray-400">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
+                    {{range .MenuItems}}
+                    <a href="{{.Href}}" 
+                       @click="sidebarOpen = false"
+                       class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if .Active}}bg-black text-white font-medium shadow-md{{else}}text-gray-600 hover:bg-gray-100{{end}}">
+                        <i data-lucide="{{.Icon}}" class="w-5 h-5"></i>
+                        <span class="font-medium">{{.Label}}</span>
+                    </a>
+                    {{end}}
+                    
+                    <div class="border-t border-gray-100 my-2"></div>
+                    
+                    <a href="/admin/profile" 
+                       @click="sidebarOpen = false"
+                       class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors {{if eq .ActivePath "/admin/profile"}}bg-black text-white{{else}}text-gray-600 hover:bg-gray-100{{end}}">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                        <span class="font-medium">Pengaturan & 2FA</span>
+                    </a>
+                    
+                    <a href="/" target="_blank" class="flex items-center space-x-3 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <span class="text-lg">🌐</span>
+                        <span class="font-medium">Lihat Website</span>
+                    </a>
+                </nav>
+                
+                <div class="p-4 border-t border-gray-100 bg-white shrink-0">
+                    <button @click="$store.auth.logout()" 
+                            class="flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg w-full transition-colors">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                        <span class="font-medium">Keluar</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- OVERLAY (Mobile) -->
+        <div x-show="sidebarOpen" 
+             x-transition:enter="transition-opacity ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-in duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="sidebarOpen = false"
+             class="fixed inset-0 bg-black/50 z-30 md:hidden"></div>
+
+        <!-- MAIN CONTENT -->
+        <div class="md:ml-64 min-h-screen transition-all duration-300 pt-20 md:pt-0 overflow-x-hidden w-full">
+            <div class="w-full max-w-full p-6">
+                {{template "admin_content" .}}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lucide Icons Init -->
+    <script>
+        lucide.createIcons();
+        
+        function adminLayout() {
+            return {
+                sidebarOpen: false
+            }
+        }
+    </script>
+    
+    <!-- App Scripts -->
+    <script src="/static/js/security.js"></script>
+    <script src="/static/js/stores.js"></script>
+    <script src="/static/js/htmx-config.js"></script>
+</body>
+</html>
+{{end}}
