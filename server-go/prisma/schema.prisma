@@ -95,22 +95,27 @@ model Category {
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  name        String
-  description String
-  price       Float
-  discount    Float       @default(0)
-  stock       Int         @default(0)
-  type        ProductType @default(BARANG)
-  images      String[]
-  categoryId  String?
-  category    Category?   @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  reviews     Review[]
-  flashSales  FlashSale[]
+  id             String      @id @default(cuid())
+  name           String
+  description    String
+  price          Float
+  discount       Float       @default(0)
+  stock          Int         @default(0)
+  type           ProductType @default(BARANG)
+  images         String[]
+  categoryId     String?
+  category       Category?   @relation(fields: [categoryId], references: [id])
+  
+  // Payment Configuration
+  useCoreApi     Boolean     @default(false)
+  paymentMethods String[]    @default([])
+  
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  reviews        Review[]
+  flashSales     FlashSale[]
 }
 
 model Service {
@@ -144,10 +149,21 @@ model Order {
   totalAmount   Float
   status        OrderStatus @default(PENDING)
   paymentType   String?
+  
+  // Snap Payment Fields
   snapToken     String?
   snapUrl       String?
-  address       String?
   
+  // Core API Payment Fields
+  useCoreApi          Boolean   @default(false)
+  coreApiPaymentMethod String?
+  coreApiVaNumber     String?
+  coreApiBankCode     String?
+  coreApiQrisUrl      String?
+  coreApiDeeplinkUrl  String?
+  paymentExpiredAt    DateTime?
+  
+  address       String?
   deliveryInfo  String?
   refundReason  String?
   refundAccount String?

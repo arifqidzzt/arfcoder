@@ -20,7 +20,7 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/google", handlers.GoogleLogin)
 	auth.Post("/forgot-password", handlers.ForgotPassword)
 	auth.Post("/reset-password", handlers.ResetPassword)
-	
+
 	// 2FA Routes
 	auth.Post("/2fa/verify", handlers.VerifyLogin2FA)
 	auth.Post("/2fa/send", handlers.SendBackupOtp)
@@ -47,6 +47,11 @@ func SetupRoutes(app *fiber.App) {
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
 	orders.Post("/:id/refund", middleware.AuthMiddleware, handlers.RequestRefund)
 	orders.Post("/:id/pay", middleware.AuthMiddleware, handlers.RegeneratePaymentToken)
+
+	// Core API Payment Routes
+	orders.Post("/:id/charge", middleware.AuthMiddleware, handlers.CreateCoreApiCharge)
+	orders.Get("/:id/payment-status", middleware.AuthMiddleware, handlers.GetPaymentStatus)
+	orders.Post("/:id/regenerate-payment", middleware.AuthMiddleware, handlers.RegenerateCoreApiPayment)
 
 	// --- VOUCHERS ---
 	vouchers := api.Group("/vouchers", middleware.SecureMiddleware)
@@ -101,20 +106,20 @@ func SetupRoutes(app *fiber.App) {
 	admin.Put("/orders/:id/delivery", handlers.UpdateDeliveryInfo)
 	admin.Get("/users", handlers.GetAllUsers)
 	admin.Delete("/users/:id", handlers.DeleteUser)
-	
+
 	admin.Get("/chat/:userId", handlers.GetUserChatHistory)
 
 	admin.Get("/services", handlers.GetAdminServices)
 	admin.Post("/services", handlers.UpsertService)
 	admin.Delete("/services/:id", handlers.DeleteService)
-	
+
 	admin.Get("/wa/status", handlers.GetWaStatus)
 	admin.Post("/wa/logout", handlers.LogoutWa)
 	admin.Post("/wa/start", handlers.StartWa)
-	
+
 	admin.Post("/timeline/:id", handlers.UpdateOrderTimeline)
 	admin.Delete("/timeline/:id", handlers.DeleteOrderTimeline)
-	
+
 	// --- LOGS ---
 	api.Get("/logs", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetLogs)
 }

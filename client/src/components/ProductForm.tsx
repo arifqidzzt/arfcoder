@@ -24,7 +24,9 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
     stock: initialData?.stock || 0,
     type: initialData?.type || 'BARANG',
     discount: initialData?.discount || 0,
-    images: initialData?.images?.[0] || '', 
+    images: initialData?.images?.[0] || '',
+    useCoreApi: initialData?.useCoreApi || false,
+    paymentMethods: initialData?.paymentMethods || [],
   });
 
   const handleChange = (e: any) => {
@@ -52,7 +54,7 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
 
     const payload = {
       ...formData,
-      images: [formData.images], 
+      images: [formData.images],
     };
 
     try {
@@ -147,6 +149,60 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
             </select>
           </div>
 
+          {/* Payment Configuration */}
+          <div className="md:col-span-2" bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h3 className="font-bold mb-4">Konfigurasi Pembayaran</h3>
+            
+            <div className="mb-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={formData.useCoreApi}
+                  onChange={(e) => setFormData(prev => ({ ...prev, useCoreApi: e.target.checked, paymentMethods: [] }))}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm font-medium">Gunakan Core API (Pilih metode pembayaran manual)</span>
+              </label>
+              <p className="text-xs text-gray-500 mt-1 ml-6">Jika tidak dicentang, akan menggunakan Snap (otomatis semua metode)</p>
+            </div>
+
+            {formData.useCoreApi && (
+              <div>
+                <label className="block text-sm font-bold mb-2">Metode Pembayaran (Minimal 1)</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'bca_va', label: 'BCA VA' },
+                    { id: 'bni_va', label: 'BNI VA' },
+                    { id: 'bri_va', label: 'BRI VA' },
+                    { id: 'mandiri_bill', label: 'Mandiri Bill' },
+                    { id: 'permata_va', label: 'Permata VA' },
+                    { id: 'qris', label: 'QRIS' },
+                    { id: 'gopay', label: 'GoPay' },
+                    { id: 'shopeepay', label: 'ShopeePay' },
+                  ].map(method => (
+                    <label key={method.id} className="flex items-center gap-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.paymentMethods.includes(method.id)}
+                        onChange={(e) => {
+                          const newMethods = e.target.checked
+                            ? [...formData.paymentMethods, method.id]
+                            : formData.paymentMethods.filter(m => m !== method.id);
+                          setFormData(prev => ({ ...prev, paymentMethods: newMethods }));
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">{method.label}</span>
+                    </label>
+                  ))}
+                </div>
+                {formData.paymentMethods.length === 0 && (
+                  <p className="text-xs text-red-500 mt-2">⚠️ Pilih minimal 1 metode pembayaran</p>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="md:col-span-2">
             <label className="block text-sm font-bold mb-2">Gambar Produk</label>
             
@@ -192,7 +248,7 @@ export default function ProductForm({ initialData, isEdit = false }: ProductForm
             {loading ? 'Menyimpan...' : 'Simpan Produk'}
           </button>
         </div>
-      </form>
-    </div>
+      </form >
+    </div >
   );
 }

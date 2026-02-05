@@ -16,8 +16,8 @@ interface OrderDetail {
   snapToken?: string;
   deliveryInfo?: string;
   refundReason?: string;
-  refundAccount?: string; 
-  refundStatus?: string; 
+  refundAccount?: string;
+  refundStatus?: string;
   createdAt: string;
   items: {
     product: { name: string; images: string[]; type: string };
@@ -67,8 +67,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     // Load Midtrans Snap script
     const script = document.createElement('script');
     const isProduction = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true';
-    script.src = isProduction 
-      ? "https://app.midtrans.com/snap/snap.js" 
+    script.src = isProduction
+      ? "https://app.midtrans.com/snap/snap.js"
       : "https://app.sandbox.midtrans.com/snap/snap.js";
     script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '');
     document.body.appendChild(script);
@@ -88,20 +88,27 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const handlePay = async () => {
-    if (!window.snap) return toast.error("Sistem pembayaran sedang memuat...");
+    // If order uses Core API, redirect to dedicated payment page
+    if (order?.useCoreApi) {
+      router.push(`/payment/${id}`);
+      return;
+    }
+
+    // Otherwise use Snap (existing flow)
+    if (!window.snap) return toast.error("Sistem pembayaran sedang memuat...');
 
     try {
       const res = await api.post(`/orders/${id}/pay`, {});
       const { snapToken } = res.data;
 
       window.snap.pay(snapToken, {
-        onSuccess: () => { 
-          toast.success('Pembayaran Berhasil!'); 
-          window.location.reload(); 
+        onSuccess: () => {
+          toast.success('Pembayaran Berhasil!');
+          window.location.reload();
         },
-        onPending: () => { 
-          toast('Menunggu pembayaran...'); 
-          window.location.reload(); 
+        onPending: () => {
+          toast('Menunggu pembayaran...');
+          window.location.reload();
         },
         onError: () => { toast.error('Pembayaran Gagal'); },
         onClose: () => { toast('Pembayaran belum selesai'); }
@@ -144,7 +151,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navbar />
       <main className="max-w-3xl mx-auto px-4 pt-24">
-        
+
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <button onClick={() => router.back()} className="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-100">
@@ -164,13 +171,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               {order.status === 'PENDING' && <CountdownTimer dateString={order.createdAt} />}
             </div>
             <span className={`px-3 py-1 rounded-full text-xs font-bold 
-              ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 
-                order.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : 
-                'bg-gray-100 text-gray-700'}`}>
+              ${order.status === 'PAID' ? 'bg-green-100 text-green-700' :
+                order.status === 'PENDING' ? 'bg-orange-100 text-orange-700' :
+                  'bg-gray-100 text-gray-700'}`}>
               {order.status}
             </span>
           </div>
-          
+
           {order.status === 'PENDING' && (
             <div className="flex gap-3">
               <button onClick={handlePay} className="flex-1 bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors">
@@ -237,7 +244,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <form onSubmit={handleSubmitRefund} className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase">Alasan Refund</label>
-                <textarea 
+                <textarea
                   required
                   value={refundReason}
                   onChange={(e) => setRefundReason(e.target.value)}
@@ -247,7 +254,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase">Rekening Tujuan</label>
-                <input 
+                <input
                   required
                   type="text"
                   value={refundAccount}

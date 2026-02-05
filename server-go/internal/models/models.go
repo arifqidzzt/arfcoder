@@ -144,6 +144,11 @@ type Product struct {
 	Images      pq.StringArray `gorm:"type:text[];column:images" json:"images"` 
 	CategoryID  *string        `gorm:"column:categoryId" json:"categoryId"`
 	Category    Category       `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
+	
+	// Payment Configuration
+	UseCoreApi     bool           `gorm:"default:false;column:useCoreApi" json:"useCoreApi"`
+	PaymentMethods pq.StringArray `gorm:"type:text[];column:paymentMethods;default:'{}'" json:"paymentMethods"`
+	
 	CreatedAt   time.Time      `gorm:"autoCreateTime;column:createdAt" json:"createdAt"`
 	UpdatedAt   time.Time      `gorm:"autoUpdateTime;column:updatedAt" json:"updatedAt"`
 
@@ -215,8 +220,20 @@ type Order struct {
 	TotalAmount   float64   `gorm:"not null;column:totalAmount" json:"totalAmount"`
 	Status        string    `gorm:"default:'PENDING';column:status" json:"status"`
 	PaymentType   string    `gorm:"column:paymentType" json:"paymentType"`
+	
+	// Snap Payment Fields
 	SnapToken     string    `gorm:"column:snapToken" json:"snapToken"`
 	SnapUrl       string    `gorm:"column:snapUrl" json:"snapUrl"`
+	
+	// Core API Payment Fields
+	UseCoreApi          bool       `gorm:"default:false;column:useCoreApi" json:"useCoreApi"`
+	CoreApiPaymentMethod string    `gorm:"column:coreApiPaymentMethod" json:"coreApiPaymentMethod"`
+	CoreApiVaNumber     string    `gorm:"column:coreApiVaNumber" json:"coreApiVaNumber"`
+	CoreApiBankCode     string    `gorm:"column:coreApiBankCode" json:"coreApiBankCode"`
+	CoreApiQrisUrl      string    `gorm:"column:coreApiQrisUrl" json:"coreApiQrisUrl"`
+	CoreApiDeeplinkUrl  string    `gorm:"column:coreApiDeeplinkUrl" json:"coreApiDeeplinkUrl"`
+	PaymentExpiredAt    *time.Time `gorm:"column:paymentExpiredAt" json:"paymentExpiredAt"`
+	
 	Address       string    `gorm:"column:address" json:"address"`
 	DeliveryInfo  string    `gorm:"column:deliveryInfo" json:"deliveryInfo"`
 	RefundReason  string    `gorm:"column:refundReason" json:"refundReason"`

@@ -97,8 +97,19 @@ fi
 # --- 5. PROJECT SETUP ---
 PROJECT_DIR=$(pwd)
 
-# Setup Backend
-cd $PROJECT_DIR/server
+# Install Go
+if ! command -v go &>/dev/null; then
+    echo "Installing Go..."
+    cd /tmp
+    wget https://go.dev/dl/go1.22.0.linux-amd64.tar.gz
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.0.linux-amd64.tar.gz
+    export PATH=$PATH:/usr/local/go/bin
+    echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
+    source ~/.profile
+fi
+
+# Setup Backend (Go)
+cd $PROJECT_DIR/server-go
 cat > .env <<EOL
 DATABASE_URL="$DATABASE_URL"
 PORT=5000
@@ -115,14 +126,40 @@ GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID"
 WA_SESSION_PATH="./wa_sessions"
 EOL
 
-npm install
-npx prisma generate
+# Run Prisma migrations (if not restoring)
 if [ "$DO_RESTORE" != "y" ]; then
     npx prisma migrate deploy
 fi
-npm run build
-pm2 delete arfcoder-server 2>/dev/null || true
-pm2 start dist/index.js --name arfcoder-server
+
+# Build Go binary
+go mod download
+go build -o arfcoder-server ./cmd/api
+
+# Create systemd service for Go backend
+cat > /etc/systemd/system/arfcoder-backend.service <<EOL
+[Unit]
+Description=ArfCoder Go Backend
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$PROJECT_DIR/server-go
+ExecStart=$PROJECT_DIR/server-go/arfcoder-server
+Restart=always
+RestartSec=5
+Environment="PATH=/usr/local/go/bin:/usr/bin:/bin"
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# Enable and start backend service
+systemctl daemon-reload
+systemctl enable arfcoder-backend
+systemctl restart arfcoder-backend
+
+echo "✅ Go backend service started"
 
 # Setup Frontend
 cd $PROJECT_DIR/client

@@ -30,8 +30,8 @@ export default function CheckoutPage() {
   useEffect(() => {
     const script = document.createElement('script');
     const isProduction = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true';
-    script.src = isProduction 
-      ? "https://app.midtrans.com/snap/snap.js" 
+    script.src = isProduction
+      ? "https://app.midtrans.com/snap/snap.js"
       : "https://app.sandbox.midtrans.com/snap/snap.js";
     script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '');
     document.body.appendChild(script);
@@ -68,24 +68,43 @@ export default function CheckoutPage() {
         voucherCode: appliedVoucher
       });
 
-      const { snapToken } = res.data;
-      if (snapToken && window.snap) {
+      const { useCoreApi, availablePaymentMethods, snapToken, order } = res.data;
+
+      // If Core API, show payment method selector and redirect
+      if (useCoreApi && availablePaymentMethods) {
+        clearCart();
+        // For now, automatically select first payment method and redirect
+        // In production, you might want to show a modal to let user choose
+        const selectedMethod = availablePaymentMethods[0];
+
+        try {
+          await api.post(`/orders/${order.id}/charge`, {
+            paymentMethod: selectedMethod
+          });
+          router.push(`/payment/${order.id}`);
+        } catch (chargeError: any) {
+          toast.error('Gagal membuat pembayaran');
+          setLoading(false);
+        }
+      }
+      // Otherwise, use Snap (existing flow)
+      else if (snapToken && window.snap) {
         window.snap.pay(snapToken, {
-          onSuccess: () => { 
-            toast.success('Pembayaran Berhasil!'); 
-            clearCart(); 
-            window.location.href = '/orders'; 
+          onSuccess: () => {
+            toast.success('Pembayaran Berhasil!');
+            clearCart();
+            window.location.href = '/orders';
           },
-          onPending: () => { 
-            toast('Menunggu pembayaran...'); 
-            clearCart(); 
-            router.push('/orders'); 
+          onPending: () => {
+            toast('Menunggu pembayaran...');
+            clearCart();
+            router.push('/orders');
           },
           onError: () => { toast.error('Pembayaran Gagal'); setLoading(false); },
-          onClose: () => { 
-            toast('Selesaikan pembayaran di menu Pesanan'); 
-            clearCart(); 
-            router.push('/orders'); 
+          onClose: () => {
+            toast('Selesaikan pembayaran di menu Pesanan');
+            clearCart();
+            router.push('/orders');
           }
         });
       }
@@ -112,7 +131,7 @@ export default function CheckoutPage() {
                 <MapPin size={20} />
                 <h2 className="font-bold uppercase tracking-wider text-sm">Alamat Pengiriman / Catatan Jasa</h2>
               </div>
-              <textarea 
+              <textarea
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 rows={4}
@@ -146,13 +165,13 @@ export default function CheckoutPage() {
           <div className="space-y-6">
             <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 sticky top-24">
               <h2 className="text-xl font-bold mb-6">Ringkasan</h2>
-              
+
               {/* Voucher Input */}
               <div className="mb-6">
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Punya Kode Promo?</label>
                 <div className="flex gap-2">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={voucherInput}
                     onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
                     className="flex-1 bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-black font-bold"
@@ -160,14 +179,14 @@ export default function CheckoutPage() {
                     disabled={!!appliedVoucher}
                   />
                   {appliedVoucher ? (
-                    <button 
-                      onClick={() => {setAppliedVoucher(null); setDiscount(0); setVoucherInput('');}}
+                    <button
+                      onClick={() => { setAppliedVoucher(null); setDiscount(0); setVoucherInput(''); }}
                       className="px-4 py-2 bg-red-50 text-red-500 rounded-xl text-xs font-bold hover:bg-red-100"
                     >
                       Hapus
                     </button>
                   ) : (
-                    <button 
+                    <button
                       onClick={handleApplyVoucher}
                       className="px-4 py-2 bg-black text-white rounded-xl text-xs font-bold hover:bg-gray-800"
                     >
@@ -205,7 +224,7 @@ export default function CheckoutPage() {
                 </p>
               </div>
 
-              <button 
+              <button
                 onClick={handleCheckout}
                 disabled={loading}
                 className="w-full py-4 bg-black text-white rounded-2xl font-bold hover:bg-gray-800 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:bg-gray-300 shadow-xl shadow-black/10"

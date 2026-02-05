@@ -20,16 +20,17 @@ func main() {
 
 	// 2. Database
 	database.Connect()
-	
+
 	// Auto Migrate (Ensure schema matches)
-	// database.DB.AutoMigrate(&models.User{}, &models.Order{}, &models.Product{}, &models.Otp{}, &models.ActivityLog{}) 
-	// Note: AutoMigrate is good for dev, but use with caution. 
+	// database.DB.AutoMigrate(&models.User{}, &models.Order{}, &models.Product{}, &models.Otp{}, &models.ActivityLog{})
+	// Note: AutoMigrate is good for dev, but use with caution.
 	// Since we are migrating, we assume the DB schema already exists from Prisma.
 	// We just need to ensure GORM models map correctly.
 
 	// 3. Init Services
 	handlers.InitMidtrans()
-	
+	handlers.InitMidtransCoreApi()
+
 	go func() {
 		if err := whatsapp.Connect(); err != nil {
 			log.Println("Failed to start WhatsApp Service:", err)

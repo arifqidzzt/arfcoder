@@ -43,6 +43,9 @@ func CreateProduct(c *fiber.Ctx) error {
 		Type        string   `json:"type"`
 		Images      []string `json:"images"`
 		CategoryId  string   `json:"categoryId"`
+		// Payment Configuration
+		UseCoreApi     bool     `json:"useCoreApi"`
+		PaymentMethods []string `json:"paymentMethods"`
 	}
 	var req Req
 	if err := c.BodyParser(&req); err != nil {
@@ -56,7 +59,9 @@ func CreateProduct(c *fiber.Ctx) error {
 		Discount:    req.Discount,
 		Stock:       req.Stock,
 		Type:        req.Type,
-		Images:      pq.StringArray(req.Images), // Cast to pq.StringArray
+		Images:      pq.StringArray(req.Images),
+		UseCoreApi:  req.UseCoreApi,
+		PaymentMethods: pq.StringArray(req.PaymentMethods),
 	}
 	
 	if req.CategoryId != "" {
@@ -77,6 +82,9 @@ func UpdateProduct(c *fiber.Ctx) error {
 		Stock       int      `json:"stock"`
 		Type        string   `json:"type"`
 		Images      []string `json:"images"`
+		// Payment Configuration
+		UseCoreApi     bool     `json:"useCoreApi"`
+		PaymentMethods []string `json:"paymentMethods"`
 	}
 	var req Req
 	c.BodyParser(&req)
@@ -93,6 +101,8 @@ func UpdateProduct(c *fiber.Ctx) error {
 	product.Stock = req.Stock
 	product.Type = req.Type
 	product.Images = pq.StringArray(req.Images)
+	product.UseCoreApi = req.UseCoreApi
+	product.PaymentMethods = pq.StringArray(req.PaymentMethods)
 
 	database.DB.Save(&product)
 	return c.JSON(product)
