@@ -39,7 +39,6 @@ func SetupRoutes(app *fiber.App) {
 
 	// --- ORDERS ---
 	orders := api.Group("/orders", middleware.SecureMiddleware)
-	orders.Get("/payment-methods", middleware.AuthMiddleware, handlers.GetPaymentMethods) // FIX: Added
 	orders.Post("/", middleware.AuthMiddleware, handlers.CreateOrder)
 	orders.Post("/webhook", handlers.HandleMidtransWebhook)
 	orders.Get("/my", middleware.AuthMiddleware, handlers.GetMyOrders)
@@ -47,7 +46,7 @@ func SetupRoutes(app *fiber.App) {
 	// Order Actions
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
 	orders.Post("/:id/refund", middleware.AuthMiddleware, handlers.RequestRefund)
-	orders.Post("/:id/pay", middleware.AuthMiddleware, handlers.RegeneratePayment) // FIX: Updated Name
+	orders.Post("/:id/pay", middleware.AuthMiddleware, handlers.RegeneratePaymentToken)
 
 	// --- VOUCHERS ---
 	vouchers := api.Group("/vouchers", middleware.SecureMiddleware)
@@ -115,12 +114,6 @@ func SetupRoutes(app *fiber.App) {
 	
 	admin.Post("/timeline/:id", handlers.UpdateOrderTimeline)
 	admin.Delete("/timeline/:id", handlers.DeleteOrderTimeline)
-	
-	// Config & Payment Methods
-	admin.Get("/config", handlers.GetSystemConfig)
-	admin.Post("/config", handlers.UpdateSystemConfig)
-	admin.Get("/payment-methods", handlers.GetAdminPaymentMethods)
-	admin.Put("/payment-methods/:id/toggle", handlers.TogglePaymentMethod)
 	
 	// --- LOGS ---
 	api.Get("/logs", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetLogs)

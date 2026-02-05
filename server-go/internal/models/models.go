@@ -151,7 +151,6 @@ type Product struct {
 	OrderItems []OrderItem `gorm:"foreignKey:ProductID" json:"orderItems,omitempty"`
 	Reviews    []Review    `gorm:"foreignKey:ProductID" json:"reviews,omitempty"`
 	FlashSales []FlashSale `gorm:"foreignKey:ProductID" json:"flashSales,omitempty"`
-	PaymentMethods []PaymentMethod `gorm:"many2many:product_payment_methods;" json:"paymentMethods,omitempty"`
 }
 
 func (p *Product) BeforeCreate(tx *gorm.DB) (err error) {
@@ -218,13 +217,6 @@ type Order struct {
 	PaymentType   string    `gorm:"column:paymentType" json:"paymentType"`
 	SnapToken     string    `gorm:"column:snapToken" json:"snapToken"`
 	SnapUrl       string    `gorm:"column:snapUrl" json:"snapUrl"`
-	
-	// Core API Fields
-	PaymentMethod string    `gorm:"column:paymentMethod" json:"paymentMethod"`
-	PaymentCode   string    `gorm:"column:paymentCode" json:"paymentCode"`
-	PaymentUrl    string    `gorm:"column:paymentUrl" json:"paymentUrl"`
-	PaymentExpiry *time.Time `gorm:"column:paymentExpiry" json:"paymentExpiry"`
-
 	Address       string    `gorm:"column:address" json:"address"`
 	DeliveryInfo  string    `gorm:"column:deliveryInfo" json:"deliveryInfo"`
 	RefundReason  string    `gorm:"column:refundReason" json:"refundReason"`
@@ -380,34 +372,5 @@ func (r *Review) BeforeCreate(tx *gorm.DB) (err error) {
 
 func (Review) TableName() string {
 	return "Review"
-}
-
-type PaymentMethod struct {
-	ID        string    `gorm:"primaryKey;column:id" json:"id"`
-	Code      string    `gorm:"uniqueIndex;not null;column:code" json:"code"` // e.g., "bca_va", "gopay"
-	Name      string    `gorm:"not null;column:name" json:"name"`
-	Type      string    `gorm:"not null;column:type" json:"type"` // "VA", "EWALLET", "QRIS"
-	IsActive  bool      `gorm:"default:true;column:isActive" json:"isActive"`
-	Products  []Product `gorm:"many2many:product_payment_methods;" json:"products,omitempty"`
-}
-
-func (p *PaymentMethod) BeforeCreate(tx *gorm.DB) (err error) {
-	if p.ID == "" {
-		p.ID = utils.GenerateRandomString(12)
-	}
-	return
-}
-
-func (PaymentMethod) TableName() string {
-	return "PaymentMethod"
-}
-
-type SystemConfig struct {
-	Key   string `gorm:"primaryKey;column:key" json:"key"`
-	Value string `gorm:"column:value" json:"value"`
-}
-
-func (SystemConfig) TableName() string {
-	return "SystemConfig"
 }
 

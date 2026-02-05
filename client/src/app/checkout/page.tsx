@@ -22,10 +22,6 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Payment Methods (Core API)
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
-  const [selectedPayment, setSelectedPayment] = useState('');
-
   // Voucher States
   const [voucherInput, setVoucherInput] = useState('');
   const [discount, setDiscount] = useState(0);
@@ -41,15 +37,7 @@ export default function CheckoutPage() {
     document.body.appendChild(script);
 
     if (items.length === 0) router.push('/cart');
-    
-    // Fetch Payment Methods (Filtered by Cart Items)
-    if (token && items.length > 0) {
-        const productIds = items.map(i => i.id).join(',');
-        api.get(`/orders/payment-methods?productIds=${productIds}`).then(res => {
-            setPaymentMethods(res.data);
-        }).catch(() => {});
-    }
-  }, [items, router, token]);
+  }, [items, router]);
 
   const handleApplyVoucher = async () => {
     if (!voucherInput) return;
@@ -71,25 +59,17 @@ export default function CheckoutPage() {
   const handleCheckout = async () => {
     if (!user) return toast.error('Silakan login');
     if (!address) return toast.error('Alamat/Catatan harus diisi');
-    
-    // Validate Payment Method if Core API is active (methods exist)
-    if (paymentMethods.length > 0 && !selectedPayment) {
-        return toast.error('Pilih metode pembayaran');
-    }
 
     setLoading(true);
     try {
       const res = await api.post('/orders', {
         items: items.map(i => ({ productId: i.id, quantity: i.quantity })),
         address,
-        voucherCode: appliedVoucher,
-        paymentMethod: selectedPayment
+        voucherCode: appliedVoucher
       });
 
-      const { snapToken, order } = res.data;
-      
+      const { snapToken } = res.data;
       if (snapToken && window.snap) {
-        // SNAP MODE
         window.snap.pay(snapToken, {
           onSuccess: () => { 
             toast.success('Pembayaran Berhasil!'); 
@@ -108,14 +88,9 @@ export default function CheckoutPage() {
             router.push('/orders'); 
           }
         });
-      } else {
-          // CORE API MODE (Redirect to Order Details)
-          toast.success('Pesanan dibuat!');
-          clearCart();
-          router.push(`/orders/${order.id || res.data.id}`); // Handle different response structures if any
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Gagal memproses pesanan');
+      toast.error('Gagal memproses pesanan');
       setLoading(false);
     }
   };
@@ -145,33 +120,6 @@ export default function CheckoutPage() {
                 placeholder="Contoh: Jl. Sudirman No. 1 atau detail khusus untuk jasa koding..."
               />
             </div>
-
-            {/* Payment Method Selection (Only if Core API active) */}
-            {paymentMethods.length > 0 && (
-                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-2 mb-6 text-accent">
-                        <CreditCard size={20} />
-                        <h2 className="font-bold uppercase tracking-wider text-sm">Metode Pembayaran</h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {paymentMethods.map((pm) => (
-                            <div 
-                                key={pm.id} 
-                                onClick={() => setSelectedPayment(pm.code)}
-                                className={`p-4 border rounded-xl cursor-pointer flex items-center gap-3 transition-all ${selectedPayment === pm.code ? 'border-black bg-gray-50 ring-1 ring-black' : 'border-gray-200 hover:border-gray-300'}`}
-                            >
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedPayment === pm.code ? 'border-black' : 'border-gray-300'}`}>
-                                    {selectedPayment === pm.code && <div className="w-2 h-2 rounded-full bg-black"></div>}
-                                </div>
-                                <div>
-                                    <p className="font-bold text-sm">{pm.name}</p>
-                                    <p className="text-xs text-gray-500 uppercase">{pm.type}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
 
             {/* Items Section */}
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">

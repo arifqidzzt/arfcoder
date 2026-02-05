@@ -5,6 +5,9 @@ import (
 	"arfcoder-go/internal/database"
 	"arfcoder-go/internal/models"
 	"fmt"
+	"log"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -54,38 +57,31 @@ func main() {
 		}
 	}
 
-	// [REMOVED] Admin creation logic to prevent overwriting existing data
-
-	// 4. Seed Payment Methods
-	methods := []models.PaymentMethod{
-		{Code: "bca_va", Name: "BCA Virtual Account", Type: "VA", IsActive: true},
-		{Code: "bni_va", Name: "BNI Virtual Account", Type: "VA", IsActive: true},
-		{Code: "bri_va", Name: "BRI Virtual Account", Type: "VA", IsActive: true},
-		{Code: "gopay", Name: "GoPay", Type: "EWALLET", IsActive: true},
-		{Code: "shopeepay", Name: "ShopeePay", Type: "EWALLET", IsActive: true},
-		{Code: "qris", Name: "QRIS", Type: "QRIS", IsActive: true},
-	}
-
-	for _, m := range methods {
-		var exist int64
-		database.DB.Model(&models.PaymentMethod{}).Where("code = ?", m.Code).Count(&exist)
-		if exist == 0 {
-			database.DB.Create(&m)
-			fmt.Printf("✅ Payment Method '%s' created\n", m.Name)
+	// 3. Create Super Admin
+	email := "admin@arfcoder.com"
+	password := "admin123"
+	
+	var user models.User
+	if err := database.DB.Where("email = ?", email).First(&user).Error; err != nil {
+		hashed, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
+		admin := models.User{
+			Email:      email,
+			Password:   string(hashed),
+			Name:       "Super Admin",
+			Role:       models.RoleSuperAdmin,
+			IsVerified: true,
 		}
-	}
-
-	// 5. Seed System Config
-	configs := []models.SystemConfig{
-		{Key: "payment_gateway_mode", Value: "SNAP"}, // Default SNAP
-	}
-	for _, c := range configs {
-		var exist int64
-		database.DB.Model(&models.SystemConfig{}).Where("key = ?", c.Key).Count(&exist)
-		if exist == 0 {
-			database.DB.Create(&c)
-			fmt.Printf("✅ Config '%s' created\n", c.Key)
-		}
+		database.DB.Create(&admin)
+		
+		fmt.Println("\n✅ Admin Created Successfully!")
+		fmt.Println("---------------------------")
+		fmt.Printf("Email: %s\n", email)
+		fmt.Printf("Pass : %s\n", password)
+		fmt.Println("---------------------------")
+	} else {
+		// Ensure role is Super Admin
+		database.DB.Model(&user).Update("role", models.RoleSuperAdmin)
+		fmt.Println("\nℹ️ Admin account already exists (Role updated to SUPER_ADMIN)")
 	}
 
 	fmt.Println("\n✨ Seeding Completed!")
