@@ -8,11 +8,11 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	api := app.Group("/api", middleware.RateLimitAPI())
+	// --- WEBHOOK PALING LUAR (Tanpa API, Tanpa Middleware) ---
+	// URL: https://arfzxdev.com/midtrans-webhook-public
+	app.Post("/midtrans-webhook-public", handlers.HandleMidtransWebhook)
 
-	// --- PUBLIC WEBHOOK (Pastikan ini di LUAR grup yang memakai SecureMiddleware) ---
-	// URL tetap: https://arfzxdev.com/api/orders/webhook
-	api.Post("/orders/webhook", handlers.HandleMidtransWebhook)
+	api := app.Group("/api", middleware.RateLimitAPI())
 
 	// --- AUTH ---
 	auth := api.Group("/auth", middleware.RateLimitAuth(), middleware.SecureMiddleware)
@@ -43,6 +43,7 @@ func SetupRoutes(app *fiber.App) {
 	// --- PROTECTED ORDERS ---
 	orders := api.Group("/orders", middleware.SecureMiddleware)
 	orders.Post("/", middleware.AuthMiddleware, handlers.CreateOrder)
+	orders.Post("/webhook", handlers.HandleMidtransWebhook) // Tetap sediakan cadangan
 	orders.Get("/my", middleware.AuthMiddleware, handlers.GetMyOrders)
 	orders.Get("/:id", middleware.AuthMiddleware, handlers.GetOrderById)
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
