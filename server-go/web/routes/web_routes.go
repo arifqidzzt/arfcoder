@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"arfcoder-go/internal/config"
@@ -17,11 +18,47 @@ import (
 )
 
 var templates map[string]*template.Template
+var templateDir string
 
 // InitTemplates loads and parses all HTML templates
 func InitTemplates() {
 	templates = make(map[string]*template.Template)
-	templateDir := "web/templates"
+
+	// Find the template directory - try multiple locations
+	possibleDirs := []string{
+		"web/templates",
+		"./web/templates",
+		"../web/templates",
+		"../../web/templates",
+	}
+
+	// Also try relative to executable
+	if execPath, err := os.Executable(); err == nil {
+		execDir := filepath.Dir(execPath)
+		possibleDirs = append(possibleDirs,
+			filepath.Join(execDir, "web", "templates"),
+			filepath.Join(execDir, "..", "web", "templates"),
+			filepath.Join(execDir, "..", "..", "web", "templates"),
+		)
+	}
+
+	// Try to find the templates directory
+	for _, dir := range possibleDirs {
+		if _, err := os.Stat(dir); err == nil {
+			templateDir = dir
+			break
+		}
+	}
+
+	if templateDir == "" {
+		// Get current working directory for debugging
+		wd, _ := os.Getwd()
+		log.Printf("FATAL: Could not find template directory. CWD: %s", wd)
+		log.Printf("Tried: %v", possibleDirs)
+		return
+	}
+
+	log.Printf("Using template directory: %s", templateDir)
 
 	// Define template functions
 	funcMap := template.FuncMap{
@@ -40,20 +77,34 @@ func InitTemplates() {
 		"formatDate": func(date interface{}) string {
 			return fmt.Sprintf("%v", date)
 		},
+		"eq": func(a, b string) bool {
+			return a == b
+		},
 	}
 
 	// Load layout files
 	baseLayout := filepath.Join(templateDir, "layouts", "base.html")
 	adminLayout := filepath.Join(templateDir, "layouts", "admin.html")
 
+	// Check if layouts exist
+	if _, err := os.Stat(baseLayout); os.IsNotExist(err) {
+		log.Printf("ERROR: base.html not found at %s", baseLayout)
+	}
+	if _, err := os.Stat(adminLayout); os.IsNotExist(err) {
+		log.Printf("ERROR: admin.html not found at %s", adminLayout)
+	}
+
 	// Load partials
 	partials, err := filepath.Glob(filepath.Join(templateDir, "partials", "*.html"))
 	if err != nil {
 		log.Printf("Error loading partials: %v", err)
 	}
+	log.Printf("Found %d partials", len(partials))
 
 	// Load public page templates
 	publicPages, _ := filepath.Glob(filepath.Join(templateDir, "pages", "*.html"))
+	log.Printf("Found %d public pages", len(publicPages))
+
 	for _, page := range publicPages {
 		name := strings.TrimSuffix(filepath.Base(page), ".html")
 		files := append([]string{baseLayout, page}, partials...)
@@ -68,6 +119,8 @@ func InitTemplates() {
 
 	// Load admin page templates
 	adminPages, _ := filepath.Glob(filepath.Join(templateDir, "pages", "admin", "*.html"))
+	log.Printf("Found %d admin pages", len(adminPages))
+
 	for _, page := range adminPages {
 		name := "admin/" + strings.TrimSuffix(filepath.Base(page), ".html")
 		files := append([]string{adminLayout, page}, partials...)
@@ -80,7 +133,12 @@ func InitTemplates() {
 		log.Printf("Loaded admin template: %s", name)
 	}
 
-	log.Printf("Templates loaded: %d total", len(templates))
+	log.Printf("Total templates loaded: %d", len(templates))
+
+	// List all loaded templates for debugging
+	for name := range templates {
+		log.Printf("  - %s", name)
+	}
 }
 
 func formatIDR(amount float64) string {
@@ -107,11 +165,22 @@ func formatNumber(n float64) string {
 	return str
 }
 
+// GetStaticDir returns the static files directory
+func GetStaticDir() string {
+	if templateDir != "" {
+		return filepath.Join(filepath.Dir(templateDir), "static")
+	}
+	return "./web/static"
+}
+
 // SetupWebRoutes sets up all web routes for template rendering
 func SetupWebRoutes(app *fiber.App) {
 	// Serve static files
+	staticDir := GetStaticDir()
+	log.Printf("Static files directory: %s", staticDir)
+
 	app.Use("/static", filesystem.New(filesystem.Config{
-		Root:   http.Dir("./web/static"),
+		Root:   http.Dir(staticDir),
 		Browse: false,
 	}))
 
@@ -150,6 +219,25 @@ func SetupWebRoutes(app *fiber.App) {
 	admin.Get("/whatsapp", renderPage("admin/whatsapp", "admin"))
 	admin.Get("/logs", renderPage("admin/logs", "admin"))
 	admin.Get("/profile", renderPage("admin/profile", "admin"))
+
+	// Debug endpoint
+	app.Get("/debug/templates", func(c *fiber.Ctx) error {
+		wd, _ := os.Getwd()
+		info := map[string]interface{}{
+			"working_dir":  wd,
+			"template_dir": templateDir,
+			"static_dir":   GetStaticDir(),
+			"templates":    []string{},
+			"go_version":   runtime.Version(),
+		}
+		names := []string{}
+		for name := range templates {
+			names = append(names, name)
+		}
+		info["templates"] = names
+		info["template_count"] = len(templates)
+		return c.JSON(info)
+	})
 }
 
 // renderPage returns a handler that renders a specific page with a layout
@@ -163,8 +251,10 @@ func renderPage(page, layout string) fiber.Handler {
 
 		tmpl, ok := templates[page]
 		if !ok {
-			log.Printf("Template not found: %s", page)
-			return c.Status(404).SendString("Template not found: " + page)
+			wd, _ := os.Getwd()
+			errMsg := fmt.Sprintf("Template not found: %s (loaded: %d templates, cwd: %s, template_dir: %s)", page, len(templates), wd, templateDir)
+			log.Printf("ERROR: %s", errMsg)
+			return c.Status(404).SendString(errMsg)
 		}
 
 		// For HTMX requests, only return the content block
@@ -232,10 +322,4 @@ func getPageTitle(page string) string {
 		return title
 	}
 	return "ArfCoder"
-}
-
-// GetWorkingDirectory returns the current working directory
-func GetWorkingDirectory() string {
-	wd, _ := os.Getwd()
-	return wd
 }
