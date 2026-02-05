@@ -10,12 +10,13 @@ import (
 )
 
 func SecureMiddleware(c *fiber.Ctx) error {
-	// 1. Skip Webhook (Midtrans tidak mengirim x-arf-secure-token)
+	// --- PENGECEKAN WEBHOOK (WAJIB DI ATAS) ---
+	// Jika URL mengandung kata "webhook", abaikan semua proteksi keamanan
 	if strings.Contains(c.Path(), "webhook") {
 		return c.Next()
 	}
 
-	// 2. Check Header Keamanan untuk User Biasa
+	// 1. Check Header Keamanan
 	secureHeader := c.Get("x-arf-secure-token")
 	if !utils.VerifySecureHeader(secureHeader) {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
@@ -23,7 +24,7 @@ func SecureMiddleware(c *fiber.Ctx) error {
 		})
 	}
 
-	// 3. Handle Body Decryption for POST/PUT/PATCH
+	// 2. Handle Body Decryption for POST/PUT/PATCH
 	method := c.Method()
 	if method == "POST" || method == "PUT" || method == "PATCH" {
 		var rawBody interface{}

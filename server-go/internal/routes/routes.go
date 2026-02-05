@@ -8,10 +8,11 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	// --- WEBHOOK PALING LUAR (Tanpa API, Tanpa Middleware) ---
-	// URL: https://arfzxdev.com/midtrans-webhook-public
-	app.Post("/midtrans-webhook-public", handlers.HandleMidtransWebhook)
+	// --- WEBHOOK (POSISI PALING ATAS & BEBAS MIDDLEWARE) ---
+	// Menggunakan path asli agar Nginx mengenalinya
+	app.Post("/api/orders/webhook", handlers.HandleMidtransWebhook)
 
+	// --- PROTECTED API ---
 	api := app.Group("/api", middleware.RateLimitAPI())
 
 	// --- AUTH ---
@@ -40,10 +41,10 @@ func SetupRoutes(app *fiber.App) {
 	products.Put("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.UpdateProduct)
 	products.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteProduct)
 
-	// --- PROTECTED ORDERS ---
+	// --- ORDERS ---
 	orders := api.Group("/orders", middleware.SecureMiddleware)
 	orders.Post("/", middleware.AuthMiddleware, handlers.CreateOrder)
-	orders.Post("/webhook", handlers.HandleMidtransWebhook) // Tetap sediakan cadangan
+	// Webhook di dalam sini dihapus karena sudah ada di paling atas
 	orders.Get("/my", middleware.AuthMiddleware, handlers.GetMyOrders)
 	orders.Get("/:id", middleware.AuthMiddleware, handlers.GetOrderById)
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
