@@ -1,3 +1,4 @@
+{{define "admin.html"}}
 <!DOCTYPE html>
 <html lang="id">
 
@@ -55,8 +56,8 @@
 
         <!-- Main Content -->
         <div class="md:ml-64 min-h-screen transition-all duration-300 pt-20 md:pt-0 overflow-x-hidden w-full">
-            <div id="admin-content" class="w-full max-w-full" hx-swap="innerHTML" hx-target="this">
-                {{template "content" .}}
+            <div id="admin-content" class="w-full max-w-full p-6" hx-swap="innerHTML" hx-target="this">
+                {{template "admin_content" .}}
             </div>
         </div>
     </div>
@@ -73,3 +74,4 @@
 </body>
 
 </html>
+{{end}}
