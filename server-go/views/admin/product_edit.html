@@ -87,7 +87,7 @@
     description: '{{.Product.Description}}',
         category_id: { {.Product.CategoryID } },
     demo_link: '{{.Product.DemoLink}}'
-        },
+            },
     categories: [],
         loading: false,
 
@@ -101,10 +101,12 @@
                 }
             });
             if (response.ok) this.categories = await response.json();
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+        }
     },
-        
-        async saveProduct() {
+
+            async saveProduct() {
         this.loading = true;
         try {
             const token = Alpine.store('auth').token;
@@ -130,7 +132,7 @@
             this.loading = false;
         }
     }
+        }
     }
-}
 </script>
 {{end}}
