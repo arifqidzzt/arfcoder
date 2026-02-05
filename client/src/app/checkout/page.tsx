@@ -53,8 +53,9 @@ export default function CheckoutPage() {
       // For simplicity, if any product has overrides, we intersect them.
       // If product has empty array, it uses global.
       for (const item of items) {
-        if (item.paymentMethods && item.paymentMethods.length > 0) {
-          methods = methods.filter((m: string) => item.paymentMethods.includes(m));
+        const pMethods = item.paymentMethods;
+        if (pMethods && pMethods.length > 0) {
+          methods = methods.filter((m: string) => pMethods.includes(m));
         }
       }
       
