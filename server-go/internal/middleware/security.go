@@ -10,24 +10,26 @@ import (
 )
 
 func SecureMiddleware(c *fiber.Ctx) error {
-	// 1. Check Header
+	// 1. Skip Webhook Security Checks
 	path := c.Path()
-	// Skip Webhook Security Checks
 	if strings.Contains(path, "webhook") {
 		return c.Next()
 	}
 
+	// 2. Check Header
 	secureHeader := c.Get("x-arf-secure-token")
+	if !utils.VerifySecureHeader(secureHeader) {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": "Access Denied: Invalid Security Header",
+		})
+	}
 
-		// Read Body as generic Interface to check if it's the Array[5] format
+	// 3. Handle Body Decryption for POST/PUT/PATCH
+	method := c.Method()
+	if method == "POST" || method == "PUT" || method == "PATCH" {
+		// Read Body as generic Interface
 		var rawBody interface{}
 		if err := json.Unmarshal(c.Body(), &rawBody); err != nil {
-			// If not JSON or empty, maybe proceed (depends on logic), but Node version checks strictly
-			// However, if parsing fails, it might not be the encrypted payload.
-			// Let's assume strict compliance.
-			// Actually, if it's standard JSON (not encrypted), Node version fails? 
-			// Node version: if (!Array.isArray(req.body) || req.body.length !== 5) return 400.
-			// So YES, strict.
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"message": "Access Denied: Invalid Body Format",
 			})
@@ -54,8 +56,6 @@ func SecureMiddleware(c *fiber.Ctx) error {
 		}
 		
 		c.Request().SetBody(newBody)
-		// Update Content-Length? Fiber might handle it or ignore if we set body directly.
-		// Important: Set Content-Type to application/json just in case
 		c.Request().Header.SetContentType("application/json")
 	}
 
