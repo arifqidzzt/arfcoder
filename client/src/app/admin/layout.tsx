@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare, Settings, History, Layers, Menu, X } from 'lucide-react';
+import { Package, ShoppingBag, Users, BarChart3, LogOut, Ticket, Zap, MessageSquare, Settings, History, Layers, Menu, X, CreditCard } from 'lucide-react';
 import AuthGuard from '@/components/AuthGuard';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <AuthGuard adminOnly>
       <div className="min-h-screen bg-gray-50">
-        
+
         {/* MOBILE HEADER (Visible only on Mobile) */}
         <div className="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
           <Link href="/" className="text-xl font-bold tracking-tighter">ARF ADMIN</Link>
@@ -59,21 +59,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {menuItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
-                  <Link 
+                  <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setIsSidebarOpen(false)} 
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive ? 'bg-black text-white font-medium shadow-md' : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${isActive ? 'bg-black text-white font-medium shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                      }`}
                   >
                     {item.icon}
                     <span className="font-medium">{item.label}</span>
                   </Link>
                 );
               })}
-              
+
               <div className="border-t border-gray-100 my-2"></div>
+              <Link href="/admin/settings" onClick={() => setIsSidebarOpen(false)} className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${pathname === '/admin/settings' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+                <CreditCard size={20} />
+                <span className="font-medium">Pengaturan Pembayaran</span>
+              </Link>
               <Link href="/admin/profile" onClick={() => setIsSidebarOpen(false)} className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${pathname === '/admin/profile' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
                 <Settings size={20} />
                 <span className="font-medium">Pengaturan & 2FA</span>
@@ -83,9 +86,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <span className="font-medium">Lihat Website</span>
               </Link>
             </nav>
-            
+
             <div className="p-4 border-t border-gray-100 bg-white shrink-0">
-              <button 
+              <button
                 onClick={() => { logout(); router.push('/'); }}
                 className="flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg w-full transition-colors"
               >
@@ -98,7 +101,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* OVERLAY (Mobile only) */}
         {isSidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-30 md:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
@@ -106,9 +109,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* MAIN CONTENT */}
         <div className="md:ml-64 min-h-screen transition-all duration-300 pt-20 md:pt-0 overflow-x-hidden w-full">
-            <div className="w-full max-w-full">
-              {children}
-            </div>
+          <div className="w-full max-w-full">
+            {children}
+          </div>
         </div>
       </div>
     </AuthGuard>
