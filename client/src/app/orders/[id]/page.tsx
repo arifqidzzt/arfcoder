@@ -198,7 +198,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
               <span className="text-sm text-gray-500 mr-2">{t('orders.status')}</span>
               {order.status === 'PENDING' && <CountdownTimer dateString={order.createdAt} expiryTime={order.paymentDetails?.expiry_time} />}
@@ -212,51 +212,41 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </span>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="text-right mb-4">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">Total Pembayaran</span>
-              <span className="text-2xl font-black text-black">Rp {order.totalAmount.toLocaleString()}</span>
-            </div>
-          </div>
-
-          {/* Core API Details - REDESIGNED */}
+          {/* Core API Details - CLEANER */}
           {order.status === "PENDING" && order.paymentDetails && (
-            <div className="mb-6 space-y-6">
-              <div className="p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
-                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
+            <div className="mb-6 space-y-6 border-t pt-6">
+              <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-center">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
                   <CreditCard size={14} /> {t('orders.instruction')}
                 </h3>
                 
                 {order.paymentDetails.va_number && (
-                  <div className="max-w-xs mx-auto">
-                    <p className="text-[10px] font-black text-gray-400 uppercase mb-3">VA Number ({order.paymentDetails.bank?.toUpperCase()})</p>
-                    <div className="flex items-center justify-between bg-white p-5 rounded-2xl border-2 border-black shadow-lg mb-4">
-                      <span className="text-2xl font-black tracking-[0.2em]">{order.paymentDetails.va_number}</span>
-                      <button onClick={() => {navigator.clipboard.writeText(order.paymentDetails?.va_number || ""); toast.success(t('orders.copy'))}} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <Copy size={20} className="text-accent" />
+                  <div className="max-w-xs mx-auto mb-4">
+                    <p className="text-[10px] font-black text-gray-400 uppercase mb-2">VA Number ({order.paymentDetails.bank?.toUpperCase()})</p>
+                    <div className="flex items-center justify-between bg-white p-4 rounded-xl border">
+                      <span className="text-lg font-mono font-bold tracking-widest">{order.paymentDetails.va_number}</span>
+                      <button onClick={() => {navigator.clipboard.writeText(order.paymentDetails?.va_number || ""); toast.success(t('orders.copy'))}} className="text-accent">
+                        <Copy size={18} />
                       </button>
                     </div>
                   </div>
                 )}
 
                 {(order.paymentDetails.qr_url || order.paymentDetails.deeplink) && (
-                  <div className="flex flex-col items-center gap-6">
+                  <div className="flex flex-col items-center gap-4">
                     {order.paymentDetails.qr_url && !order.paymentDetails.deeplink && (
-                      <div className="space-y-4">
-                        <div className="bg-white p-6 rounded-[2rem] border-2 border-black shadow-xl inline-block">
-                          <img src={order.paymentDetails.qr_url} className="w-48 h-48" alt="QR Code" />
-                        </div>
-                        <p className="text-xs font-bold text-gray-500 italic">{t('orders.scan_qr')}</p>
+                      <div className="bg-white p-4 rounded-xl border inline-block mb-2 shadow-sm">
+                        <img src={order.paymentDetails.qr_url} className="w-40 h-40" alt="QR Code" />
                       </div>
                     )}
                     
                     {order.paymentDetails.deeplink && (
-                      <a href={order.paymentDetails.deeplink} className={`group flex items-center gap-4 px-10 py-5 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 transition-all ${
+                      <a href={order.paymentDetails.deeplink} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 px-8 py-3 text-white rounded-xl font-bold text-sm shadow-lg transition-transform active:scale-95 ${
                         order.paymentType === 'gopay' ? 'bg-[#00AABB]' : 
                         order.paymentType === 'shopeepay' ? 'bg-[#EE4D2D]' : 'bg-[#118EEA]'
                       }`}>
                         {t('orders.open_app')} {order.paymentType?.toUpperCase()}
-                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight size={18} />
                       </a>
                     )}
                   </div>
@@ -265,12 +255,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
 
-          {/* Snap Pay Button */}
-          {order.status === 'PENDING' && order.snapToken && !order.paymentDetails && (
-            <button onClick={handlePaySnap} className="w-full bg-black text-white py-3 rounded-lg font-bold mb-3">Bayar Sekarang (Snap)</button>
+          {order.status === 'PENDING' && (
+            <div className="flex flex-col gap-3">
+              {order.snapToken && !order.paymentDetails && (
+                <button onClick={handlePaySnap} className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors">
+                  Bayar Sekarang (Snap)
+                </button>
+              )}
+              <button onClick={handleCancel} className="w-full bg-white border border-red-100 text-red-600 py-3 rounded-xl font-bold hover:bg-red-50 transition-colors">
+                {t('orders.cancel_order')}
+              </button>
+            </div>
           )}
-          
-          {order.status === 'PENDING' && <button onClick={handleCancel} className="w-full bg-white border border-red-200 text-red-600 py-3 rounded-lg font-bold">{t('orders.cancel_order')}</button>}
           {order.status === 'PAID' && !showRefundForm && !order.refundReason && <button onClick={() => setShowRefundForm(true)} className="w-full mt-4 text-xs text-gray-400 underline">{t('orders.refund')}</button>}
         </div>
 

@@ -7,36 +7,44 @@ export default function RefundPolicyPage() {
     <div className="min-h-screen bg-white text-gray-900">
       <Navbar />
       <main className="max-w-4xl mx-auto px-6 py-24 md:py-32">
-        <div className="text-center mb-20">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
-            Refund Policy
-          </div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-4 italic">Kebijakan <span className="text-gradient">Refund</span></h1>
-          <p className="text-gray-500 font-medium italic">Aturan pengembalian dana untuk produk digital kami.</p>
+        <div className="mb-16 border-b pb-8">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-4">Kebijakan Refund</h1>
+          <p className="text-gray-500 text-sm italic">Terakhir diperbarui: 6 Februari 2026</p>
         </div>
         
-        <section className="space-y-8">
-          {[
-            { title: "1. Sifat Produk Digital", content: "ArfCoder menyediakan produk digital berupa template koding, perangkat lunak, dan aset desain. Karena sifat produk digital yang dapat disalin dan digunakan secara instan setelah akses diberikan, maka semua pembelian bersifat final." },
-            { title: "2. Pengecualian Refund", content: "Refund hanya akan dipertimbangkan jika terjadi transaksi ganda akibat kesalahan sistem, produk yang dikirimkan terbukti rusak/corrupt secara teknis, atau jasa custom belum dikerjakan sama sekali melewati batas waktu yang dijanjikan." },
-            { title: "3. Batas Waktu Pengajuan", content: "Segala bentuk keluhan atau pengajuan refund harus disampaikan maksimal dalam waktu 24 jam setelah transaksi dilakukan melalui kontak resmi kami untuk dapat diproses." },
-            { title: "4. Proses Pengembalian", content: "Jika pengajuan disetujui, dana akan dikembalikan melalui mekanisme asli pembayaran atau transfer bank manual dalam waktu 7-14 hari kerja." }
-          ].map((item, i) => (
-            <div key={i} className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100">
-              <h2 className="text-xl font-black mb-4 flex items-center gap-3">
-                <span className="text-accent">/0{i+1}</span>
-                {item.title}
-              </h2>
-              <p className="text-gray-600 leading-relaxed font-medium italic pl-10">
-                {item.content}
-              </p>
-            </div>
-          ))}
+        <div className="prose prose-gray max-w-none space-y-12">
+          <section>
+            <h2 className="text-xl font-bold mb-4 text-black">1. Sifat Produk Digital</h2>
+            <p className="text-gray-600 leading-relaxed italic">
+              ArfCoder menyediakan produk digital berupa template koding, perangkat lunak, dan aset desain. Karena sifat produk digital yang dapat disalin dan digunakan secara instan setelah akses diberikan, maka semua pembelian bersifat final dan tidak dapat dikembalikan dananya.
+            </p>
+          </section>
 
-          <div className="p-10 bg-accent/5 rounded-[2.5rem] border border-accent/10 italic mt-12 text-center text-gray-700 font-bold">
-            "Dengan melakukan pembelian di arfzxdev.com, pelanggan dianggap telah membaca, memahami, dan menyetujui kebijakan pengembalian dana ini tanpa paksaan."
+          <section>
+            <h2 className="text-xl font-bold mb-4 text-black">2. Pengecualian Refund</h2>
+            <p className="text-gray-600 leading-relaxed italic">
+              Refund hanya akan dipertimbangkan dalam kondisi luar biasa: transaksi ganda akibat kesalahan sistem, produk terbukti rusak secara teknis setelah bantuan tim kami, atau jasa custom belum dikerjakan sama sekali melewati batas waktu tanpa pemberitahuan.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-bold mb-4 text-black">3. Batas Waktu Pengajuan</h2>
+            <p className="text-gray-600 leading-relaxed italic">
+              Segala bentuk keluhan atau pengajuan refund harus disampaikan maksimal dalam waktu 24 jam setelah transaksi dilakukan melalui kontak resmi kami untuk diverifikasi oleh tim teknis.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-bold mb-4 text-black">4. Proses Pengembalian</h2>
+            <p className="text-gray-600 leading-relaxed italic">
+              Jika pengajuan refund disetujui, dana akan dikembalikan melalui mekanisme asli pembayaran atau transfer bank manual dalam waktu 7-14 hari kerja.
+            </p>
+          </section>
+
+          <div className="mt-12 p-8 bg-gray-50 rounded-2xl border border-gray-100 text-sm italic text-gray-500 text-center">
+            "Dengan melakukan pembelian di arfzxdev.com, pelanggan dianggap telah membaca dan menyetujui seluruh syarat dalam kebijakan pengembalian dana ini."
           </div>
-        </section>
+        </div>
       </main>
     </div>
   );
