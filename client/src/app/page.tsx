@@ -246,7 +246,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-      </main>
 
       {/* FOOTER */}
       <footer className="bg-white pt-24 pb-12 border-t border-border px-6 md:px-12">
