@@ -8,13 +8,14 @@ import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import AuthGuard from '@/components/AuthGuard';
+import { useTranslation } from '@/lib/i18n';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, fetchCart } = useCartStore();
   const { token } = useAuthStore();
+  const { t } = useTranslation();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Calculate total locally for real-time refresh
   const totalAmount = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   useEffect(() => {
@@ -28,22 +29,22 @@ export default function CartPage() {
   };
 
   const handleRemove = (id: string) => {
-    toast((t) => (
+    toast((t_toast) => (
       <div className="flex flex-col gap-3 min-w-[240px]">
-        <span className="font-bold text-sm">Hapus item ini?</span>
+        <span className="font-bold text-sm">{t('cart.remove_confirm')}</span>
         <div className="flex gap-2 justify-end">
-          <button onClick={() => toast.dismiss(t.id)} className="px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-bold transition-colors">Batal</button>
+          <button onClick={() => toast.dismiss(t_toast.id)} className="px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-bold transition-colors">{t('cart.cancel')}</button>
           <button 
             onClick={async () => {
-              toast.dismiss(t.id);
+              toast.dismiss(t_toast.id);
               setIsRefreshing(true);
               await removeItem(id);
               setIsRefreshing(false);
-              toast.success('Item dihapus');
+              toast.success('Deleted');
             }} 
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors shadow-lg shadow-red-200"
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors"
           >
-            Hapus
+            {t('cart.delete')}
           </button>
         </div>
       </div>
@@ -53,112 +54,71 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <AuthGuard>
-      <div className="min-h-screen bg-white">
-        <Navbar />
-        <main className="max-w-7xl mx-auto px-8 py-32 text-center">
-          <div className="bg-gray-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShoppingBag size={40} className="text-gray-300"/>
-          </div>
-          <h1 className="text-2xl font-bold mb-2">Keranjang Belanja Kosong</h1>
-          <p className="text-gray-500 mb-8">Wah, keranjangmu masih kosong nih. Yuk isi dengan produk keren!</p>
-          <Link href="/products" className="inline-flex items-center space-x-2 px-8 py-3 bg-black text-white font-medium rounded-full hover:bg-gray-800 transition-colors">
-            <span>Mulai Belanja</span>
-            <ArrowRight size={18} />
-          </Link>
-        </main>
-      </div>
+        <div className="min-h-screen bg-white">
+          <Navbar />
+          <main className="max-w-7xl mx-auto px-8 py-32 text-center">
+            <div className="bg-gray-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ShoppingBag size={40} className="text-gray-300"/>
+            </div>
+            <h1 className="text-2xl font-bold mb-2">{t('cart.empty')}</h1>
+            <Link href="/products" className="inline-flex items-center space-x-2 px-8 py-3 bg-black text-white font-medium rounded-full hover:bg-gray-800 transition-colors">
+              <span>{t('cart.start_shopping')}</span>
+              <ArrowRight size={18} />
+            </Link>
+          </main>
+        </div>
       </AuthGuard>
     );
   }
 
   return (
     <AuthGuard>
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Navbar />
-      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-12 pt-24">
-        <div className="flex justify-between items-end mb-8">
-          <h1 className="text-3xl font-bold">Keranjang Belanja ({items.length})</h1>
-          {isRefreshing && <span className="text-xs text-gray-400 animate-pulse font-medium">Memperbarui...</span>}
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <div key={item.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-6 items-center transition-opacity ${isRefreshing ? 'opacity-50' : 'opacity-100'}`}>
-                <div className="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                  {item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}
-                </div>
-                
-                <div className="flex-grow min-w-0">
-                  <h3 className="font-bold text-lg mb-1 truncate">{item.name}</h3>
-                  <p className="text-sm font-medium text-gray-500 mb-4">Rp {item.price.toLocaleString('id-ID')}</p>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200">
-                      <button 
-                        onClick={() => handleUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                        disabled={isRefreshing}
-                        className="p-2 hover:bg-gray-200 rounded-l-lg transition-colors disabled:opacity-50"
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
-                      <button 
-                        onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                        disabled={isRefreshing}
-                        className="p-2 hover:bg-gray-200 rounded-r-lg transition-colors disabled:opacity-50"
-                      >
-                        <Plus size={14} />
-                      </button>
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Navbar />
+        <main className="max-w-6xl mx-auto px-4 sm:px-8 py-12 pt-24">
+          <h1 className="text-3xl font-bold mb-8">{t('cart.title')} ({items.length})</h1>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-4">
+              {items.map((item) => (
+                <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-6 items-center">
+                  <div className="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                    {item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}
+                  </div>
+                  <div className="flex-grow min-w-0">
+                    <h3 className="font-bold text-lg mb-1 truncate">{item.name}</h3>
+                    <p className="text-sm font-medium text-gray-500 mb-4">Rp {item.price.toLocaleString('id-ID')}</p>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200">
+                        <button onClick={() => handleUpdateQuantity(item.id, Math.max(1, item.quantity - 1))} className="p-2 hover:bg-gray-200 rounded-l-lg transition-colors"><Minus size={14} /></button>
+                        <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
+                        <button onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)} className="p-2 hover:bg-gray-200 rounded-r-lg transition-colors"><Plus size={14} /></button>
+                      </div>
+                      <button onClick={() => handleRemove(item.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
                     </div>
-                    <button 
-                      onClick={() => handleRemove(item.id)} 
-                      disabled={isRefreshing}
-                      className="p-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
-                      title="Hapus"
-                    >
-                      <Trash2 size={18} />
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Summary Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
-              <h2 className="text-xl font-bold mb-6">Ringkasan</h2>
-              <div className="space-y-3 mb-6 border-b border-gray-50 pb-6">
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>Subtotal</span>
+              ))}
+            </div>
+            <div className="lg:col-span-1">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
+                <h2 className="text-xl font-bold mb-6">{t('cart.summary')}</h2>
+                <div className="flex justify-between text-sm text-gray-500 mb-6">
+                  <span>{t('cart.subtotal')}</span>
                   <span>Rp {totalAmount.toLocaleString('id-ID')}</span>
                 </div>
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>Pajak & Biaya</span>
-                  <span className="text-green-600 font-bold">Rp 0</span>
+                <div className="flex justify-between items-center mb-8 pt-4 border-t">
+                  <span className="font-bold text-lg">{t('cart.total')}</span>
+                  <span className="font-black text-2xl">Rp {totalAmount.toLocaleString('id-ID')}</span>
                 </div>
+                <Link href="/checkout" className="w-full py-4 bg-black text-white font-bold rounded-xl flex items-center justify-center space-x-2 hover:bg-gray-800 transition-all shadow-lg shadow-black/20">
+                  <span>{t('cart.checkout')}</span>
+                  <ArrowRight size={18} />
+                </Link>
               </div>
-              
-              <div className="flex justify-between items-center mb-8">
-                <span className="font-bold text-lg">Total</span>
-                <span className="font-black text-2xl">Rp {totalAmount.toLocaleString('id-ID')}</span>
-              </div>
-
-              <Link href="/checkout" className="w-full py-4 bg-black text-white font-bold rounded-xl flex items-center justify-center space-x-2 hover:bg-gray-800 transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-black/20">
-                <span>Checkout Sekarang</span>
-                <ArrowRight size={18} />
-              </Link>
-              
-              <p className="text-center text-xs text-gray-400 mt-4">
-                Transaksi aman & terenkripsi.
-              </p>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
     </AuthGuard>
   );
 }
