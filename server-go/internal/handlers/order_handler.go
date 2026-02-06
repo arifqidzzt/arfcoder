@@ -108,14 +108,9 @@ func CreateOrder(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"message": "Failed to create order"})
 	}
 
-	// Kosongkan keranjang di DB
 	database.DB.Where("\"userId\" = ?", user.UserID).Delete(&models.CartItem{})
 
 	if paymentSetting.Mode == models.MidtransModeCore {
-		if req.PaymentType == "" {
-			return c.Status(400).JSON(fiber.Map{"message": "Payment type is required for Core API"})
-		}
-
 		coreReq := &coreapi.ChargeReq{
 			PaymentType: coreapi.CoreapiPaymentType(req.PaymentType),
 			TransactionDetails: midtrans.TransactionDetails{
@@ -127,7 +122,7 @@ func CreateOrder(c *fiber.Ctx) error {
 			},
 		}
 
-		if req.PaymentType == string(coreapi.PaymentTypeBankTransfer) {
+		if req.PaymentType == "bank_transfer" {
 			coreReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.Bank(req.PaymentMethod)}
 		}
 
@@ -137,16 +132,21 @@ func CreateOrder(c *fiber.Ctx) error {
 		}
 
 		details := make(utils.JSONField)
+		// VA Numbers
 		if len(resp.VaNumbers) > 0 {
 			details["va_number"] = resp.VaNumbers[0].VANumber
 			details["bank"] = resp.VaNumbers[0].Bank
 		}
-		if resp.PaymentType == "qris" || resp.PaymentType == "gopay" || resp.PaymentType == "shopeepay" || resp.PaymentType == "dana" {
-			for _, action := range resp.Actions {
-				if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
-				if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
-			}
+		// Actions (QRIS, GoPay, ShopeePay, DANA)
+		for _, action := range resp.Actions {
+			if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
+			if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
 		}
+		// DANA and some others use direct redirect_url
+		if resp.RedirectURL != "" {
+			details["deeplink"] = resp.RedirectURL
+		}
+		
 		details["expiry_time"] = resp.ExpiryTime
 
 		database.DB.Model(&order).Update("paymentDetails", details)
@@ -155,16 +155,10 @@ func CreateOrder(c *fiber.Ctx) error {
 		return c.Status(201).JSON(fiber.Map{"order": order, "mode": "CORE"})
 	} else {
 		reqSnap := &snap.Request{
-			TransactionDetails: midtrans.TransactionDetails{
-				OrderID:  order.ID,
-				GrossAmt: int64(finalAmount),
-			},
+			TransactionDetails: midtrans.TransactionDetails{OrderID: order.ID, GrossAmt: int64(finalAmount)},
 			CustomerDetail: &midtrans.CustomerDetails{FName: user.UserID},
 		}
-		resp, err := SnapClient.CreateTransaction(reqSnap)
-		if err != nil {
-			return c.Status(201).JSON(fiber.Map{"order": order, "message": "Order created but payment token failed"})
-		}
+		resp, _ := SnapClient.CreateTransaction(reqSnap)
 		database.DB.Model(&order).Updates(models.Order{SnapToken: resp.Token, SnapUrl: resp.RedirectURL})
 		return c.Status(201).JSON(fiber.Map{"order": order, "snapToken": resp.Token, "snapUrl": resp.RedirectURL, "mode": "SNAP"})
 	}
@@ -175,7 +169,6 @@ func GetOrderById(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*utils.JWTClaims)
 
 	var order models.Order
-	// Preload Product agar data tampil lengkap
 	if err := database.DB.Preload("Items.Product").Preload("User").Preload("Timeline").First(&order, "id = ?", id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
 	}
@@ -184,16 +177,15 @@ func GetOrderById(c *fiber.Ctx) error {
 		return c.Status(403).JSON(fiber.Map{"message": "Forbidden"})
 	}
 
-	// --- FIX CRASH: Nil check pada PaymentDetails ---
 	if order.Status == models.OrderStatusPending {
 		if time.Since(order.CreatedAt) > 24*time.Hour {
 			database.DB.Model(&order).Update("status", models.OrderStatusCancelled)
 			order.Status = models.OrderStatusCancelled
 		} else if order.PaymentDetails != nil {
-			if expiryStr, ok := order.PaymentDetails["expiry_time"].(string); ok && expiryStr != "" {
+			expiryStr, ok := order.PaymentDetails["expiry_time"].(string)
+			if ok && expiryStr != "" {
 				expiryTime, _ := time.Parse("2006-01-02 15:04:05", expiryStr)
 				if !expiryTime.IsZero() && time.Now().After(expiryTime) {
-					// Auto-Regenerate logic (tetap ada tapi diperbaiki)
 					newTxId := fmt.Sprintf("%s-%d", order.ID, time.Now().Unix())
 					coreReq := &coreapi.ChargeReq{
 						PaymentType: coreapi.CoreapiPaymentType(order.PaymentType),
@@ -209,12 +201,11 @@ func GetOrderById(c *fiber.Ctx) error {
 							details["va_number"] = resp.VaNumbers[0].VANumber
 							details["bank"] = resp.VaNumbers[0].Bank
 						}
-						if resp.PaymentType == "qris" || resp.PaymentType == "gopay" || resp.PaymentType == "shopeepay" || resp.PaymentType == "dana" {
-							for _, action := range resp.Actions {
-								if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
-								if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
-							}
+						for _, action := range resp.Actions {
+							if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
+							if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
 						}
+						if resp.RedirectURL != "" { details["deeplink"] = resp.RedirectURL }
 						details["expiry_time"] = resp.ExpiryTime
 						database.DB.Model(&order).Update("paymentDetails", details)
 						order.PaymentDetails = details
