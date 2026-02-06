@@ -108,6 +108,9 @@ func CreateOrder(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"message": "Failed to create order"})
 	}
 
+	// Clean User Cart
+	database.DB.Where("\"userId\" = ?", user.UserID).Delete(&models.CartItem{})
+
 	if paymentSetting.Mode == models.MidtransModeCore {
 		if req.PaymentType == "" {
 			return c.Status(400).JSON(fiber.Map{"message": "Payment type is required for Core API"})
@@ -180,18 +183,17 @@ func GetOrderById(c *fiber.Ctx) error {
 		return c.Status(403).JSON(fiber.Map{"message": "Forbidden"})
 	}
 
-	// --- FIX PANIC: Nil Check PaymentDetails ---
+	// --- FIX CRASH: Nil Check sebelum akses map ---
 	if order.Status == models.OrderStatusPending {
 		if time.Since(order.CreatedAt) > 24*time.Hour {
 			database.DB.Model(&order).Update("status", models.OrderStatusCancelled)
 			order.Status = models.OrderStatusCancelled
-		} else if order.PaymentDetails != nil {
-			// Hanya proses jika ada data pembayaran CORE API
-			expiryStr, ok := order.PaymentDetails["expiry_time"].(string)
-			if ok && expiryStr != "" {
+		} else if order.PaymentDetails != nil { 
+			// PENTING: Hanya jalankan jika PaymentDetails TIDAK nil
+			if expiryStr, ok := order.PaymentDetails["expiry_time"].(string); ok && expiryStr != "" {
 				expiryTime, _ := time.Parse("2006-01-02 15:04:05", expiryStr)
 				if !expiryTime.IsZero() && time.Now().After(expiryTime) {
-					// Auto Regenerate
+					// Regenerate
 					newTxId := fmt.Sprintf("%s-%d", order.ID, time.Now().Unix())
 					coreReq := &coreapi.ChargeReq{
 						PaymentType: coreapi.CoreapiPaymentType(order.PaymentType),

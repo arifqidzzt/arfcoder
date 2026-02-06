@@ -38,15 +38,7 @@ export default function CheckoutPage() {
 // ... existing script logic ...
     script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '');
     document.body.appendChild(script);
-
-    // Only redirect if NOT loading (not in the middle of checkout)
-    if (items.length === 0 && !loading) {
-      const timeout = setTimeout(() => {
-        if (items.length === 0) router.push('/cart');
-      }, 500);
-      return () => clearTimeout(timeout);
-    }
-  }, [items, router, loading]);
+  }, [router]); // Kurangi dependency agar tidak trigger saat items kosong
 
   const fetchPaymentSettings = async () => {
     try {
