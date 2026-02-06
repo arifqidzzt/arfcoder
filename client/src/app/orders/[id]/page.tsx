@@ -197,26 +197,27 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <div><h1 className="text-xl font-bold">{t('orders.title')}</h1><p className="text-sm text-gray-500">{t('orders.invoice')}: {order.invoiceNumber}</p></div>
         </div>
 
-        {/* Status Card - BACKUP STYLE */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500 mr-2">Status Pesanan</span>
-              {order.status === 'PENDING' && <CountdownTimer dateString={order.createdAt} expiryTime={order.paymentDetails?.expiry_time} />}
-            </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
-              ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 
-                order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 
-                'bg-orange-100 text-orange-700'}`}>
+        {/* Status Card - MINIMALIST STYLE */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status Pesanan</span>
+            <span className={`font-black text-sm uppercase tracking-[0.2em] 
+              ${order.status === 'PAID' ? 'text-green-600' : 
+                order.status === 'CANCELLED' ? 'text-red-600' : 
+                'text-orange-600'}`}>
               {order.status}
             </span>
+          </div>
+          
+          <div className="flex items-center mb-6">
+            {order.status === 'PENDING' && <CountdownTimer dateString={order.createdAt} expiryTime={order.paymentDetails?.expiry_time} />}
           </div>
 
           {/* Core API Details */}
           {order.status === "PENDING" && order.paymentDetails && (
             <div className="mb-6 space-y-4 border-t pt-6">
-              <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 text-center">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+              <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-center">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
                   Instruksi Pembayaran
                 </h3>
                 
@@ -234,18 +235,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
                 {(order.paymentDetails.qr_url || order.paymentDetails.deeplink) && (
                   <div className="flex flex-col items-center gap-4">
-                    {order.paymentDetails.qr_url && !order.paymentDetails.deeplink && (
+                    {order.paymentDetails.qr_url && (
                       <div className="bg-white p-3 rounded-xl border inline-block mb-2">
                         <img src={order.paymentDetails.qr_url} className="w-40 h-40" alt="QR Code" />
                       </div>
                     )}
                     
-                    {order.paymentDetails.deeplink && (
-                      <a href={order.paymentDetails.deeplink} target="_blank" rel="noopener noreferrer" className={`w-full flex items-center justify-center gap-2 py-3 text-white rounded-lg font-bold text-sm shadow-sm transition-transform active:scale-95 ${
-                        order.paymentType === 'gopay' ? 'bg-[#00AABB]' : 
-                        order.paymentType === 'shopeepay' ? 'bg-[#EE4D2D]' : 'bg-[#118EEA]'
-                      }`}>
-                        BUKA APLIKASI {order.paymentType?.toUpperCase()}
+                    {/* Dana/E-Wallet Button - Improved Logic */}
+                    {(order.paymentDetails.deeplink || order.paymentDetails.qr_url) && (
+                      <a 
+                        href={order.paymentDetails.deeplink || order.paymentDetails.qr_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className={`w-full flex items-center justify-center gap-2 py-3 text-white rounded-lg font-bold text-sm shadow-sm transition-transform active:scale-95 ${
+                          order.paymentMethod === 'dana' || order.paymentType === 'dana' ? 'bg-[#118EEA]' :
+                          order.paymentType === 'gopay' ? 'bg-[#00AABB]' : 
+                          'bg-[#EE4D2D]'
+                        }`}
+                      >
+                        BUKA APLIKASI PEMBAYARAN
                         <ArrowRight size={18} />
                       </a>
                     )}
@@ -267,7 +275,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               </button>
             </div>
           )}
-          {order.status === 'PAID' && !showRefundForm && !order.refundReason && <button onClick={() => setShowRefundForm(true)} className="w-full mt-4 text-xs text-gray-400 underline">{t('orders.refund')}</button>}
         </div>
 
         {/* Timeline */}

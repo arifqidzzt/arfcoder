@@ -163,17 +163,15 @@ func CreateOrder(c *fiber.Ctx) error {
 			}
 		}
 
-		if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
-			details["deeplink"] = resp.RedirectURL
+		// MANDATORY FOR DANA: RedirectURL is the actual deeplink
+		if req.PaymentType == "dana" || req.PaymentMethod == "dana" {
+			if resp.RedirectURL != "" {
+				details["deeplink"] = resp.RedirectURL
+			}
 		}
 
-		if req.PaymentType == "dana" && (details["deeplink"] == nil || details["deeplink"] == "") {
-			for _, action := range resp.Actions {
-				if action.URL != "" {
-					details["deeplink"] = action.URL
-					break
-				}
-			}
+		if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
+			details["deeplink"] = resp.RedirectURL
 		}
 
 		details["expiry_time"] = resp.ExpiryTime
