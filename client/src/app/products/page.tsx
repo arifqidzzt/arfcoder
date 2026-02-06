@@ -69,10 +69,10 @@ export default function ProductList() {
       name: product.name,
       price: product.price * (1 - product.discount / 100),
       quantity: 1,
-      image: product.images[0],
+      image: product.images[0] || 'https://placehold.co/600x400?text=No+Image',
       paymentMethods: product.paymentMethods
     });
-    toast.success(`${product.name} +1`);
+    toast.success(`${product.name} added!`);
   };
 
   return (
@@ -80,6 +80,7 @@ export default function ProductList() {
       <Navbar />
       
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
           <div data-aos="fade-right">
             <h1 className="text-4xl font-black tracking-tight mb-2 text-gray-900">{t('products.title')}</h1>
@@ -101,6 +102,7 @@ export default function ProductList() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+          {/* Sidebar Filter */}
           <aside className="lg:col-span-1 space-y-8">
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm sticky top-24">
               <div className="flex items-center gap-2 mb-6 text-gray-900 font-bold">
@@ -132,19 +134,25 @@ export default function ProductList() {
 
               <div>
                 <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">{t('products.sort')}</h4>
-                <select 
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full appearance-none bg-gray-50 border border-gray-100 text-gray-900 py-3 px-4 rounded-xl focus:border-black text-sm font-bold"
-                >
-                  <option value="newest">{t('products.newest')}</option>
-                  <option value="price_low">{t('products.price_low')}</option>
-                  <option value="price_high">{t('products.price_high')}</option>
-                </select>
+                <div className="relative">
+                  <select 
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-900 py-3 px-4 pr-8 rounded-xl focus:border-black text-sm font-bold"
+                  >
+                    <option value="newest">{t('products.newest')}</option>
+                    <option value="price_low">{t('products.price_low')}</option>
+                    <option value="price_high">{t('products.price_high')}</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                    <ArrowUpDown size={14} />
+                  </div>
+                </div>
               </div>
             </div>
           </aside>
 
+          {/* Product Grid */}
           <div className="lg:col-span-3">
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -165,19 +173,36 @@ export default function ProductList() {
                 {filteredProducts.map((product) => (
                   <Link href={`/products/${product.id}`} key={product.id} className="group relative bg-white rounded-[2rem] border border-gray-100 hover:border-accent/20 overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col">
                     <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative shadow-inner">
-                      <img src={product.images[0] || 'https://placehold.co/600x400'} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <img 
+                        src={product.images[0] || 'https://placehold.co/600x400'} 
+                        alt="" 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
                       <div className="absolute top-4 left-4 flex flex-col gap-2">
-                        {product.discount > 0 && <span className="bg-black text-white text-[10px] px-2.5 py-1 font-black rounded-lg">-{product.discount}%</span>}
-                        {product.type === 'JASA' && <span className="bg-white/90 text-purple-700 border text-[10px] px-2.5 py-1 font-black rounded-lg">JASA</span>}
+                        {product.discount > 0 && <span className="bg-black text-white text-[10px] px-2.5 py-1 font-black rounded-lg shadow-lg">-{product.discount}%</span>}
+                        {product.type === 'JASA' && <span className="bg-white/90 text-purple-700 border border-purple-100 text-[10px] px-2.5 py-1 font-black rounded-lg shadow-sm">JASA</span>}
                       </div>
-                      <button onClick={(e) => handleAddToCart(e, product)} className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-xl translate-y-16 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all z-10 hover:bg-black hover:text-white"><ShoppingCart size={18} strokeWidth={2.5}/></button>
+                      {/* QUICK ADD BUTTON RESTORED */}
+                      <button 
+                        onClick={(e) => handleAddToCart(e, product)}
+                        className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-xl translate-y-16 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all z-10 hover:bg-black hover:text-white"
+                      >
+                        <ShoppingCart size={18} strokeWidth={2.5}/>
+                      </button>
                     </div>
+
                     <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-accent transition-colors">{product.name}</h3>
-                      <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-6">{product.description}</p>
-                      <div className="mt-auto pt-4 border-t border-gray-50 flex flex-col">
-                        {product.discount > 0 && <span className="text-xs text-gray-400 line-through mb-0.5">Rp {product.price.toLocaleString()}</span>}
-                        <span className="font-black text-xl text-black">Rp {(product.price * (1 - product.discount / 100)).toLocaleString()}</span>
+                      <div className="mb-auto">
+                        <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-accent transition-colors">{product.name}</h3>
+                        <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{product.description}</p>
+                      </div>
+                      <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
+                        <div className="flex flex-col">
+                          {product.discount > 0 && <span className="text-xs text-gray-400 line-through mb-0.5">Rp {product.price.toLocaleString()}</span>}
+                          <span className="font-black text-xl text-black">Rp {(product.price * (1 - product.discount / 100)).toLocaleString()}</span>
+                        </div>
+                        {/* MOBILE ADD BUTTON */}
+                        <button onClick={(e) => handleAddToCart(e, product)} className="lg:hidden p-2 bg-gray-50 text-gray-900 rounded-lg active:scale-95"><ShoppingCart size={18} /></button>
                       </div>
                     </div>
                   </Link>

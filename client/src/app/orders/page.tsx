@@ -58,57 +58,86 @@ export default function MyOrdersPage() {
   const filteredOrders = orders.filter(o => {
     if (activeTab === 'ALL') return true;
     if (activeTab === 'UNPAID') return o.status === 'PENDING';
-    if (activeTab === 'PROCESS') return o.status === 'PAID' || o.status === 'PROCESSING' || o.status === 'SHIPPED';
-    if (activeTab === 'DONE') return o.status === 'COMPLETED';
+    if (activeTab === 'PROCESS') return ['PAID', 'PROCESSING', 'SHIPPED'].includes(o.status);
+    if (activeTab === 'DONE') return ['COMPLETED'].includes(o.status);
     return false;
   });
+
+  const tabs = [
+    { id: 'ALL', label: t('orders.all') || 'Semua' },
+    { id: 'UNPAID', label: t('orders.unpaid') || 'Belum Bayar' },
+    { id: 'PROCESS', label: t('orders.process') || 'Diproses' },
+    { id: 'DONE', label: t('orders.done') || 'Selesai' },
+  ];
 
   return (
     <AuthGuard>
       <div className="min-h-screen bg-white">
         <Navbar />
-        <main className="max-w-4xl mx-auto px-4 py-24">
-          <h1 className="text-3xl font-bold mb-8">{t('orders.list_title')}</h1>
+        <main className="max-w-4xl mx-auto px-4 sm:px-8 py-12 pt-24">
+          <h1 className="text-3xl font-black mb-8 tracking-tighter">{t('orders.list_title')}</h1>
 
-          <div className="flex border-b border-gray-100 mb-8 overflow-x-auto">
-            {['ALL', 'UNPAID', 'PROCESS', 'DONE'].map(tabId => (
+          <div className="flex border-b border-gray-100 mb-8 overflow-x-auto bg-white rounded-t-xl px-2">
+            {tabs.map(tab => (
               <button
-                key={tabId}
-                onClick={() => setActiveTab(tabId)}
-                className={`px-6 py-4 text-sm font-bold whitespace-nowrap border-b-2 transition-all 
-                  ${activeTab === tabId ? 'border-black text-black' : 'border-transparent text-gray-400'}`}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-4 text-sm font-black whitespace-nowrap transition-all border-b-2 
+                  ${activeTab === tab.id ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
               >
-                {tabId}
+                {tab.label}
               </button>
             ))}
           </div>
 
           {loading ? (
-            <div className="text-center py-12 text-gray-400">{t('common.loading')}</div>
+            <div className="text-center py-12 text-gray-400 font-bold">{t('common.loading')}</div>
           ) : filteredOrders.length === 0 ? (
-            <div className="text-center py-20 border border-dashed rounded-xl">
+            <div className="text-center py-20 border border-dashed border-gray-200 rounded-[2rem] bg-gray-50/30">
               <Package className="mx-auto text-gray-200 mb-4" size={48} />
-              <p className="text-gray-500 font-medium">{t('orders.empty')}</p>
+              <p className="text-gray-500 font-bold">{t('orders.empty')}</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {filteredOrders.map((order) => (
-                <div key={order.id} className="block border border-gray-100 rounded-2xl p-6 hover:shadow-md transition-all">
-                  <div className="flex justify-between items-start mb-6">
-                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest
-                      ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                      {order.status}
-                    </span>
-                    <Link href={`/orders/${order.id}`} className="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg">Detail</Link>
-                  </div>
-                  <div className="flex gap-4">
-                    <img src={order.items[0]?.product.images[0] || 'https://placehold.co/100'} className="w-16 h-16 rounded-xl object-cover" />
-                    <div>
-                      <p className="font-bold text-sm">{order.items[0]?.product.name}</p>
-                      <p className="text-xs text-gray-400 mt-1">{new Date(order.createdAt).toLocaleDateString()}</p>
-                      <p className="text-sm font-black mt-2">Rp {order.totalAmount.toLocaleString()}</p>
+                <div key={order.id} className="block border border-gray-100 rounded-[2rem] p-8 hover:shadow-2xl transition-all bg-white relative group">
+                  <div className="flex justify-between items-start mb-8">
+                    <div className="space-y-3">
+                      {/* FIXED STATUS COLORS */}
+                      <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.1em] shadow-sm
+                        ${order.status === 'PAID' ? 'bg-green-500 text-white' : 
+                          order.status === 'PENDING' ? 'bg-orange-500 text-white' : 
+                          order.status === 'CANCELLED' ? 'bg-red-500 text-white' :
+                          'bg-gray-800 text-white'}`}>
+                        {order.status}
+                      </span>
+                      
+                      {order.status === 'PENDING' && (
+                        <div className="flex items-center gap-2 bg-red-50 text-red-600 px-3 py-1.5 rounded-xl border border-red-100">
+                          <AlertCircle size={14}/>
+                          <span className="text-[10px] font-black uppercase tracking-widest">{t('orders.limit')}:</span>
+                          <CountdownTimer dateString={order.createdAt} />
+                        </div>
+                      )}
                     </div>
+                    
+                    <Link href={`/orders/${order.id}`} className="bg-black text-white px-6 py-2.5 rounded-xl text-xs font-black hover:bg-gray-800 flex items-center gap-2 transition-all shadow-xl shadow-black/10 active:scale-95">
+                      {order.status === 'PENDING' ? <><CreditCard size={14}/> Pay</> : 'Details'}
+                    </Link>
                   </div>
+                  
+                  <Link href={`/orders/${order.id}`} className="flex gap-6 items-center">
+                    <div className="w-20 h-20 rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 flex-shrink-0 shadow-inner">
+                      <img src={order.items[0]?.product.images[0] || 'https://placehold.co/100'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-lg font-black text-gray-900 truncate group-hover:text-accent transition-colors">
+                        {order.items[0]?.product.name} {order.items.length > 1 && `+ ${order.items.length - 1} more`}
+                      </p>
+                      <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xl font-black mt-3 text-black">Rp {order.totalAmount.toLocaleString('id-ID')}</p>
+                    </div>
+                  </Link>
                 </div>
               ))}
             </div>
