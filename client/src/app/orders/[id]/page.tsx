@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { ArrowLeft, Copy, Download, CreditCard, Activity, CheckCircle2, Loader2, AlertCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Copy, Download, CreditCard, Activity, CheckCircle2, Loader2, AlertCircle, XCircle, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from '@/lib/i18n';
 

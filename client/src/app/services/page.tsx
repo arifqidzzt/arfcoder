@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import api from '@/lib/api';
-import { CheckCircle2, ArrowRight, Code, Globe, Laptop, Database, Search, Layout } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Code, Globe, Laptop, Database, Search, Layout, Zap } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 
 const Icons = { Code, Globe, Laptop, Database, Search, Layout, ArrowRight };
