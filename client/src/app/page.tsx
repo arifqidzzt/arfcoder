@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { ArrowRight, Code, CheckCircle, Zap, Globe, Database, Smartphone } from 'lucide-react';
+import { ArrowRight, Code, Rocket, CheckCircle, Mail, Phone, MapPin, Zap, Globe, Database, Smartphone } from 'lucide-react';
 import api from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 
@@ -53,8 +53,9 @@ export default function Home() {
                 </span>
               </div>
 
-              <h1 data-aos="fade-up" data-aos-delay="100" className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-6 md:mb-8 leading-[1.1] break-words">
-                {t('home.hero_title')}
+              <h1 data-aos="fade-up" data-aos-delay="100" className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-6 md:mb-8 leading-[1.1] break-words text-black">
+                {t('home.hero_title_part1')}<br />
+                <span className="text-gradient block mt-2 pb-2">{t('home.hero_title_part2')}</span>
               </h1>
 
               <p data-aos="fade-up" data-aos-delay="200" className="text-sm sm:text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 md:mb-10 leading-relaxed">
@@ -72,36 +73,68 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 text-left">
-                <div data-aos="fade-up" data-aos-delay="400" className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft">
+                <div data-aos="fade-up" data-aos-delay="400" className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
                   <div className="w-10 h-10 rounded-lg bg-black text-white flex items-center justify-center mb-4"><Zap className="w-5 h-5" /></div>
                   <h3 className="text-lg font-bold mb-2">{t('home.fast_delivery')}</h3>
-                  <p className="text-sm text-muted-foreground">Optimized for maximum speed.</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Optimasi performa maksimal untuk load time di bawah 1 detik.</p>
                 </div>
-                <div data-aos="fade-up" data-aos-delay="500" className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft">
+
+                <div data-aos="fade-up" data-aos-delay="500" className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
                   <div className="w-10 h-10 rounded-lg bg-black text-white flex items-center justify-center mb-4"><CheckCircle className="w-5 h-5" /></div>
                   <h3 className="text-lg font-bold mb-2">{t('home.secure_payment')}</h3>
-                  <p className="text-sm text-muted-foreground">Encryption & Data security.</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Struktur kode yang ramah mesin pencari untuk ranking terbaik.</p>
                 </div>
-                <div data-aos="fade-up" data-aos-delay="600" className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft">
+
+                <div data-aos="fade-up" data-aos-delay="600" className="flex flex-col p-6 rounded-2xl bg-white border border-border shadow-soft hover:shadow-elevated transition-all hover:-translate-y-1">
                   <div className="w-10 h-10 rounded-lg bg-black text-white flex items-center justify-center mb-4"><Code className="w-5 h-5" /></div>
                   <h3 className="text-lg font-bold mb-2">{t('home.best_support')}</h3>
-                  <p className="text-sm text-muted-foreground">24/7 technical assistance.</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Siap menangani pertumbuhan pengguna dari ratusan hingga jutaan.</p>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
+        {/* TECH STACK MARQUEE */}
+        <section className="py-10 border-y border-border bg-secondary/30 overflow-hidden">
+          <div className="w-full inline-flex flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
+            <ul className="flex items-center justify-center md:justify-start [&_li]:mx-8 animate-marquee text-muted-foreground font-bold text-xl uppercase tracking-widest opacity-50">
+              {languages.map((tech, i) => <li key={i} className="whitespace-nowrap">{tech}</li>)}
+              {languages.map((tech, i) => <li key={`dup-${i}`} className="whitespace-nowrap">{tech}</li>)}
+            </ul>
+          </div>
+        </section>
+
         {/* FLASH SALE */}
         {flashSales.length > 0 && (
           <section className="py-12 bg-black text-white">
-            <div className="container-custom px-4">
-              <h2 className="text-3xl font-bold mb-8 flex items-center gap-2"><Zap className="text-yellow-500 fill-yellow-500" /> FLASH SALE</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="container-custom">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-2 bg-yellow-500 rounded-lg animate-pulse">
+                  <Zap className="text-black fill-black" size={24} />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold tracking-tight">FLASH SALE</h2>
+                  <p className="text-gray-400">Penawaran terbatas, segera habiskan!</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4">
                 {flashSales.map((fs) => (
-                  <Link href={`/products/${fs.productId}`} key={fs.id} className="bg-white/10 border border-white/20 p-6 rounded-2xl">
-                    <h3 className="text-xl font-bold mb-2">{fs.product.name}</h3>
-                    <p className="text-yellow-400 font-bold text-2xl">Rp {fs.discountPrice.toLocaleString()}</p>
+                  <Link href={`/products/${fs.productId}`} key={fs.id} className="bg-white/10 border border-white/20 p-6 rounded-2xl hover:bg-white/20 transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                      <span className="bg-red-600 px-3 py-1 rounded-full text-xs font-bold animate-bounce">
+                        -{Math.round((1 - fs.discountPrice / fs.product.price) * 100)}%
+                      </span>
+                      <span className="text-xs font-mono text-gray-400">
+                        Berakhir: {new Date(fs.endTime).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-bold mb-2 group-hover:text-yellow-400 transition-colors">{fs.product.name}</h3>
+                    <div className="flex items-end gap-3">
+                      <span className="text-2xl font-bold text-yellow-400">Rp {fs.discountPrice.toLocaleString()}</span>
+                      <span className="text-sm text-gray-500 line-through mb-1">Rp {fs.product.price.toLocaleString()}</span>
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -112,19 +145,53 @@ export default function Home() {
         {/* PREVIEW PRODUCTS */}
         <section className="py-24 bg-secondary/20">
           <div className="container-custom px-4">
-            <div className="flex justify-between items-end mb-12">
-              <h2 className="text-3xl font-bold">{t('home.featured_products')}</h2>
-              <Link href="/products" className="text-sm font-bold border-b-2 border-black pb-1">View All</Link>
+            <div data-aos="fade-right" className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+              <div>
+                <span className="text-accent font-bold tracking-wider uppercase text-sm mb-2 block">Katalog</span>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{t('home.featured_products')}</h2>
+              </div>
+              <Link href="/products" className="inline-flex items-center justify-center px-6 py-3 rounded-lg border border-border bg-white hover:bg-gray-50 transition-colors font-medium">
+                View All
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {featuredProducts.map((product: any, idx) => (
+                <Link href={`/products/${product.id}`} key={product.id} data-aos="fade-up" data-aos-delay={idx * 100} className="group cursor-pointer bg-white rounded-2xl p-4 border border-border hover:border-accent/30 transition-all hover:shadow-lg">
+                  <div className="bg-gray-100 rounded-xl aspect-[16/10] mb-5 overflow-hidden relative">
+                    <img src={product.images[0] || 'https://placehold.co/600x400'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                  <div className="px-2">
+                    <h3 className="font-bold mb-1 group-hover:text-accent transition-colors">{product.name}</h3>
+                    <div className="flex justify-between items-center mt-3">
+                      <span className="font-bold text-lg text-black">Rp {product.price.toLocaleString()}</span>
+                      <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center"><ArrowRight size={14} /></div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* SERVICES */}
+        <section className="py-24 bg-white">
+          <div className="container-custom px-4">
+            <div data-aos="fade-up" className="text-center max-w-2xl mx-auto mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('services.title')}</h2>
+              <p className="text-muted-foreground">{t('services.desc')}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {featuredProducts.map((p: any) => (
-                <Link href={`/products/${p.id}`} key={p.id} className="bg-white rounded-2xl p-4 border shadow-sm">
-                  <div className="bg-gray-100 rounded-xl aspect-video mb-4 overflow-hidden">
-                    <img src={p.images[0] || 'https://placehold.co/600x400'} className="w-full h-full object-cover" />
-                  </div>
-                  <h3 className="font-bold mb-1">{p.name}</h3>
-                  <p className="text-sm font-bold text-accent">Rp {p.price.toLocaleString()}</p>
-                </Link>
+              {[
+                { icon: <Globe />, title: "Web Development", desc: "Website performa tinggi dengan teknologi terbaru." },
+                { icon: <Smartphone />, title: "Mobile Apps", desc: "Aplikasi Android & iOS yang responsif." },
+                { icon: <Database />, title: "Backend System", desc: "Arsitektur server yang aman dan scalable." }
+              ].map((s, i) => (
+                <div key={i} data-aos="fade-up" data-aos-delay={i * 100} className="p-8 rounded-2xl border border-border bg-secondary/10 hover:bg-white hover:shadow-xl transition-all">
+                  <div className="w-12 h-12 mb-6 bg-black text-white flex items-center justify-center rounded-xl">{s.icon}</div>
+                  <h3 className="text-xl font-bold mb-3">{s.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{s.desc}</p>
+                </div>
               ))}
             </div>
           </div>
@@ -148,8 +215,8 @@ export default function Home() {
             <div>
               <h4 className="font-bold mb-6">{t('footer.support')}</h4>
               <ul className="space-y-4 text-sm text-muted-foreground">
-                <li><Link href="/faq">Help Center</Link></li>
                 <li><Link href="/terms">Terms</Link></li>
+                <li><Link href="/privacy">Privacy</Link></li>
               </ul>
             </div>
             <div>
