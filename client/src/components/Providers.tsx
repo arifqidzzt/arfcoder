@@ -27,7 +27,18 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
       <AOSInit />
-      <Toaster position="top-center" />
+      <Toaster 
+        position="top-center" 
+        containerStyle={{
+          top: '50%',
+          transform: 'translateY(-50%)',
+        }}
+        toastOptions={{
+          style: {
+            margin: 'auto',
+          }
+        }}
+      />
       {children}
       <ChatWidget />
     </GoogleOAuthProvider>

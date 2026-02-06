@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingBag, User, LogOut } from 'lucide-react';
+import { ShoppingBag, User, LogOut, Globe } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useTranslation } from '@/lib/i18n';
 
 export default function Navbar() {
   const cartItems = useCartStore((state) => state.items);
   const { user, logout } = useAuthStore();
+  const { t, language, setLanguage } = useTranslation();
 
   return (
     <nav className="flex items-center justify-between px-8 py-4 border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50 transition-all">
@@ -18,33 +20,39 @@ export default function Navbar() {
         <span className="text-xl font-bold tracking-tighter">ARFCODER</span>
       </Link>
       <div className="hidden md:flex space-x-8 text-sm font-medium">
-        <Link href="/" className="hover:text-gray-600 transition-colors">Beranda</Link>
-        <Link href="/products" className="hover:text-gray-600 transition-colors">Produk</Link>
-        <Link href="/services" className="hover:text-gray-600 transition-colors">Jasa</Link>
-        {user && <Link href="/orders" className="hover:text-gray-600 transition-colors">Pesanan</Link>}
+        <Link href="/" className="hover:text-gray-600 transition-colors">{t('navbar.home')}</Link>
+        <Link href="/products" className="hover:text-gray-600 transition-colors">{t('navbar.products')}</Link>
+        <Link href="/services" className="hover:text-gray-600 transition-colors">{t('navbar.services')}</Link>
+        {user && <Link href="/orders" className="hover:text-gray-600 transition-colors">{t('navbar.orders')}</Link>}
         {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
-          <Link href="/admin" className="text-purple-600 font-bold hover:text-purple-800 transition-colors">Dashboard</Link>
+          <Link href="/admin" className="text-purple-600 font-bold hover:text-purple-800 transition-colors">{t('navbar.admin')}</Link>
         )}
       </div>
       <div className="flex items-center space-x-4">
+        {/* Language Selector */}
+        <div className="flex items-center bg-gray-100 rounded-full p-1 mr-2">
+          <button 
+            onClick={() => setLanguage('id')}
+            className={`px-2 py-1 text-[10px] font-bold rounded-full transition-all ${language === 'id' ? 'bg-white shadow-sm' : 'text-gray-400'}`}
+          >
+            ID
+          </button>
+          <button 
+            onClick={() => setLanguage('en')}
+            className={`px-2 py-1 text-[10px] font-bold rounded-full transition-all ${language === 'en' ? 'bg-white shadow-sm' : 'text-gray-400'}`}
+          >
+            EN
+          </button>
+        </div>
+
         {user ? (
-          <div className="flex items-center space-x-4">
-            <Link href="/profile" className="flex items-center gap-2 hover:bg-gray-50 px-3 py-2 rounded-full transition-colors group">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs overflow-hidden border border-gray-200">
-                {user.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-black">{user.name?.charAt(0).toUpperCase()}</span>
-                )}
-              </div>
-              <span className="text-sm font-medium hidden sm:inline group-hover:text-black">{user.name}</span>
-            </Link>
-            <button onClick={logout} className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-colors" title="Keluar">
+// ... rest of user logic ...
+            <button onClick={logout} className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-colors" title={t('navbar.logout')}>
               <LogOut size={18} />
             </button>
           </div>
         ) : (
-          <Link href="/login" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <Link href="/login" className="p-2 hover:bg-gray-100 rounded-full transition-colors" title={t('navbar.login')}>
             <User size={18} />
           </Link>
         )}

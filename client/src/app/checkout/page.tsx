@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { ShieldCheck, Truck, CreditCard, ArrowRight, MapPin } from 'lucide-react';
+import AuthGuard from '@/components/AuthGuard';
 
 declare global {
   interface Window {
@@ -34,8 +35,14 @@ export default function CheckoutPage() {
   const [appliedVoucher, setAppliedVoucher] = useState<string | null>(null);
 
   useEffect(() => {
-    // Deteksi Perangkat
-    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    // Deteksi Perangkat yang lebih akurat (Termasuk Android Mode Desktop)
+    const checkMobile = () => {
+      const isTouch = navigator.maxTouchPoints > 0;
+      const isMobileUA = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      // Jika punya Touch Point dan bukan Windows PC murni, anggap Mobile
+      setIsMobile(isMobileUA || (isTouch && !navigator.userAgent.includes("Windows NT")));
+    };
+    checkMobile();
     
     fetchPaymentSettings();
     const script = document.createElement('script');
@@ -138,9 +145,10 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
-      <main className="max-w-6xl mx-auto px-4 py-24 w-full">
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <main className="max-w-6xl mx-auto px-4 py-24 w-full">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">1</div>
           <h1 className="text-3xl font-bold tracking-tight">Konfirmasi Pesanan</h1>
@@ -240,26 +248,26 @@ export default function CheckoutPage() {
               {/* Voucher Input */}
               <div className="mb-6">
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Punya Kode Promo?</label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input 
                     type="text" 
                     value={voucherInput}
                     onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
-                    className="flex-1 bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-black font-bold"
+                    className="w-full sm:flex-1 bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-black font-bold"
                     placeholder="KODE100"
                     disabled={!!appliedVoucher}
                   />
                   {appliedVoucher ? (
                     <button 
                       onClick={() => {setAppliedVoucher(null); setDiscount(0); setVoucherInput('');}}
-                      className="px-4 py-2 bg-red-50 text-red-500 rounded-xl text-xs font-bold hover:bg-red-100"
+                      className="w-full sm:w-auto px-6 py-3 bg-red-50 text-red-500 rounded-xl text-xs font-bold hover:bg-red-100 whitespace-nowrap"
                     >
                       Hapus
                     </button>
                   ) : (
                     <button 
                       onClick={handleApplyVoucher}
-                      className="px-4 py-2 bg-black text-white rounded-xl text-xs font-bold hover:bg-gray-800"
+                      className="w-full sm:w-auto px-6 py-3 bg-black text-white rounded-xl text-xs font-bold hover:bg-gray-800 whitespace-nowrap"
                     >
                       Pasang
                     </button>
@@ -307,5 +315,6 @@ export default function CheckoutPage() {
         </div>
       </main>
     </div>
+    </AuthGuard>
   );
 }

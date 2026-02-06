@@ -48,9 +48,13 @@ export const useCartStore = create<CartStore>()(
 
       addItem: async (item) => {
         const { token } = useAuthStore.getState();
-        if (token) {
-          await api.post('/user/cart', { productId: item.id, quantity: item.quantity });
+        if (!token) {
+          const toast = (await import('react-hot-toast')).default;
+          toast.error('Silakan login untuk menambah ke keranjang');
+          return;
         }
+        
+        await api.post('/user/cart', { productId: item.id, quantity: item.quantity });
 
         const currentItems = get().items;
         const existingItem = currentItems.find((i) => i.id === item.id);

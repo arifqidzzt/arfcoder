@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import AuthGuard from '@/components/AuthGuard';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, fetchCart } = useCartStore();
@@ -51,6 +52,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
+      <AuthGuard>
       <div className="min-h-screen bg-white">
         <Navbar />
         <main className="max-w-7xl mx-auto px-8 py-32 text-center">
@@ -65,10 +67,12 @@ export default function CartPage() {
           </Link>
         </main>
       </div>
+      </AuthGuard>
     );
   }
 
   return (
+    <AuthGuard>
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navbar />
       <main className="max-w-6xl mx-auto px-4 sm:px-8 py-12 pt-24">
@@ -155,5 +159,6 @@ export default function CartPage() {
         </div>
       </main>
     </div>
+    </AuthGuard>
   );
 }
