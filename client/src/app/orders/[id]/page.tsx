@@ -131,14 +131,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   const startRedirectCountdown = () => {
     const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          router.push('/orders');
-          return 0;
-        }
-        return prev - 1;
-      });
+      // HANYA kurangi countdown jika tab sedang dilihat (tidak di-minimize/pindah tab)
+      if (document.visibilityState === 'visible') {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            router.push('/orders');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }
     }, 1000);
   };
 
