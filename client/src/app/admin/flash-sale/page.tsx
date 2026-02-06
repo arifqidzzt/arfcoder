@@ -62,13 +62,28 @@ export default function FlashSalePage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Hapus?')) return;
-    try {
-      await api.delete(`/flash-sales/${id}`);
-      fetchData();
-      toast.success('Dihapus');
-    } catch (error) { toast.error('Gagal hapus'); }
+  const handleDelete = (id: string) => {
+    toast((t) => (
+      <div className="flex flex-col gap-3 min-w-[240px]">
+        <span className="font-bold text-sm text-center">Hapus Flash Sale ini?</span>
+        <div className="flex gap-2 justify-center">
+          <button onClick={() => toast.dismiss(t.id)} className="px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-bold transition-colors">Batal</button>
+          <button 
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await api.delete(`/flash-sales/${id}`);
+                fetchData();
+                toast.success('Berhasil dihapus');
+              } catch (error) { toast.error('Gagal menghapus'); }
+            }} 
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors shadow-lg shadow-red-200"
+          >
+            Hapus
+          </button>
+        </div>
+      </div>
+    ));
   };
 
   return (

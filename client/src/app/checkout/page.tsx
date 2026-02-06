@@ -20,6 +20,7 @@ export default function CheckoutPage() {
   const { user, token } = useAuthStore();
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false); // Deteksi HP
   const router = useRouter();
 
   // Payment Settings
@@ -33,6 +34,9 @@ export default function CheckoutPage() {
   const [appliedVoucher, setAppliedVoucher] = useState<string | null>(null);
 
   useEffect(() => {
+    // Deteksi Perangkat
+    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    
     fetchPaymentSettings();
     const script = document.createElement('script');
 // ... existing script logic ...
@@ -63,16 +67,17 @@ export default function CheckoutPage() {
 
   const getMethodDetails = (id: string) => {
     const map: any = {
-      bca_va: { name: "BCA Virtual Account", type: "bank_transfer", method: "bca" },
-      bni_va: { name: "BNI Virtual Account", type: "bank_transfer", method: "bni" },
-      bri_va: { name: "BRI Virtual Account", type: "bank_transfer", method: "bri" },
-      mandiri_va: { name: "Mandiri VA", type: "echannel", method: "mandiri" },
-      permata_va: { name: "Permata VA", type: "bank_transfer", method: "permata" },
-      qris: { name: "QRIS", type: "qris", method: "qris" },
-      gopay: { name: "GoPay", type: "gopay", method: "gopay" },
-      shopeepay: { name: "ShopeePay", type: "shopeepay", method: "shopeepay" },
+      bca_va: { name: "BCA Virtual Account", type: "bank_transfer", method: "bca", isEWallet: false },
+      bni_va: { name: "BNI Virtual Account", type: "bank_transfer", method: "bni", isEWallet: false },
+      bri_va: { name: "BRI Virtual Account", type: "bank_transfer", method: "bri", isEWallet: false },
+      mandiri_va: { name: "Mandiri VA", type: "echannel", method: "mandiri", isEWallet: false },
+      permata_va: { name: "Permata VA", type: "bank_transfer", method: "permata", isEWallet: false },
+      qris: { name: "QRIS", type: "qris", method: "qris", isEWallet: false },
+      gopay: { name: "GoPay", type: "gopay", method: "gopay", isEWallet: true },
+      shopeepay: { name: "ShopeePay", type: "shopeepay", method: "shopeepay", isEWallet: true },
+      dana: { name: "DANA", type: "dana", method: "dana", isEWallet: true },
     };
-    return map[id] || { name: id, type: id, method: id };
+    return map[id] || { name: id, type: id, method: id, isEWallet: false };
   };
 
   const handleApplyVoucher = async () => {
@@ -186,20 +191,39 @@ export default function CheckoutPage() {
                   <h2 className="font-bold uppercase tracking-wider text-sm">Pilih Metode Pembayaran</h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {availableMethods.map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setSelectedMethod(m)}
-                      className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
-                        selectedMethod === m
-                          ? "border-black bg-gray-50"
-                          : "border-gray-50 hover:border-gray-100"
-                      }`}
-                    >
-                      <span className="font-bold text-sm">{getMethodDetails(m).name}</span>
-                      {selectedMethod === m && <div className="w-4 h-4 bg-black rounded-full" />}
-                    </button>
-                  ))}
+                  {availableMethods.map((m) => {
+                    const details = getMethodDetails(m);
+                    const isDisabled = !isMobile && details.isEWallet; // Nonaktifkan jika desktop dan e-wallet
+
+                    return (
+                      <button
+                        key={m}
+                        onClick={() => {
+                          if (isDisabled) {
+                            toast.error("Metode ini hanya tersedia jika Anda mengakses website melalui Smartphone (Android/iOS).", {
+                              position: "bottom-center",
+                              duration: 4000,
+                            });
+                            return;
+                          }
+                          setSelectedMethod(m);
+                        }}
+                        className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                          isDisabled 
+                            ? "bg-gray-50 border-gray-100 opacity-60 cursor-pointer" 
+                            : selectedMethod === m
+                              ? "border-black bg-gray-50"
+                              : "border-gray-50 hover:border-gray-100"
+                        }`}
+                      >
+                        <div className="flex flex-col items-start">
+                          <span className="font-bold text-sm">{details.name}</span>
+                          {isDisabled && <span className="text-[9px] text-red-500 font-medium uppercase">Hanya di HP</span>}
+                        </div>
+                        {selectedMethod === m && <div className="w-4 h-4 bg-black rounded-full" />}
+                      </button>
+                    );
+                  })}
                   {availableMethods.length === 0 && (
                     <p className="text-sm text-gray-500 col-span-2 italic">Tidak ada metode pembayaran tersedia untuk kombinasi produk ini.</p>
                   )}

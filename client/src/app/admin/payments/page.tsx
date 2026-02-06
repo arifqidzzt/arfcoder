@@ -15,6 +15,7 @@ const PAYMENT_METHODS = [
   { id: "qris", name: "QRIS (Gopay, OVO, Dana, LinkAja)", category: "E-Wallet & QR" },
   { id: "gopay", name: "GoPay (Deeplink)", category: "E-Wallet & QR" },
   { id: "shopeepay", name: "ShopeePay", category: "E-Wallet & QR" },
+  { id: "dana", name: "DANA", category: "E-Wallet & QR" },
 ];
 
 export default function AdminPaymentSettings() {

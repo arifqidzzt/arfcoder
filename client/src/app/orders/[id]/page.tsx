@@ -145,15 +145,29 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }, 1000);
   };
 
-  const handleCancel = async () => {
-    if (!confirm('Yakin batalkan pesanan?')) return;
-    try {
-      await api.put(`/orders/${id}/cancel`, {});
-      toast.success('Pesanan dibatalkan');
-      fetchOrder();
-    } catch (error) {
-      toast.error('Gagal membatalkan pesanan');
-    }
+  const handleCancel = () => {
+    toast((t) => (
+      <div className="flex flex-col gap-3 min-w-[240px]">
+        <span className="font-bold text-sm">Batalkan pesanan ini?</span>
+        <p className="text-[10px] text-gray-500 leading-tight">Tindakan ini tidak dapat dibatalkan dan stok akan dikembalikan.</p>
+        <div className="flex gap-2 justify-end mt-2">
+          <button onClick={() => toast.dismiss(t.id)} className="px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-bold transition-colors">Batal</button>
+          <button 
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await api.put(`/orders/${id}/cancel`, {});
+                toast.success('Pesanan dibatalkan');
+                fetchOrder();
+              } catch (error) { toast.error('Gagal membatalkan'); }
+            }} 
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors shadow-lg shadow-red-200"
+          >
+            Ya, Batalkan
+          </button>
+        </div>
+      </div>
+    ), { duration: 6000 });
   };
 
   if (!hasHydrated || loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center font-bold">Memuat data...</div>;
@@ -227,12 +241,30 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
               {order.paymentDetails.qr_url && (
                 <div className="flex flex-col items-center">
-                  <p className="text-xs text-gray-500 mb-4 text-center">Scan QR Code di bawah untuk membayar</p>
-                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <img src={order.paymentDetails.qr_url} alt="QR Code" className="w-48 h-48" />
-                  </div>
+                  {/* Sembunyikan QR jika GoPay (karena sudah ada Deeplink), kecuali jika tidak ada Deeplink */}
+                  {!(order.paymentType === 'gopay' && order.paymentDetails.deeplink) && (
+                    <>
+                      <p className="text-xs text-gray-500 mb-4 text-center">Scan QR Code di bawah untuk membayar</p>
+                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                        <img src={order.paymentDetails.qr_url} alt="QR Code" className="w-48 h-48" />
+                      </div>
+                    </>
+                  )}
+                  
                   {order.paymentDetails.deeplink && (
-                    <a href={order.paymentDetails.deeplink} className="mt-4 px-6 py-2 bg-[#00AABB] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#00AABB]/20">Buka di Gojek</a>
+                    <div className="mt-4 flex flex-col items-center gap-2">
+                      <a 
+                        href={order.paymentDetails.deeplink} 
+                        className={`px-8 py-3 text-white rounded-xl font-bold shadow-lg transition-transform active:scale-95 ${
+                          order.paymentType === 'gopay' ? 'bg-[#00AABB] shadow-[#00AABB]/20' : 
+                          order.paymentType === 'shopeepay' ? 'bg-[#EE4D2D] shadow-[#EE4D2D]/20' :
+                          'bg-[#118EEA] shadow-[#118EEA]/20'
+                        }`}
+                      >
+                        Buka Aplikasi {order.paymentType === 'gopay' ? 'Gojek' : order.paymentType === 'shopeepay' ? 'Shopee' : 'DANA'}
+                      </a>
+                      <p className="text-[10px] text-gray-400 mt-2">Klik tombol di atas jika Anda membayar melalui HP</p>
+                    </div>
                   )}
                 </div>
               )}

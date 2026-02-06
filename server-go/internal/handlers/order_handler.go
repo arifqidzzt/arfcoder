@@ -141,7 +141,7 @@ func CreateOrder(c *fiber.Ctx) error {
 			details["va_number"] = resp.VaNumbers[0].VANumber
 			details["bank"] = resp.VaNumbers[0].Bank
 		}
-		if resp.PaymentType == "qris" || resp.PaymentType == "gopay" {
+		if resp.PaymentType == "qris" || resp.PaymentType == "gopay" || resp.PaymentType == "shopeepay" || resp.PaymentType == "dana" {
 			for _, action := range resp.Actions {
 				if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
 				if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
@@ -209,7 +209,7 @@ func GetOrderById(c *fiber.Ctx) error {
 							details["va_number"] = resp.VaNumbers[0].VANumber
 							details["bank"] = resp.VaNumbers[0].Bank
 						}
-						if resp.PaymentType == "qris" || resp.PaymentType == "gopay" {
+						if resp.PaymentType == "qris" || resp.PaymentType == "gopay" || resp.PaymentType == "shopeepay" || resp.PaymentType == "dana" {
 							for _, action := range resp.Actions {
 								if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
 								if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }

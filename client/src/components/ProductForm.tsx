@@ -17,6 +17,7 @@ const PAYMENT_METHODS = [
   { id: "qris", name: "QRIS" },
   { id: "gopay", name: "GoPay" },
   { id: "shopeepay", name: "ShopeePay" },
+  { id: "dana", name: "DANA" },
 ];
 
 interface ProductFormProps {

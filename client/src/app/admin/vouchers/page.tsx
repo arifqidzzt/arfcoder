@@ -60,15 +60,28 @@ export default function VoucherPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Yakin hapus voucher ini?')) return;
-    try {
-      await api.delete(`/vouchers/${id}`);
-      toast.success('Voucher dihapus');
-      fetchVouchers();
-    } catch (error) {
-      toast.error('Gagal menghapus');
-    }
+  const handleDelete = (id: string) => {
+    toast((t) => (
+      <div className="flex flex-col gap-3 min-w-[240px]">
+        <span className="font-bold text-sm text-center">Hapus voucher ini?</span>
+        <div className="flex gap-2 justify-center">
+          <button onClick={() => toast.dismiss(t.id)} className="px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-xs font-bold transition-colors">Batal</button>
+          <button 
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await api.delete(`/vouchers/${id}`);
+                toast.success('Voucher dihapus');
+                fetchVouchers();
+              } catch (error) { toast.error('Gagal menghapus'); }
+            }} 
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors shadow-lg shadow-red-200"
+          >
+            Ya, Hapus
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 });
   };
 
   return (
