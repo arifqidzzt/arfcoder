@@ -8,14 +8,16 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	// --- Public Webhook ---
-	// URL: https://arfzxdev.com/api/midtrans-callback
-	app.Post("/api/midtrans-callback", handlers.HandleMidtransWebhook)
-	app.Get("/api/midtrans-callback", func(c *fiber.Ctx) error {
-		return c.SendString("Webhook is active")
-	})
-
 	api := app.Group("/api", middleware.RateLimitAPI())
+
+	// --- SATU-SATUNYA WEBHOOK RESMI (DI LUAR GRUP PROTEKSI) ---
+	// URL: https://arfzxdev.com/api/midtrans-callback
+	api.All("/midtrans-callback", func(c *fiber.Ctx) error {
+		if c.Method() == "GET" {
+			return c.SendString("Webhook Midtrans is active and ready!")
+		}
+		return handlers.HandleMidtransWebhook(c)
+	})
 
 	// --- AUTH ---
 	auth := api.Group("/auth", middleware.RateLimitAuth(), middleware.SecureMiddleware)
@@ -34,7 +36,7 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/2fa/setup", middleware.AuthMiddleware, handlers.SetupTwoFactor)
 	auth.Post("/2fa/enable", middleware.AuthMiddleware, handlers.EnableTwoFactor)
 
-	// --- PRODUCTS ---
+	// --- PROTECTED PRODUCTS ---
 	products := api.Group("/products", middleware.SecureMiddleware)
 	products.Get("/services", handlers.GetPublicServices)
 	products.Get("/", handlers.GetAllProducts)
@@ -43,9 +45,10 @@ func SetupRoutes(app *fiber.App) {
 	products.Put("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.UpdateProduct)
 	products.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteProduct)
 
-	// --- ORDERS ---
+	// --- PROTECTED ORDERS ---
 	orders := api.Group("/orders", middleware.SecureMiddleware)
 	orders.Post("/", middleware.AuthMiddleware, handlers.CreateOrder)
+	// Webhook dihapus dari sini agar tidak bentrok dengan :id
 	orders.Get("/my", middleware.AuthMiddleware, handlers.GetMyOrders)
 	orders.Get("/:id", middleware.AuthMiddleware, handlers.GetOrderById)
 	orders.Put("/:id/cancel", middleware.AuthMiddleware, handlers.CancelOrder)
@@ -81,7 +84,7 @@ func SetupRoutes(app *fiber.App) {
 	user.Post("/email/verify-new", handlers.VerifyNewEmail)
 	user.Post("/phone/request", handlers.RequestPhoneChange)
 	user.Post("/phone/verify-old", handlers.VerifyOldPhone)
-	user.Post("/phone/request-new", handlers.RequestNewPhoneOtp)
+	user.Post("/phone-request-new", handlers.RequestNewPhoneOtp)
 	user.Post("/phone/verify-new", handlers.VerifyNewPhone)
 
 	// --- CART ---

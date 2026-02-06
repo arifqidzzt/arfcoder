@@ -108,7 +108,7 @@ func CreateOrder(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"message": "Failed to create order"})
 	}
 
-	// Clean User Cart
+	// Kosongkan keranjang di DB
 	database.DB.Where("\"userId\" = ?", user.UserID).Delete(&models.CartItem{})
 
 	if paymentSetting.Mode == models.MidtransModeCore {
@@ -175,6 +175,7 @@ func GetOrderById(c *fiber.Ctx) error {
 	userClaims := c.Locals("user").(*utils.JWTClaims)
 
 	var order models.Order
+	// Preload Product agar data tampil lengkap
 	if err := database.DB.Preload("Items.Product").Preload("User").Preload("Timeline").First(&order, "id = ?", id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"message": "Order not found"})
 	}
@@ -183,24 +184,20 @@ func GetOrderById(c *fiber.Ctx) error {
 		return c.Status(403).JSON(fiber.Map{"message": "Forbidden"})
 	}
 
-	// --- FIX CRASH: Nil Check sebelum akses map ---
+	// --- FIX CRASH: Nil check pada PaymentDetails ---
 	if order.Status == models.OrderStatusPending {
 		if time.Since(order.CreatedAt) > 24*time.Hour {
 			database.DB.Model(&order).Update("status", models.OrderStatusCancelled)
 			order.Status = models.OrderStatusCancelled
-		} else if order.PaymentDetails != nil { 
-			// PENTING: Hanya jalankan jika PaymentDetails TIDAK nil
+		} else if order.PaymentDetails != nil {
 			if expiryStr, ok := order.PaymentDetails["expiry_time"].(string); ok && expiryStr != "" {
 				expiryTime, _ := time.Parse("2006-01-02 15:04:05", expiryStr)
 				if !expiryTime.IsZero() && time.Now().After(expiryTime) {
-					// Regenerate
+					// Auto-Regenerate logic (tetap ada tapi diperbaiki)
 					newTxId := fmt.Sprintf("%s-%d", order.ID, time.Now().Unix())
 					coreReq := &coreapi.ChargeReq{
 						PaymentType: coreapi.CoreapiPaymentType(order.PaymentType),
-						TransactionDetails: midtrans.TransactionDetails{
-							OrderID:  newTxId,
-							GrossAmt: int64(order.TotalAmount),
-						},
+						TransactionDetails: midtrans.TransactionDetails{OrderID: newTxId, GrossAmt: int64(order.TotalAmount)},
 					}
 					if order.PaymentType == "bank_transfer" {
 						coreReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.Bank(order.PaymentMethod)}

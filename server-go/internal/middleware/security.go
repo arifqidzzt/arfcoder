@@ -9,6 +9,11 @@ import (
 )
 
 func SecureMiddleware(c *fiber.Ctx) error {
+	// --- KARTU PASS WEBHOOK (HANYA UNTUK SATU URL INI) ---
+	if c.Path() == "/api/orders/webhook" {
+		return c.Next()
+	}
+
 	// 1. Check Header Keamanan
 	secureHeader := c.Get("x-arf-secure-token")
 	if !utils.VerifySecureHeader(secureHeader) {
