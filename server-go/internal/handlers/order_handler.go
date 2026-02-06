@@ -143,8 +143,6 @@ func CreateOrder(c *fiber.Ctx) error {
 		}
 
 		details := make(utils.JSONField)
-		
-		// Map for easier access
 		details["payment_type"] = string(resp.PaymentType)
 
 		if len(resp.VaNumbers) > 0 {
@@ -155,27 +153,30 @@ func CreateOrder(c *fiber.Ctx) error {
 			details["va_number"] = resp.PermataVaNumber
 			details["bank"] = "permata"
 		}
-		
-				// Universal Deeplink/QRIS logic
-				for _, action := range resp.Actions {
-					if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
-					if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
+
+		for _, action := range resp.Actions {
+			if action.Name == "generate-qr-code" {
+				details["qr_url"] = action.URL
+			}
+			if action.Name == "deeplink-redirect" {
+				details["deeplink"] = action.URL
+			}
+		}
+
+		if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
+			details["deeplink"] = resp.RedirectURL
+		}
+
+		if req.PaymentType == "dana" && (details["deeplink"] == nil || details["deeplink"] == "") {
+			for _, action := range resp.Actions {
+				if action.URL != "" {
+					details["deeplink"] = action.URL
+					break
 				}
-				
-				// DANA and E-Wallets often use RedirectURL directly
-				if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
-					details["deeplink"] = resp.RedirectURL
-				}
-		
-				// Fallback for Dana specifically if still missing
-				if req.PaymentType == "dana" && (details["deeplink"] == nil || details["deeplink"] == "") {
-					// Some Midtrans versions put it in Actions but with different name
-					for _, action := range resp.Actions {
-						if action.URL != "" { details["deeplink"] = action.URL; break }
-					}
-				}
-		
-				details["expiry_time"] = resp.ExpiryTime
+			}
+		}
+
+		details["expiry_time"] = resp.ExpiryTime
 		database.DB.Model(&order).Update("paymentDetails", details)
 		order.PaymentDetails = details
 
