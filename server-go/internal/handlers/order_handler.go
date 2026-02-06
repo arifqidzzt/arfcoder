@@ -108,7 +108,6 @@ func CreateOrder(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"message": "Failed to create order"})
 	}
 
-	// Clean User Cart
 	database.DB.Where("\"userId\" = ?", user.UserID).Delete(&models.CartItem{})
 
 	if paymentSetting.Mode == models.MidtransModeCore {
@@ -123,40 +122,39 @@ func CreateOrder(c *fiber.Ctx) error {
 			},
 		}
 
+		// LOGIKA KHUSUS E-WALLET (WAJIB ADA CALLBACK URL)
+		callbackURL := config.ClientURL + "/orders/" + order.ID
+		if req.PaymentType == "gopay" {
+			coreReq.Gopay = &coreapi.GopayDetails{EnableCallback: true, CallbackURL: callbackURL}
+		} else if req.PaymentType == "shopeepay" {
+			coreReq.Shopeepay = &coreapi.ShopeepayDetails{CallbackURL: callbackURL}
+		}
+
 		if req.PaymentType == "bank_transfer" {
 			coreReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.Bank(req.PaymentMethod)}
 		}
 
 		resp, err := CoreClient.ChargeTransaction(coreReq)
 		if err != nil {
-			return c.Status(201).JSON(fiber.Map{"order": order, "message": "Order created but payment failed"})
+			fmt.Println("MIDTRANS_ERROR:", err)
+			return c.Status(201).JSON(fiber.Map{"order": order, "message": "Payment system busy"})
 		}
 
 		details := make(utils.JSONField)
-		
-		// VA Logic
 		if len(resp.VaNumbers) > 0 {
 			details["va_number"] = resp.VaNumbers[0].VANumber
 			details["bank"] = resp.VaNumbers[0].Bank
 		}
-		if resp.PermataVaNumber != "" {
-			details["va_number"] = resp.PermataVaNumber
-			details["bank"] = "permata"
-		}
-
-		// E-Wallet & QRIS Logic (Universal Action Handler)
 		for _, action := range resp.Actions {
 			if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
 			if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
 		}
-		
-		// Fallback untuk DANA/ShopeePay jika tidak ada di actions
+		// DANA Fallback
 		if details["deeplink"] == nil && resp.RedirectURL != "" {
 			details["deeplink"] = resp.RedirectURL
 		}
 
 		details["expiry_time"] = resp.ExpiryTime
-
 		database.DB.Model(&order).Update("paymentDetails", details)
 		order.PaymentDetails = details
 
@@ -185,46 +183,35 @@ func GetOrderById(c *fiber.Ctx) error {
 		return c.Status(403).JSON(fiber.Map{"message": "Forbidden"})
 	}
 
-	// Auto Regenerate Logic
-	if order.Status == models.OrderStatusPending {
-		if time.Since(order.CreatedAt) > 24*time.Hour {
-			database.DB.Model(&order).Update("status", models.OrderStatusCancelled)
-			order.Status = models.OrderStatusCancelled
-		} else if order.PaymentDetails != nil {
-			if expiryStr, ok := order.PaymentDetails["expiry_time"].(string); ok && expiryStr != "" {
-				expiryTime, _ := time.Parse("2006-01-02 15:04:05", expiryStr)
-				if !expiryTime.IsZero() && time.Now().After(expiryTime) {
-					// Regenerate Code
-					newTxId := fmt.Sprintf("%s-%d", order.ID, time.Now().Unix())
-					coreReq := &coreapi.ChargeReq{
-						PaymentType: coreapi.CoreapiPaymentType(order.PaymentType),
-						TransactionDetails: midtrans.TransactionDetails{OrderID: newTxId, GrossAmt: int64(order.TotalAmount)},
+	if order.Status == models.OrderStatusPending && order.PaymentDetails != nil {
+		expiryStr, ok := order.PaymentDetails["expiry_time"].(string)
+		if ok && expiryStr != "" {
+			expiryTime, _ := time.Parse("2006-01-02 15:04:05", expiryStr)
+			if !expiryTime.IsZero() && time.Now().After(expiryTime) {
+				// Auto-Regenerate Logic
+				newTxId := fmt.Sprintf("%s-%d", order.ID, time.Now().Unix())
+				coreReq := &coreapi.ChargeReq{
+					PaymentType: coreapi.CoreapiPaymentType(order.PaymentType),
+					TransactionDetails: midtrans.TransactionDetails{OrderID: newTxId, GrossAmt: int64(order.TotalAmount)},
+				}
+				if order.PaymentType == "bank_transfer" {
+					coreReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.Bank(order.PaymentMethod)}
+				}
+				resp, err := CoreClient.ChargeTransaction(coreReq)
+				if err == nil {
+					details := make(utils.JSONField)
+					if len(resp.VaNumbers) > 0 {
+						details["va_number"] = resp.VaNumbers[0].VANumber
+						details["bank"] = resp.VaNumbers[0].Bank
 					}
-					if order.PaymentType == "bank_transfer" {
-						coreReq.BankTransfer = &coreapi.BankTransferDetails{Bank: midtrans.Bank(order.PaymentMethod)}
+					for _, action := range resp.Actions {
+						if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
+						if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
 					}
-					resp, err := CoreClient.ChargeTransaction(coreReq)
-					if err == nil {
-						details := make(utils.JSONField)
-						if len(resp.VaNumbers) > 0 {
-							details["va_number"] = resp.VaNumbers[0].VANumber
-							details["bank"] = resp.VaNumbers[0].Bank
-						}
-						if resp.PermataVaNumber != "" {
-							details["va_number"] = resp.PermataVaNumber
-							details["bank"] = "permata"
-						}
-						for _, action := range resp.Actions {
-							if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
-							if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
-						}
-						if details["deeplink"] == nil && resp.RedirectURL != "" {
-							details["deeplink"] = resp.RedirectURL
-						}
-						details["expiry_time"] = resp.ExpiryTime
-						database.DB.Model(&order).Update("paymentDetails", details)
-						order.PaymentDetails = details
-					}
+					if details["deeplink"] == nil && resp.RedirectURL != "" { details["deeplink"] = resp.RedirectURL }
+					details["expiry_time"] = resp.ExpiryTime
+					database.DB.Model(&order).Update("paymentDetails", details)
+					order.PaymentDetails = details
 				}
 			}
 		}
