@@ -28,15 +28,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
       <AOSInit />
       <Toaster 
-        position="top-center" 
-        containerStyle={{
-          top: '50%',
-          transform: 'translateY(-50%)',
-        }}
+        position="bottom-right" 
         toastOptions={{
-          style: {
-            margin: 'auto',
-          }
+          duration: 4000,
+          className: 'text-sm font-medium',
         }}
       />
       {children}

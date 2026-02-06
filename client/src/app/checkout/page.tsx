@@ -143,7 +143,7 @@ export default function CheckoutPage() {
                       const d = getMethodDetails(m);
                       const disabled = !isMobile && d.isEWallet;
                       return (
-                        <button key={m} onClick={() => disabled ? toast.error(t('checkout.only_mobile')) : setSelectedMethod(m)} className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${disabled ? 'opacity-40 grayscale cursor-not-allowed' : selectedMethod === m ? 'border-black bg-gray-50' : 'border-gray-50'}`}>
+                        <button key={m} onClick={() => disabled ? toast.error(t('checkout.only_mobile'), { position: "top-center" }) : setSelectedMethod(m)} className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${disabled ? 'opacity-40 grayscale cursor-not-allowed' : selectedMethod === m ? 'border-black bg-gray-50' : 'border-gray-50'}`}>
                           <div className="flex flex-col items-start text-sm font-bold">
                             {d.name}
                             {disabled && <span className="text-[8px] text-red-500 uppercase">{t('checkout.only_mobile')}</span>}
@@ -163,14 +163,14 @@ export default function CheckoutPage() {
                 
                 <div className="mb-6">
                   <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t('checkout.voucher')}</label>
-                  <div className="flex flex-col gap-2">
-                    <input type="text" value={voucherInput} onChange={(e) => setVoucherInput(e.target.value.toUpperCase())} className="w-full bg-gray-50 border p-3 rounded-xl text-sm font-bold" placeholder="KODE100" />
-                    <button onClick={appliedVoucher ? () => {setAppliedVoucher(null); setDiscount(0);} : handleApplyVoucher} className="w-full py-3 bg-black text-white rounded-xl text-xs font-bold">{appliedVoucher ? t('checkout.remove') : t('checkout.apply')}</button>
+                  <div className="flex gap-2">
+                    <input type="text" value={voucherInput} onChange={(e) => setVoucherInput(e.target.value.toUpperCase())} className="flex-1 bg-gray-50 border p-3 rounded-xl text-sm font-bold min-w-0" placeholder="KODE100" />
+                    <button onClick={appliedVoucher ? () => {setAppliedVoucher(null); setDiscount(0);} : handleApplyVoucher} className="px-4 py-3 bg-black text-white rounded-xl text-xs font-bold whitespace-nowrap">{appliedVoucher ? t('checkout.remove') : t('checkout.apply')}</button>
                   </div>
                 </div>
 
                 <div className="space-y-4 mb-8 pt-4 border-t">
-                  <div className="flex justify-between text-sm text-gray-500"><span>Items</span><span>Rp {total().toLocaleString()}</span></div>
+                  <div className="flex justify-between text-sm text-gray-500"><span>{t('checkout.items')}</span><span>Rp {total().toLocaleString()}</span></div>
                   {discount > 0 && <div className="flex justify-between text-green-600 font-bold text-sm"><span>Discount</span><span>-Rp {discount.toLocaleString()}</span></div>}
                   <div className="flex justify-between items-center pt-4 border-t"><span className="font-bold">Total</span><span className="text-2xl font-black text-accent">Rp {(total() - discount).toLocaleString()}</span></div>
                 </div>
