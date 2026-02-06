@@ -7,6 +7,7 @@ import { ArrowRight, Code, CheckCircle, Zap, Globe, Database, Smartphone, Shoppi
 import api from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import { useCartStore } from '@/store/useCartStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import toast from 'react-hot-toast';
 
 export default function Home() {
