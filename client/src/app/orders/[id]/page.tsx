@@ -197,35 +197,35 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <div><h1 className="text-xl font-bold">{t('orders.title')}</h1><p className="text-sm text-gray-500">{t('orders.invoice')}: {order.invoiceNumber}</p></div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
+        {/* Status Card - BACKUP STYLE */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
-              <span className="text-sm text-gray-500 mr-2">{t('orders.status')}</span>
+              <span className="text-sm text-gray-500 mr-2">Status Pesanan</span>
               {order.status === 'PENDING' && <CountdownTimer dateString={order.createdAt} expiryTime={order.paymentDetails?.expiry_time} />}
             </div>
             <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
               ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 
                 order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 
-                order.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : 
-                'bg-blue-100 text-blue-700'}`}>
+                'bg-orange-100 text-orange-700'}`}>
               {order.status}
             </span>
           </div>
 
-          {/* Core API Details - CLEANER */}
+          {/* Core API Details */}
           {order.status === "PENDING" && order.paymentDetails && (
-            <div className="mb-6 space-y-6 border-t pt-6">
-              <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-center">
-                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
-                  <CreditCard size={14} /> {t('orders.instruction')}
+            <div className="mb-6 space-y-4 border-t pt-6">
+              <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 text-center">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                  Instruksi Pembayaran
                 </h3>
                 
                 {order.paymentDetails.va_number && (
-                  <div className="max-w-xs mx-auto mb-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase mb-2">VA Number ({order.paymentDetails.bank?.toUpperCase()})</p>
-                    <div className="flex items-center justify-between bg-white p-4 rounded-xl border">
+                  <div className="max-w-xs mx-auto mb-4 text-left">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">VA Number ({order.paymentDetails.bank?.toUpperCase()})</p>
+                    <div className="flex items-center justify-between bg-white p-4 rounded-lg border">
                       <span className="text-lg font-mono font-bold tracking-widest">{order.paymentDetails.va_number}</span>
-                      <button onClick={() => {navigator.clipboard.writeText(order.paymentDetails?.va_number || ""); toast.success(t('orders.copy'))}} className="text-accent">
+                      <button onClick={() => {navigator.clipboard.writeText(order.paymentDetails?.va_number || ""); toast.success("VA Berhasil disalin!")}} className="text-accent">
                         <Copy size={18} />
                       </button>
                     </div>
@@ -235,17 +235,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 {(order.paymentDetails.qr_url || order.paymentDetails.deeplink) && (
                   <div className="flex flex-col items-center gap-4">
                     {order.paymentDetails.qr_url && !order.paymentDetails.deeplink && (
-                      <div className="bg-white p-4 rounded-xl border inline-block mb-2 shadow-sm">
+                      <div className="bg-white p-3 rounded-xl border inline-block mb-2">
                         <img src={order.paymentDetails.qr_url} className="w-40 h-40" alt="QR Code" />
                       </div>
                     )}
                     
                     {order.paymentDetails.deeplink && (
-                      <a href={order.paymentDetails.deeplink} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 px-8 py-3 text-white rounded-xl font-bold text-sm shadow-lg transition-transform active:scale-95 ${
+                      <a href={order.paymentDetails.deeplink} target="_blank" rel="noopener noreferrer" className={`w-full flex items-center justify-center gap-2 py-3 text-white rounded-lg font-bold text-sm shadow-sm transition-transform active:scale-95 ${
                         order.paymentType === 'gopay' ? 'bg-[#00AABB]' : 
                         order.paymentType === 'shopeepay' ? 'bg-[#EE4D2D]' : 'bg-[#118EEA]'
                       }`}>
-                        {t('orders.open_app')} {order.paymentType?.toUpperCase()}
+                        BUKA APLIKASI {order.paymentType?.toUpperCase()}
                         <ArrowRight size={18} />
                       </a>
                     )}
@@ -256,14 +256,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           )}
 
           {order.status === 'PENDING' && (
-            <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
               {order.snapToken && !order.paymentDetails && (
-                <button onClick={handlePaySnap} className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors">
-                  Bayar Sekarang (Snap)
+                <button onClick={handlePaySnap} className="flex-1 bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors">
+                  Bayar Sekarang
                 </button>
               )}
-              <button onClick={handleCancel} className="w-full bg-white border border-red-100 text-red-600 py-3 rounded-xl font-bold hover:bg-red-50 transition-colors">
-                {t('orders.cancel_order')}
+              <button onClick={handleCancel} className="flex-1 bg-white border border-red-200 text-red-600 py-3 rounded-lg font-bold hover:bg-red-50 transition-colors">
+                Batalkan
               </button>
             </div>
           )}

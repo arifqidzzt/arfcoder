@@ -162,13 +162,12 @@ func CreateOrder(c *fiber.Ctx) error {
 			if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
 		}
 		
-		// DANA and some E-Wallets use direct RedirectURL
+		// DANA and E-Wallets often use RedirectURL directly
 		if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
 			details["deeplink"] = resp.RedirectURL
 		}
 		
-		// ShopeePay specific: sometimes it returns QR in Actions and Deeplink in Actions.
-		// If DANA, resp.RedirectURL is usually the one.
+		details["expiry_time"] = resp.ExpiryTime
 		database.DB.Model(&order).Update("paymentDetails", details)
 		order.PaymentDetails = details
 

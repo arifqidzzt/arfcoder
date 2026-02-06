@@ -125,28 +125,32 @@ export default function Home() {
           </div>
         </section>
 
-        {/* TECH STACK MARQUEE WITH LOGOS (LARGER) */}
-        <section className="py-20 border-y border-border bg-secondary/30 overflow-hidden">
+        {/* TECH STACK MARQUEE WITH LOGOS (LARGER & COLORED) */}
+        <section className="py-24 border-y border-border bg-secondary/30 overflow-hidden">
           <div className="w-full inline-flex flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
-            <ul className="flex items-center justify-center md:justify-start [&_li]:mx-20 animate-marquee text-muted-foreground font-black text-xl uppercase tracking-[0.3em] opacity-80">
+            <ul className="flex items-center justify-center md:justify-start [&_li]:mx-20 animate-marquee text-muted-foreground font-black text-xl uppercase tracking-[0.3em]">
               {languages.map((tech, i) => (
                 <li key={i} className="whitespace-nowrap flex flex-col items-center gap-6">
                   <img 
-                    src={`https://cdn.simpleicons.org/${techLogos[tech] || tech.toLowerCase()}/gray`} 
+                    src={tech === "Java" 
+                      ? "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" 
+                      : `https://cdn.simpleicons.org/${techLogos[tech] || tech.toLowerCase()}`} 
                     alt="" 
-                    className="w-20 h-20 object-contain opacity-60 hover:opacity-100 transition-opacity" 
+                    className="w-20 h-20 object-contain hover:scale-110 transition-transform duration-300" 
                   />
-                  <span className="text-lg">{tech}</span>
+                  <span className="text-lg font-bold text-gray-500">{tech}</span>
                 </li>
               ))}
               {languages.map((tech, i) => (
                 <li key={`dup-${i}`} className="whitespace-nowrap flex flex-col items-center gap-6">
                   <img 
-                    src={`https://cdn.simpleicons.org/${techLogos[tech] || tech.toLowerCase()}/gray`} 
+                    src={tech === "Java" 
+                      ? "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" 
+                      : `https://cdn.simpleicons.org/${techLogos[tech] || tech.toLowerCase()}`} 
                     alt="" 
-                    className="w-20 h-20 object-contain opacity-60 hover:opacity-100 transition-opacity" 
+                    className="w-20 h-20 object-contain hover:scale-110 transition-transform duration-300" 
                   />
-                  <span className="text-lg">{tech}</span>
+                  <span className="text-lg font-bold text-gray-500">{tech}</span>
                 </li>
               ))}
             </ul>
@@ -154,12 +158,18 @@ export default function Home() {
         </section>
 
         {/* LATEST PRODUCTS */}
-        <section className="py-24 bg-white">
-          <div className="container-custom px-4">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+        <section className="py-24 bg-white relative">
+          <div className="container-custom px-4 relative z-10">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
               <div data-aos="fade-right">
-                <span className="text-accent font-black tracking-widest uppercase text-xs mb-3 block">{t('navbar.products')}</span>
-                <h2 className="text-3xl md:text-5xl font-black tracking-tight">{t('home.latest_products')}</h2>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-px w-10 bg-accent" />
+                  <span className="text-accent font-black tracking-[0.3em] uppercase text-xs">{t('navbar.products')}</span>
+                </div>
+                <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-none">
+                  <span className="text-black">{t('home.latest_products').split(' ')[0]}</span><br/>
+                  <span className="text-gray-300">{t('home.latest_products').split(' ').slice(1).join(' ')}</span>
+                </h2>
               </div>
               <Link href="/products" className="btn-hero-secondary text-sm px-8 py-3" data-aos="fade-left">{t('home.view_all')}</Link>
             </div>
@@ -224,9 +234,9 @@ export default function Home() {
         {/* CTA - IMPROVED */}
         <section className="py-20 px-4">
           <div className="max-w-5xl mx-auto relative rounded-[3rem] overflow-hidden bg-black py-20 px-8 md:px-16 text-center">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-[80px] -mr-32 -mt-32" />
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-8 leading-tight">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-[80px] -mr-32 -mt-32" />
+            <div className="relative z-10 flex flex-col items-center">
+              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-8 leading-tight italic max-w-2xl">
                 {t('home.start_transform')}
               </h2>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -236,7 +246,7 @@ export default function Home() {
                   </Link>
                 ) : (
                   <Link href="/products" className="px-10 py-4 bg-white text-black rounded-xl font-black text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-all">
-                    Explore Products
+                    Explore Our Products
                   </Link>
                 )}
                 <Link href="/contact" className="px-10 py-4 bg-transparent border-2 border-white/20 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">

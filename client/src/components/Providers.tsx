@@ -29,9 +29,19 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <AOSInit />
       <Toaster 
         position="bottom-right" 
+        reverseOrder={false}
+        gutter={8}
         toastOptions={{
           duration: 4000,
-          className: 'text-sm font-medium',
+          className: 'text-sm font-medium border border-gray-100 shadow-xl rounded-2xl',
+          style: {
+            background: '#fff',
+            color: '#000',
+          },
+        }}
+        containerStyle={{
+          bottom: 40,
+          right: 40,
         }}
       />
       {children}
