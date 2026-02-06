@@ -67,32 +67,52 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const { user, token, hasHydrated } = useAuthStore();
   const router = useRouter();
 
-  // Polling Status Logic
+  // 1. Logika Sinkronisasi Auth (Hydration)
   useEffect(() => {
+    // Jangan lakukan apapun sebelum data localStorage terisi kembali ke Store
     if (!hasHydrated) return;
-    if (!token) { router.push('/login'); return; }
+
+    // Setelah Hydrated, baru cek apakah benar-benar ada token
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
 
     fetchOrder();
+  }, [id, token, hasHydrated]);
+
+  // 2. Polling Status (Terpisah agar tidak reset fetchOrder)
+  useEffect(() => {
+    if (!hasHydrated || !token || order?.status !== 'PENDING') return;
 
     const pollInterval = setInterval(() => {
-      if (order?.status === 'PENDING') {
-        checkStatusOnly();
-      }
-    }, 3000); // Cek setiap 3 detik (dipercepat)
+      checkStatusOnly();
+    }, 3000);
 
     return () => clearInterval(pollInterval);
   }, [id, token, hasHydrated, order?.status]);
 
   const fetchOrder = async () => {
     try {
+      setLoading(true);
       const res = await api.get(`/orders/${id}`);
-      if (user && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && res.data.userId !== user.id) {
-        router.push('/orders');
-        return;
-      }
+      
+      // Keamanan sisi client: pastikan user adalah pemilik
+      // Gunakan setTimeout kecil untuk memastikan state 'user' sudah siap
+      setTimeout(() => {
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN' && res.data.userId !== currentUser.id) {
+          router.replace('/orders');
+        }
+      }, 100);
+
       setOrder(res.data);
     } catch (error: any) {
-      toast.error('Gagal memuat pesanan');
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        router.replace('/login');
+      } else {
+        toast.error('Gagal memuat pesanan');
+      }
     } finally {
       setLoading(false);
     }
