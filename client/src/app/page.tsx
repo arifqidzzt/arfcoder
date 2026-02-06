@@ -13,7 +13,7 @@ export default function Home() {
   const [flashSales, setFlashSales] = useState<any[]>([]);
   
   const languages = [
-    "JavaScript", "TypeScript", "Python", "Go", "Java", "PHP", "Rust", "Cplusplus", "Swift", "Kotlin", "Ruby", "Dart"
+    "JavaScript", "TypeScript", "Python", "Go", "Java", "PHP", "Rust", "Kotlin", "Ruby", "Dart", "Swift"
   ];
 
   useEffect(() => {
@@ -93,20 +93,20 @@ export default function Home() {
           </div>
         </section>
 
-        {/* TECH STACK MARQUEE WITH LOGOS */}
-        <section className="py-16 border-y border-border bg-secondary/30 overflow-hidden">
+        {/* TECH STACK MARQUEE WITH LOGOS (LARGER) */}
+        <section className="py-20 border-y border-border bg-secondary/30 overflow-hidden">
           <div className="w-full inline-flex flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
-            <ul className="flex items-center justify-center md:justify-start [&_li]:mx-12 animate-marquee text-muted-foreground font-black text-xs uppercase tracking-[0.2em] opacity-60">
+            <ul className="flex items-center justify-center md:justify-start [&_li]:mx-16 animate-marquee text-muted-foreground font-black text-sm uppercase tracking-[0.2em] opacity-70">
               {languages.map((tech, i) => (
-                <li key={i} className="whitespace-nowrap flex flex-col items-center gap-4">
-                  <img src={`https://cdn.simpleicons.org/${tech.toLowerCase()}/gray`} alt="" className="w-10 h-10 object-contain opacity-50" />
-                  <span>{tech === 'Cplusplus' ? 'C++' : tech}</span>
+                <li key={i} className="whitespace-nowrap flex flex-col items-center gap-6">
+                  <img src={`https://cdn.simpleicons.org/${tech.toLowerCase()}/gray`} alt="" className="w-14 h-14 object-contain opacity-60 hover:opacity-100 transition-opacity" />
+                  <span>{tech}</span>
                 </li>
               ))}
               {languages.map((tech, i) => (
-                <li key={`dup-${i}`} className="whitespace-nowrap flex flex-col items-center gap-4">
-                  <img src={`https://cdn.simpleicons.org/${tech.toLowerCase()}/gray`} alt="" className="w-10 h-10 object-contain opacity-50" />
-                  <span>{tech === 'Cplusplus' ? 'C++' : tech}</span>
+                <li key={`dup-${i}`} className="whitespace-nowrap flex flex-col items-center gap-6">
+                  <img src={`https://cdn.simpleicons.org/${tech.toLowerCase()}/gray`} alt="" className="w-14 h-14 object-contain opacity-60" />
+                  <span>{tech}</span>
                 </li>
               ))}
             </ul>

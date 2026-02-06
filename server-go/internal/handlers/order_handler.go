@@ -122,7 +122,6 @@ func CreateOrder(c *fiber.Ctx) error {
 			},
 		}
 
-		// FIX CASE SENSITIVITY: CallbackUrl & ShopeePay
 		callbackURL := config.ClientURL + "/orders/" + order.ID
 		if req.PaymentType == "gopay" {
 			coreReq.Gopay = &coreapi.GopayDetails{EnableCallback: true, CallbackUrl: callbackURL}
@@ -149,11 +148,15 @@ func CreateOrder(c *fiber.Ctx) error {
 			details["va_number"] = resp.PermataVaNumber
 			details["bank"] = "permata"
 		}
+		
+		// Universal Deeplink/QRIS logic
 		for _, action := range resp.Actions {
 			if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
 			if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
 		}
-		if details["deeplink"] == nil && resp.RedirectURL != "" {
+		
+		// DANA and some E-Wallets use direct RedirectURL
+		if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
 			details["deeplink"] = resp.RedirectURL
 		}
 
@@ -206,15 +209,13 @@ func GetOrderById(c *fiber.Ctx) error {
 						details["va_number"] = resp.VaNumbers[0].VANumber
 						details["bank"] = resp.VaNumbers[0].Bank
 					}
-					if resp.PermataVaNumber != "" {
-						details["va_number"] = resp.PermataVaNumber
-						details["bank"] = "permata"
-					}
 					for _, action := range resp.Actions {
 						if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
 						if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
 					}
-					if details["deeplink"] == nil && resp.RedirectURL != "" { details["deeplink"] = resp.RedirectURL }
+					if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
+						details["deeplink"] = resp.RedirectURL
+					}
 					details["expiry_time"] = resp.ExpiryTime
 					database.DB.Model(&order).Update("paymentDetails", details)
 					order.PaymentDetails = details
