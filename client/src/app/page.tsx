@@ -3,18 +3,49 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { ArrowRight, Code, CheckCircle, Zap, Globe, Database, Smartphone } from 'lucide-react';
+import { ArrowRight, Code, CheckCircle, Zap, Globe, Database, Smartphone, ShoppingCart } from 'lucide-react';
 import api from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
+import { useCartStore } from '@/store/useCartStore';
+import toast from 'react-hot-toast';
 
 export default function Home() {
   const { t } = useTranslation();
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [flashSales, setFlashSales] = useState<any[]>([]);
+  const addItem = useCartStore((state) => state.addItem);
   
   const languages = [
-    "JavaScript", "TypeScript", "Python", "Go", "Java", "PHP", "Rust", "Kotlin", "Ruby", "Dart", "Swift"
+    "JavaScript", "TypeScript", "Python", "Go", "Java", "PHP", "Rust", "Kotlin", "Ruby", "Dart", "Swift", "C++"
   ];
+
+  const techLogos: { [key: string]: string } = {
+    "JavaScript": "javascript",
+    "TypeScript": "typescript",
+    "Python": "python",
+    "Go": "go",
+    "Java": "oracle",
+    "PHP": "php",
+    "Rust": "rust",
+    "Kotlin": "kotlin",
+    "Ruby": "ruby",
+    "Dart": "dart",
+    "Swift": "swift",
+    "C++": "cplusplus"
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, product: any) => {
+    e.preventDefault();
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price * (1 - (product.discount || 0) / 100),
+      quantity: 1,
+      image: product.images[0],
+      paymentMethods: product.paymentMethods
+    });
+    toast.success(`${product.name} added to cart!`);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -96,16 +127,16 @@ export default function Home() {
         {/* TECH STACK MARQUEE WITH LOGOS (LARGER) */}
         <section className="py-20 border-y border-border bg-secondary/30 overflow-hidden">
           <div className="w-full inline-flex flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
-            <ul className="flex items-center justify-center md:justify-start [&_li]:mx-16 animate-marquee text-muted-foreground font-black text-sm uppercase tracking-[0.2em] opacity-70">
+            <ul className="flex items-center justify-center md:justify-start [&_li]:mx-16 animate-marquee text-muted-foreground font-black text-lg uppercase tracking-[0.2em] opacity-70">
               {languages.map((tech, i) => (
-                <li key={i} className="whitespace-nowrap flex flex-col items-center gap-6">
-                  <img src={`https://cdn.simpleicons.org/${tech.toLowerCase()}/gray`} alt="" className="w-14 h-14 object-contain opacity-60 hover:opacity-100 transition-opacity" />
+                <li key={i} className="whitespace-nowrap flex flex-col items-center gap-8">
+                  <img src={`https://cdn.simpleicons.org/${techLogos[tech] || tech.toLowerCase()}/gray`} alt="" className="w-20 h-20 object-contain opacity-60 hover:opacity-100 transition-opacity" />
                   <span>{tech}</span>
                 </li>
               ))}
               {languages.map((tech, i) => (
-                <li key={`dup-${i}`} className="whitespace-nowrap flex flex-col items-center gap-6">
-                  <img src={`https://cdn.simpleicons.org/${tech.toLowerCase()}/gray`} alt="" className="w-14 h-14 object-contain opacity-60" />
+                <li key={`dup-${i}`} className="whitespace-nowrap flex flex-col items-center gap-8">
+                  <img src={`https://cdn.simpleicons.org/${techLogos[tech] || tech.toLowerCase()}/gray`} alt="" className="w-20 h-20 object-contain opacity-60" />
                   <span>{tech}</span>
                 </li>
               ))}
@@ -135,7 +166,21 @@ export default function Home() {
                     <p className="text-muted-foreground text-sm line-clamp-2 mb-6 leading-relaxed italic">{product.description}</p>
                     <div className="flex justify-between items-center">
                       <span className="font-black text-2xl">Rp {product.price.toLocaleString('id-ID')}</span>
-                      <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center group-hover:translate-x-1 transition-transform shadow-lg shadow-black/20"><ArrowRight size={18} /></div>
+                      <div className="flex gap-3">
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAddToCart(e, product);
+                          }}
+                          className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center hover:bg-accent transition-colors shadow-lg shadow-black/20"
+                        >
+                          <ShoppingCart size={20} />
+                        </button>
+                        <div className="w-12 h-12 rounded-full bg-secondary text-black flex items-center justify-center group-hover:translate-x-1 transition-transform shadow-lg">
+                          <ArrowRight size={20} />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </Link>

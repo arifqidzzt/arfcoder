@@ -141,12 +141,10 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {availableMethods.map((m) => {
                       const d = getMethodDetails(m);
-                      const disabled = !isMobile && d.isEWallet;
                       return (
-                        <button key={m} onClick={() => disabled ? toast.error(t('checkout.only_mobile'), { position: "top-center" }) : setSelectedMethod(m)} className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${disabled ? 'opacity-40 grayscale cursor-not-allowed' : selectedMethod === m ? 'border-black bg-gray-50' : 'border-gray-50'}`}>
+                        <button key={m} onClick={() => setSelectedMethod(m)} className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${selectedMethod === m ? 'border-black bg-gray-50' : 'border-gray-50'}`}>
                           <div className="flex flex-col items-start text-sm font-bold">
                             {d.name}
-                            {disabled && <span className="text-[8px] text-red-500 uppercase">{t('checkout.only_mobile')}</span>}
                           </div>
                           {selectedMethod === m && <div className="w-3 h-3 bg-black rounded-full" />}
                         </button>

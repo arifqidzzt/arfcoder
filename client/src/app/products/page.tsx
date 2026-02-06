@@ -177,14 +177,33 @@ export default function ProductList() {
                         {product.discount > 0 && <span className="bg-black text-white text-[10px] px-2.5 py-1 font-black rounded-lg">-{product.discount}%</span>}
                         {product.type === 'JASA' && <span className="bg-white/90 text-purple-700 border border-purple-100 text-[10px] px-2.5 py-1 font-black rounded-lg">JASA</span>}
                       </div>
-                      <button onClick={(e) => handleAddToCart(e, product)} className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-xl translate-y-16 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all z-10 hover:bg-black hover:text-white"><ShoppingCart size={18} strokeWidth={2.5}/></button>
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleAddToCart(e, product);
+                        }} 
+                        className="absolute bottom-4 right-4 bg-black text-white p-3 rounded-full shadow-xl transition-all z-10 hover:bg-accent active:scale-95 hidden md:flex"
+                      >
+                        <ShoppingCart size={18} strokeWidth={2.5}/>
+                      </button>
                     </div>
                     <div className="p-6 flex-1 flex flex-col">
                       <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-accent transition-colors">{product.name}</h3>
                       <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-6">{product.description}</p>
-                      <div className="mt-auto pt-4 border-t border-gray-50 flex flex-col">
-                        {product.discount > 0 && <span className="text-xs text-gray-400 line-through mb-0.5">Rp {product.price.toLocaleString()}</span>}
-                        <span className="font-black text-xl text-black">Rp {(product.price * (1 - product.discount / 100)).toLocaleString()}</span>
+                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                        <div className="flex flex-col">
+                          {product.discount > 0 && <span className="text-xs text-gray-400 line-through mb-0.5">Rp {product.price.toLocaleString()}</span>}
+                          <span className="font-black text-xl text-black">Rp {(product.price * (1 - product.discount / 100)).toLocaleString()}</span>
+                        </div>
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAddToCart(e, product);
+                          }} 
+                          className="md:hidden p-3 bg-black text-white rounded-xl active:scale-95 shadow-lg"
+                        >
+                          <ShoppingCart size={18} />
+                        </button>
                       </div>
                     </div>
                   </Link>

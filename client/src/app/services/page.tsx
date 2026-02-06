@@ -62,7 +62,7 @@ export default function ServicesPage() {
                 </p>
                 <div className="pt-6 border-t border-gray-100 flex justify-between items-center">
                   <span className="font-black text-xl text-accent">
-                    Rp {isNaN(Number(service.price)) ? service.price : Number(service.price).toLocaleString()}
+                    {isNaN(Number(service.price)) ? service.price : `Rp ${Number(service.price).toLocaleString()}`}
                   </span>
                   <a href="https://wa.me/628988289551" target="_blank" className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all shadow-sm">
                     <Icons.ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
