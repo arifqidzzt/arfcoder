@@ -175,7 +175,8 @@ func CreateOrder(c *fiber.Ctx) error {
 					}
 				}
 		
-				details["expiry_time"] = resp.ExpiryTime		database.DB.Model(&order).Update("paymentDetails", details)
+				details["expiry_time"] = resp.ExpiryTime
+		database.DB.Model(&order).Update("paymentDetails", details)
 		order.PaymentDetails = details
 
 		return c.Status(201).JSON(fiber.Map{"order": order, "mode": "CORE"})
