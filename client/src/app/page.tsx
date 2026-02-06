@@ -166,7 +166,7 @@ export default function Home() {
                   <div className="h-px w-10 bg-accent" />
                   <span className="text-accent font-black tracking-[0.3em] uppercase text-xs">{t('navbar.products')}</span>
                 </div>
-                <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-none">
+                <h2 className="text-2xl md:text-4xl font-black tracking-tighter leading-none italic">
                   <span className="text-black">{t('home.latest_products').split(' ')[0]}</span><br/>
                   <span className="text-gray-300">{t('home.latest_products').split(' ').slice(1).join(' ')}</span>
                 </h2>
