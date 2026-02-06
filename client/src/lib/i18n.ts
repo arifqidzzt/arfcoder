@@ -160,6 +160,14 @@ const translations = {
       refund: "Kebijakan Refund",
       faq: "Pusat Bantuan (FAQ)"
     },
+    admin: {
+      dashboard: "Dashboard",
+      users: "Pengguna",
+      vouchers: "Voucher",
+      payments: "Pembayaran",
+      settings: "Pengaturan",
+      view_site: "Lihat Website"
+    },
     common: {
       loading: "Memuat data...",
       error: "Terjadi kesalahan",
@@ -326,6 +334,14 @@ const translations = {
       privacy: "Privacy Policy",
       refund: "Refund Policy",
       faq: "Help Center (FAQ)"
+    },
+    admin: {
+      dashboard: "Dashboard",
+      users: "Users",
+      vouchers: "Vouchers",
+      payments: "Payments",
+      settings: "Settings",
+      view_site: "View Website"
     },
     common: {
       loading: "Loading data...",
