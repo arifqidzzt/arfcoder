@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { ArrowLeft, Copy, Download, CreditCard, Activity, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Copy, Download, CreditCard, Activity, CheckCircle2, Loader2, AlertCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from '@/lib/i18n';
 
@@ -26,6 +26,10 @@ interface OrderDetail {
     biller_code?: string;
     expiry_time?: string;
   };
+  snapToken?: string;
+  deliveryInfo?: string;
+  refundReason?: string;
+  refundAccount?: string; 
   createdAt: string;
   items: {
     product: { name: string; images: string[]; type: string };
@@ -62,17 +66,30 @@ const CountdownTimer = ({ dateString, expiryTime }: { dateString: string; expiry
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { t } = useTranslation();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [successRedirect, setSuccessRedirect] = useState(false);
   const [countdown, setCountdown] = useState(3);
-  const { user, token, hasHydrated } = useAuthStore();
-  const { t } = useTranslation();
+  const { token, hasHydrated } = useAuthStore();
   const router = useRouter();
+
+  // Refund States
+  const [refundReason, setRefundReason] = useState('');
+  const [refundAccount, setRefundAccount] = useState('');
+  const [showRefundForm, setShowRefundForm] = useState(false);
 
   useEffect(() => {
     if (!hasHydrated) return;
     if (!token) { router.replace('/login'); return; }
+    
+    // Load Midtrans Snap Script (Just in case mode is SNAP)
+    const script = document.createElement('script');
+    const isProduction = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true';
+    script.src = isProduction ? "https://app.midtrans.com/snap/snap.js" : "https://app.sandbox.midtrans.com/snap/snap.js";
+    script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '');
+    document.body.appendChild(script);
+
     fetchOrder();
   }, [id, token, hasHydrated]);
 
@@ -86,19 +103,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     try {
       setLoading(true);
       const res = await api.get(`/orders/${id}`);
-      setTimeout(() => {
-        const currentUser = useAuthStore.getState().user;
-        if (currentUser && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN' && res.data.userId !== currentUser.id) {
-          router.replace('/orders');
-        }
-      }, 100);
       setOrder(res.data);
     } catch (error: any) {
-      if (error.response?.status === 403 || error.response?.status === 401) {
-        router.replace('/login');
-      } else {
-        toast.error('Error loading order');
-      }
+      toast.error('Error loading order');
+      router.push('/orders');
     } finally {
       setLoading(false);
     }
@@ -119,15 +127,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     const timer = setInterval(() => {
       if (document.visibilityState === 'visible') {
         setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            router.push('/orders');
-            return 0;
-          }
+          if (prev <= 1) { clearInterval(timer); router.push('/orders'); return 0; }
           return prev - 1;
         });
       }
     }, 1000);
+  };
+
+  const handlePaySnap = () => {
+    if (order?.snapToken && (window as any).snap) {
+      (window as any).snap.pay(order.snapToken, {
+        onSuccess: () => window.location.reload(),
+        onPending: () => window.location.reload(),
+        onClose: () => toast('Selesaikan pembayaran Anda')
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -136,25 +150,27 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         <span className="font-bold text-sm">{t('cart.remove_confirm')}</span>
         <div className="flex gap-2 justify-end mt-2">
           <button onClick={() => toast.dismiss(t_toast.id)} className="px-4 py-2 bg-gray-50 rounded-xl text-xs font-bold">{t('cart.cancel')}</button>
-          <button 
-            onClick={async () => {
-              toast.dismiss(t_toast.id);
-              try {
-                await api.put(`/orders/${id}/cancel`, {});
-                toast.success('Cancelled');
-                fetchOrder();
-              } catch (error) { toast.error('Failed'); }
-            }} 
-            className="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold"
-          >
-            {t('cart.delete')}
-          </button>
+          <button onClick={async () => {
+            toast.dismiss(t_toast.id);
+            try { await api.put(`/orders/${id}/cancel`, {}); toast.success('Cancelled'); fetchOrder(); } 
+            catch (error) { toast.error('Failed'); }
+          }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold">{t('cart.delete')}</button>
         </div>
       </div>
     ), { position: "top-center" });
   };
 
-  if (!hasHydrated || loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center font-bold">Loading...</div>;
+  const handleSubmitRefund = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.post(`/orders/${id}/refund`, { reason: refundReason, account: refundAccount });
+      toast.success('Refund requested');
+      setShowRefundForm(false);
+      fetchOrder();
+    } catch (error) { toast.error('Failed'); }
+  };
+
+  if (!hasHydrated || loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center font-bold">{t('common.loading')}</div>;
   if (!order) return <div className="min-h-screen bg-gray-50 pt-24 text-center font-bold">Not Found</div>;
 
   return (
@@ -178,7 +194,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       <main className="max-w-3xl mx-auto px-4 pt-24">
         <div className="flex items-center gap-4 mb-6">
           <button onClick={() => router.push('/orders')} className="p-2 bg-white rounded-full border border-gray-100 hover:bg-gray-100"><ArrowLeft size={20} /></button>
-          <div><h1 className="text-xl font-bold">{t('orders.title')}</h1><p className="text-sm text-gray-500">Invoice: {order.invoiceNumber}</p></div>
+          <div><h1 className="text-xl font-bold">{t('orders.title')}</h1><p className="text-sm text-gray-500">{t('orders.invoice')}: {order.invoiceNumber}</p></div>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
@@ -190,6 +206,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <span className={`px-3 py-1 rounded-full text-xs font-bold ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{order.status}</span>
           </div>
 
+          {/* Core API Details */}
           {order.status === "PENDING" && order.paymentDetails && (
             <div className="mb-6 bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-200">
               <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 flex items-center gap-2"><CreditCard size={16} /> {t('orders.instruction')}</h3>
@@ -198,22 +215,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="space-y-4">
                   <p className="text-xs text-gray-500 mb-1">VA Number ({order.paymentDetails.bank?.toUpperCase()})</p>
                   <div className="flex items-center justify-between bg-white p-4 rounded-xl border">
-                    <span className="text-xl font-mono font-bold">{order.paymentDetails.va_number}</span>
+                    <span className="text-xl font-mono font-bold tracking-widest">{order.paymentDetails.va_number}</span>
                     <button onClick={() => {navigator.clipboard.writeText(order.paymentDetails?.va_number || ""); toast.success(t('orders.copy'))}} className="text-blue-600"><Copy size={18} /></button>
                   </div>
                 </div>
               )}
 
-              {order.paymentDetails.qr_url && (
+              {(order.paymentDetails.qr_url || order.paymentDetails.deeplink) && (
                 <div className="flex flex-col items-center">
-                  {!( (order.paymentType === 'gopay' || order.paymentType === 'shopeepay' || order.paymentType === 'dana') && order.paymentDetails.deeplink ) && (
+                  {order.paymentDetails.qr_url && !order.paymentDetails.deeplink && (
                     <>
                       <p className="text-xs text-gray-500 mb-4">{t('orders.scan_qr')}</p>
-                      <div className="bg-white p-4 rounded-2xl border"><img src={order.paymentDetails.qr_url} className="w-48 h-48" /></div>
+                      <div className="bg-white p-4 rounded-2xl border mb-4"><img src={order.paymentDetails.qr_url} className="w-48 h-48" /></div>
                     </>
                   )}
                   {order.paymentDetails.deeplink && (
-                    <a href={order.paymentDetails.deeplink} className={`mt-4 px-8 py-3 text-white rounded-xl font-bold ${order.paymentType === 'gopay' ? 'bg-[#00AABB]' : order.paymentType === 'shopeepay' ? 'bg-[#EE4D2D]' : 'bg-[#118EEA]'}`}>
+                    <a href={order.paymentDetails.deeplink} className={`mt-2 px-8 py-3 text-white rounded-xl font-bold shadow-lg ${order.paymentType === 'gopay' ? 'bg-[#00AABB]' : order.paymentType === 'shopeepay' ? 'bg-[#EE4D2D]' : 'bg-[#118EEA]'}`}>
                       {t('orders.open_app')} {order.paymentType?.toUpperCase()}
                     </a>
                   )}
@@ -221,13 +238,61 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               )}
             </div>
           )}
+
+          {/* Snap Pay Button */}
+          {order.status === 'PENDING' && order.snapToken && !order.paymentDetails && (
+            <button onClick={handlePaySnap} className="w-full bg-black text-white py-3 rounded-lg font-bold mb-3">Bayar Sekarang (Snap)</button>
+          )}
+          
           {order.status === 'PENDING' && <button onClick={handleCancel} className="w-full bg-white border border-red-200 text-red-600 py-3 rounded-lg font-bold">{t('orders.cancel_order')}</button>}
+          {order.status === 'PAID' && !showRefundForm && !order.refundReason && <button onClick={() => setShowRefundForm(true)} className="w-full mt-4 text-xs text-gray-400 underline">{t('orders.refund')}</button>}
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+        {/* Timeline */}
+        {order.timeline && order.timeline.length > 0 && (
+          <div className="bg-white rounded-xl p-6 border border-gray-100 mb-6">
+            <h3 className="font-bold mb-6 flex items-center gap-2 text-accent"><Activity size={18}/> {t('orders.timeline')}</h3>
+            <div className="relative pl-4 border-l-2 border-gray-100 space-y-8">
+              {order.timeline.map((step, idx) => (
+                <div key={idx} className="relative">
+                  <div className="absolute -left-[21px] top-0 w-4 h-4 bg-accent rounded-full border-4 border-white"></div>
+                  <h4 className="font-bold text-sm">{step.title}</h4>
+                  <p className="text-[10px] text-gray-400">{new Date(step.timestamp).toLocaleString()}</p>
+                  {step.description && <p className="text-sm text-gray-600 mt-2 bg-gray-50 p-3 rounded-lg border border-gray-100">{step.description}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Delivery Info */}
+        {order.deliveryInfo && (
+          <div className="bg-blue-50 rounded-xl p-6 border border-blue-100 mb-6 text-blue-800">
+            <h3 className="font-bold mb-2 flex items-center gap-2"><Download size={18}/> {t('orders.delivery')}</h3>
+            <div className="bg-white p-4 rounded-lg border border-blue-100 text-sm font-mono">{order.deliveryInfo}</div>
+          </div>
+        )}
+
+        {/* Refund Form */}
+        {showRefundForm && (
+          <div className="bg-white rounded-xl p-6 border border-gray-100 mb-6">
+            <h3 className="font-bold mb-4">{t('orders.refund_form')}</h3>
+            <form onSubmit={handleSubmitRefund} className="space-y-4">
+              <textarea required value={refundReason} onChange={e => setRefundReason(e.target.value)} className="w-full p-3 border rounded-lg text-sm" placeholder={t('orders.reason')} />
+              <input required value={refundAccount} onChange={e => setRefundAccount(e.target.value)} className="w-full p-3 border rounded-lg text-sm" placeholder={t('orders.account')} />
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={() => setShowRefundForm(false)} className="text-sm text-gray-400">Cancel</button>
+                <button type="submit" className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">{t('orders.submit_refund')}</button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Items List */}
+        <div className="bg-white rounded-xl p-6 border border-gray-100">
           <h3 className="font-bold mb-4">{t('orders.items')}</h3>
           {order.items.map((item, idx) => (
-            <div key={idx} className="flex gap-4 border-b last:border-0 pb-4 last:pb-0 mb-4 last:mb-0">
+            <div key={idx} className="flex gap-4 border-b last:border-0 pb-4 mb-4">
               <img src={item.product.images[0]} className="w-16 h-16 rounded-lg object-cover" />
               <div className="flex-1"><h4 className="font-medium text-sm">{item.product.name}</h4><p className="text-xs text-gray-500">{item.quantity} x Rp {item.price.toLocaleString()}</p></div>
               <p className="font-bold text-sm">Rp {(item.price * item.quantity).toLocaleString()}</p>
