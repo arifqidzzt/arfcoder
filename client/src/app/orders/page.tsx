@@ -64,10 +64,10 @@ export default function MyOrdersPage() {
   });
 
   const tabs = [
-    { id: 'ALL', label: t('orders.all') || 'Semua' },
-    { id: 'UNPAID', label: t('orders.unpaid') || 'Belum Bayar' },
-    { id: 'PROCESS', label: t('orders.process') || 'Diproses' },
-    { id: 'DONE', label: t('orders.done') || 'Selesai' },
+    { id: 'ALL', label: 'All' },
+    { id: 'UNPAID', label: 'Unpaid' },
+    { id: 'PROCESS', label: 'Process' },
+    { id: 'DONE', label: 'Done' },
   ];
 
   return (
@@ -103,7 +103,7 @@ export default function MyOrdersPage() {
                 <div key={order.id} className="block border border-gray-100 rounded-[2rem] p-8 hover:shadow-2xl transition-all bg-white relative group">
                   <div className="flex justify-between items-start mb-8">
                     <div className="space-y-3">
-                      {/* FIXED STATUS COLORS */}
+                      {/* RESTORED STATUS COLORS */}
                       <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.1em] shadow-sm
                         ${order.status === 'PAID' ? 'bg-green-500 text-white' : 
                           order.status === 'PENDING' ? 'bg-orange-500 text-white' : 

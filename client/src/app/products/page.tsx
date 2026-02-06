@@ -17,7 +17,7 @@ interface Product {
   discount: number;
   images: string[];
   type: string;
-  paymentMethods?: string[];
+  paymentMethods?: string[]; // Added for Core API
   category?: { name: string };
 }
 
@@ -46,19 +46,27 @@ export default function ProductList() {
     fetchProducts();
   }, []);
 
+  // Filter & Sort Logic (Restored)
   useEffect(() => {
     let result = [...products];
+
     if (search) {
-      result = result.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()));
+      result = result.filter(p => 
+        p.name.toLowerCase().includes(search.toLowerCase()) || 
+        p.description.toLowerCase().includes(search.toLowerCase())
+      );
     }
+
     if (selectedType !== 'ALL') {
       result = result.filter(p => p.type === selectedType);
     }
+
     if (sortBy === 'price_low') {
       result.sort((a, b) => (a.price * (1 - a.discount/100)) - (b.price * (1 - b.discount/100)));
     } else if (sortBy === 'price_high') {
       result.sort((a, b) => (b.price * (1 - b.discount/100)) - (a.price * (1 - a.discount/100)));
     }
+
     setFilteredProducts(result);
   }, [search, selectedType, sortBy, products]);
 
@@ -69,10 +77,10 @@ export default function ProductList() {
       name: product.name,
       price: product.price * (1 - product.discount / 100),
       quantity: 1,
-      image: product.images[0] || 'https://placehold.co/600x400?text=No+Image',
-      paymentMethods: product.paymentMethods
+      image: product.images[0] || 'https://placehold.co/600x400',
+      paymentMethods: product.paymentMethods // Passing payment methods
     });
-    toast.success(`${product.name} added!`);
+    toast.success(`${product.name} +1`);
   };
 
   return (
@@ -138,7 +146,7 @@ export default function ProductList() {
                   <select 
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-900 py-3 px-4 pr-8 rounded-xl focus:border-black text-sm font-bold"
+                    className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded-xl focus:border-black text-sm font-bold"
                   >
                     <option value="newest">{t('products.newest')}</option>
                     <option value="price_low">{t('products.price_low')}</option>
@@ -152,7 +160,7 @@ export default function ProductList() {
             </div>
           </aside>
 
-          {/* Product Grid */}
+          {/* Product Grid - RESTORED ORIGINAL UI */}
           <div className="lg:col-span-3">
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -176,32 +184,35 @@ export default function ProductList() {
                       <img 
                         src={product.images[0] || 'https://placehold.co/600x400'} 
                         alt="" 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
                       />
+                      
                       <div className="absolute top-4 left-4 flex flex-col gap-2">
                         {product.discount > 0 && <span className="bg-black text-white text-[10px] px-2.5 py-1 font-black rounded-lg shadow-lg">-{product.discount}%</span>}
                         {product.type === 'JASA' && <span className="bg-white/90 text-purple-700 border border-purple-100 text-[10px] px-2.5 py-1 font-black rounded-lg shadow-sm">JASA</span>}
                       </div>
+
                       {/* QUICK ADD BUTTON RESTORED */}
                       <button 
                         onClick={(e) => handleAddToCart(e, product)}
                         className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-xl translate-y-16 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all z-10 hover:bg-black hover:text-white"
+                        title="Add to Cart"
                       >
                         <ShoppingCart size={18} strokeWidth={2.5}/>
                       </button>
                     </div>
 
                     <div className="p-6 flex-1 flex flex-col">
-                      <div className="mb-auto">
-                        <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-accent transition-colors">{product.name}</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{product.description}</p>
-                      </div>
-                      <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
+                      <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-accent transition-colors">{product.name}</h3>
+                      <p className="text-muted-foreground text-sm line-clamp-2 mb-6 leading-relaxed italic">{product.description}</p>
+                      
+                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                         <div className="flex flex-col">
                           {product.discount > 0 && <span className="text-xs text-gray-400 line-through mb-0.5">Rp {product.price.toLocaleString()}</span>}
                           <span className="font-black text-xl text-black">Rp {(product.price * (1 - product.discount / 100)).toLocaleString()}</span>
                         </div>
-                        {/* MOBILE ADD BUTTON */}
+                        
+                        {/* Mobile Add Button */}
                         <button onClick={(e) => handleAddToCart(e, product)} className="lg:hidden p-2 bg-gray-50 text-gray-900 rounded-lg active:scale-95"><ShoppingCart size={18} /></button>
                       </div>
                     </div>

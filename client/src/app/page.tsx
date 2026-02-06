@@ -37,9 +37,9 @@ export default function Home() {
       <Navbar />
 
       <main className="flex-grow w-full">
-        {/* HERO SECTION */}
+        {/* HERO SECTION - RESTORED ORIGINAL UI */}
         <section className="relative min-h-[90vh] flex items-center pt-20 pb-16 md:pt-24 md:pb-20 bg-grid-pattern">
-          {/* Background Circles */}
+          {/* Background Blobs */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-1/4 -right-20 md:-right-32 w-64 h-64 md:w-96 md:h-96 bg-accent/5 rounded-full blur-3xl animate-pulse opacity-70" />
             <div className="absolute bottom-1/4 -left-20 md:-left-32 w-64 h-64 md:w-96 md:h-96 bg-accent/5 rounded-full blur-3xl animate-pulse opacity-70" style={{ animationDelay: '1s' }} />
@@ -54,7 +54,7 @@ export default function Home() {
                 </span>
               </div>
 
-              <h1 data-aos="fade-up" data-aos-delay="100" className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter mb-6 md:mb-8 leading-[1.1] break-words text-black">
+              <h1 data-aos="fade-up" data-aos-delay="100" className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-6 md:mb-8 leading-[1.1] break-words text-black">
                 {t('home.hero_title_part1')}<br />
                 <span className="text-gradient block mt-2 pb-2">{t('home.hero_title_part2')}</span>
               </h1>
@@ -79,7 +79,7 @@ export default function Home() {
                     <Zap className="w-5 h-5" />
                   </div>
                   <h3 className="text-lg font-bold mb-2">{t('home.fast_delivery')}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed italic">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Optimasi performa maksimal untuk load time di bawah 1 detik.
                   </p>
                 </div>
@@ -89,7 +89,7 @@ export default function Home() {
                     <CheckCircle className="w-5 h-5" />
                   </div>
                   <h3 className="text-lg font-bold mb-2">{t('home.secure_payment')}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed italic">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Struktur kode yang ramah mesin pencari untuk ranking terbaik.
                   </p>
                 </div>
@@ -99,7 +99,7 @@ export default function Home() {
                     <Code className="w-5 h-5" />
                   </div>
                   <h3 className="text-lg font-bold mb-2">{t('home.best_support')}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed italic">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Siap menangani pertumbuhan pengguna dari ratusan hingga jutaan.
                   </p>
                 </div>
@@ -108,17 +108,17 @@ export default function Home() {
           </div>
         </section>
 
-        {/* TECH STACK MARQUEE */}
+        {/* TECH STACK MARQUEE - RESTORED */}
         <section className="py-10 border-y border-border bg-secondary/30 overflow-hidden">
           <div className="w-full inline-flex flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
-            <ul className="flex items-center justify-center md:justify-start [&_li]:mx-8 animate-marquee text-muted-foreground font-black text-xl uppercase tracking-widest opacity-50">
+            <ul className="flex items-center justify-center md:justify-start [&_li]:mx-8 animate-marquee text-muted-foreground font-bold text-xl uppercase tracking-widest opacity-50">
               {languages.map((tech, i) => <li key={i} className="whitespace-nowrap">{tech}</li>)}
               {languages.map((tech, i) => <li key={`dup-${i}`} className="whitespace-nowrap">{tech}</li>)}
             </ul>
           </div>
         </section>
 
-        {/* FLASH SALE SECTION */}
+        {/* FLASH SALE */}
         {flashSales.length > 0 && (
           <section className="py-12 bg-black text-white">
             <div className="container-custom">
@@ -155,13 +155,13 @@ export default function Home() {
           </section>
         )}
 
-        {/* PREVIEW PRODUCTS SECTION */}
+        {/* PREVIEW PRODUCTS SECTION - RESTORED */}
         <section className="py-24 bg-secondary/20">
           <div className="container-custom px-4">
             <div data-aos="fade-right" className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
               <div>
-                <span className="text-accent font-black tracking-widest uppercase text-xs mb-3 block">{t('navbar.products')}</span>
-                <h2 className="text-3xl md:text-4xl font-black tracking-tight">{t('home.latest_products')}</h2>
+                <span className="text-accent font-bold tracking-wider uppercase text-sm mb-2 block">{t('navbar.products')}</span>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{t('home.latest_products')}</h2>
               </div>
               <Link href="/products" className="inline-flex items-center justify-center px-6 py-3 rounded-lg border border-border bg-white hover:bg-gray-50 transition-colors font-medium">
                 {t('home.view_all')}
@@ -169,38 +169,32 @@ export default function Home() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {featuredProducts.length === 0 ? (
-                <div className="col-span-3 text-center py-10 text-gray-400 italic">Belum ada produk di database.</div>
-              ) : (
-                featuredProducts.map((product: any, idx) => (
-                  <Link href={`/products/${product.id}`} key={product.id} data-aos="fade-up" data-aos-delay={idx * 100} className="group cursor-pointer bg-white rounded-[2rem] p-5 border border-border hover:border-accent/30 transition-all hover:shadow-2xl">
-                    <div className="bg-gray-100 rounded-2xl aspect-[16/10] mb-6 overflow-hidden relative shadow-inner">
-                      <img src={product.images[0] || 'https://placehold.co/600x400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+              {featuredProducts.map((product: any, idx) => (
+                <Link href={`/products/${product.id}`} key={product.id} data-aos="fade-up" data-aos-delay={idx * 100} className="group cursor-pointer bg-white rounded-2xl p-4 border border-border hover:border-accent/30 transition-all hover:shadow-lg">
+                  <div className="bg-gray-100 rounded-xl aspect-[16/10] mb-5 overflow-hidden relative">
+                    <img src={product.images[0] || 'https://placehold.co/600x400'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
+                  </div>
+                  <div className="px-2">
+                    <h3 className="text-lg font-bold mb-1 group-hover:text-accent transition-colors">{product.name}</h3>
+                    <p className="text-muted-foreground text-xs mb-3 line-clamp-1">{product.description}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold">Rp {product.price.toLocaleString('id-ID')}</span>
+                      <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center group-hover:translate-x-1 transition-transform shadow-lg"><ArrowRight size={14} /></div>
                     </div>
-                    <div className="px-2">
-                      <h3 className="text-xl font-bold mb-1 group-hover:text-accent transition-colors">{product.name}</h3>
-                      <p className="text-muted-foreground text-sm line-clamp-1 mb-4 leading-relaxed italic">{product.description}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="font-black text-2xl text-black">Rp {product.price.toLocaleString('id-ID')}</span>
-                        <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center group-hover:translate-x-1 transition-transform shadow-lg shadow-black/20"><ArrowRight size={18} /></div>
-                      </div>
-                    </div>
-                  </Link>
-                ))
-              )}
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* SERVICES SECTION */}
+        {/* SERVICES SECTION - RESTORED */}
         <section className="py-24 bg-white">
           <div className="container-custom px-4">
-            <div data-aos="fade-up" className="text-center max-w-3xl mx-auto mb-20">
-              <span className="text-accent font-black tracking-widest uppercase text-xs mb-3 block">{t('navbar.services')}</span>
-              <h2 className="text-3xl md:text-5xl font-black mb-6 tracking-tighter">{t('home.help_title')}</h2>
-              <p className="text-muted-foreground text-lg leading-relaxed">
-                {t('home.help_desc')}
-              </p>
+            <div data-aos="fade-up" className="text-center max-w-2xl mx-auto mb-16">
+              <span className="text-accent font-bold tracking-wider uppercase text-sm mb-2 block">{t('navbar.services')}</span>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('home.help_title')}</h2>
+              <p className="text-muted-foreground">{t('home.help_desc')}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -209,17 +203,18 @@ export default function Home() {
                 { icon: <Smartphone />, title: "Mobile Apps", desc: "Aplikasi Android & iOS yang responsif." },
                 { icon: <Database />, title: "Backend System", desc: "Arsitektur server yang aman dan scalable." }
               ].map((s, i) => (
-                <div key={i} data-aos="fade-up" data-aos-delay={i * 100} className="p-10 rounded-[2.5rem] border border-border bg-secondary/10 hover:bg-white hover:shadow-2xl transition-all group">
-                  <div className="w-14 h-14 mb-8 bg-black text-white flex items-center justify-center rounded-2xl group-hover:rotate-6 transition-transform shadow-xl shadow-black/10">{s.icon}</div>
-                  <h3 className="text-2xl font-bold mb-4 tracking-tight">{s.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{s.desc}</p>
+                <div key={i} data-aos="fade-up" data-aos-delay={i * 100} className="p-8 rounded-2xl border border-border bg-secondary/10 hover:bg-white hover:shadow-xl transition-all">
+                  <div className="w-12 h-12 mb-6 bg-black text-white flex items-center justify-center rounded-xl">{s.icon}</div>
+                  <h3 className="text-xl font-bold mb-3">{s.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{s.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="py-32 relative overflow-hidden bg-black text-white mx-4 my-12 rounded-[3rem]">
+        {/* CTA - RESTORED */}
+        <section className="py-32 relative overflow-hidden bg-black text-white mx-4 my-8 rounded-[3rem]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-accent/20 via-transparent to-transparent opacity-50" />
           <div className="container-custom relative z-10 text-center px-4">
             <h2 data-aos="zoom-in" className="text-4xl md:text-6xl font-black mb-8 tracking-tighter leading-none">{t('home.start_transform')}</h2>
@@ -231,48 +226,34 @@ export default function Home() {
         </section>
       </main>
 
-      {/* FOOTER */}
-      <footer className="bg-white pt-24 pb-12 border-t border-border px-6 md:px-12">
+      {/* FOOTER - RESTORED */}
+      <footer className="bg-white pt-20 pb-12 border-t border-border px-4">
         <div className="container-custom">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
             <div className="col-span-1">
-              <Link href="/" className="text-3xl font-black tracking-tighter block mb-8">ARFCODER</Link>
-              <p className="text-muted-foreground text-sm leading-relaxed max-w-xs italic">
-                {t('footer.desc')}
-              </p>
+              <span className="text-2xl font-black tracking-tighter block mb-6">ARFCODER</span>
+              <p className="text-muted-foreground text-sm leading-relaxed">{t('footer.desc')}</p>
             </div>
             <div>
-              <h4 className="font-black text-xs uppercase tracking-widest text-black mb-8">{t('footer.company')}</h4>
-              <ul className="space-y-4 text-sm font-bold text-muted-foreground">
-                <li><Link href="/services" className="hover:text-black transition-colors">{t('navbar.services')}</Link></li>
-                <li><Link href="/products" className="hover:text-black transition-colors">{t('navbar.products')}</Link></li>
+              <h4 className="font-bold mb-6">{t('footer.quick_links')}</h4>
+              <ul className="space-y-4 text-sm text-muted-foreground">
+                <li><Link href="/products">{t('navbar.products')}</Link></li>
+                <li><Link href="/services">{t('navbar.services')}</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-black text-xs uppercase tracking-widest text-black mb-8">{t('footer.support')}</h4>
-              <ul className="space-y-4 text-sm font-bold text-muted-foreground">
-                <li><Link href="/terms" className="hover:text-black transition-colors">{t('policy.terms')}</Link></li>
-                <li><Link href="/privacy" className="hover:text-black transition-colors">{t('policy.privacy')}</Link></li>
-                <li><Link href="/refund-policy" className="hover:text-black transition-colors">{t('policy.refund')}</Link></li>
-                <li><Link href="/faq" className="hover:text-black transition-colors">{t('policy.faq')}</Link></li>
+              <h4 className="font-bold mb-6">{t('footer.support')}</h4>
+              <ul className="space-y-4 text-sm text-muted-foreground">
+                <li><Link href="/faq">FAQ</Link></li>
+                <li><Link href="/terms">{t('policy.terms')}</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-black text-xs uppercase tracking-widest text-black mb-8">{t('footer.contact')}</h4>
-              <ul className="space-y-4 text-sm font-bold text-muted-foreground">
-                <li className="flex items-start gap-3"><MapPin className="text-accent w-5 h-5 shrink-0"/> <span>Jl.Kebun Baru Indah Blok Puhun Dusun 4 Kabupaten Cirebon</span></li>
-                <li className="flex items-center gap-3"><Phone className="text-accent w-5 h-5 shrink-0"/> <span>08988289551</span></li>
-                <li className="flex items-center gap-3"><Mail className="text-accent w-5 h-5 shrink-0"/> <span>arfzxcoder@gmail.com</span></li>
-              </ul>
+              <h4 className="font-bold mb-6">{t('footer.contact')}</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">arfzxcoder@gmail.com<br />08988289551</p>
             </div>
           </div>
-          <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-bold text-muted-foreground italic">
-            <p>© 2026 ArfCoder. {t('footer.rights')}</p>
-            <div className="flex gap-6">
-              <span>DESIGNED BY ARF</span>
-              <span>DEVELOPED WITH NEXTJS 15</span>
-            </div>
-          </div>
+          <div className="border-t pt-8 text-center text-xs text-muted-foreground">© 2026 ArfCoder. {t('footer.rights')}</div>
         </div>
       </footer>
     </div>

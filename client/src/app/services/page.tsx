@@ -39,7 +39,9 @@ export default function ServicesPage() {
       <main className="max-w-7xl mx-auto px-8 py-24 pt-32">
         <div data-aos="fade-up" className="text-center mb-16">
           <h1 className="text-5xl font-black mb-4 tracking-tighter text-black">{t('services.title')}</h1>
-          <p className="text-gray-500 max-w-2xl mx-auto text-lg leading-relaxed">{t('services.desc')}</p>
+          <p className="text-gray-500 max-w-2xl mx-auto text-lg leading-relaxed">
+            {t('services.desc')}
+          </p>
         </div>
 
         {loading ? (
@@ -55,9 +57,10 @@ export default function ServicesPage() {
                   <DynamicIcon name={service.icon} />
                 </div>
                 <h3 className="text-2xl font-black mb-4 tracking-tight">{service.title}</h3>
-                <p className="text-gray-500 mb-8 text-sm leading-relaxed flex-grow">{service.description}</p>
+                <p className="text-gray-500 mb-8 text-sm leading-relaxed flex-grow">
+                  {service.description}
+                </p>
                 <div className="pt-6 border-t border-gray-100 flex justify-between items-center">
-                  {/* FIX NaN PRICE: Gunakan Number() atau tampilkan string jika bukan angka */}
                   <span className="font-black text-xl text-accent">
                     Rp {isNaN(Number(service.price)) ? service.price : Number(service.price).toLocaleString()}
                   </span>
@@ -69,6 +72,16 @@ export default function ServicesPage() {
             ))}
           </div>
         )}
+
+        {/* CTA */}
+        <div className="mt-32 p-12 rounded-[3rem] bg-black text-white text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-accent/10 opacity-50" />
+          <h2 className="text-3xl md:text-5xl font-black mb-6 relative z-10">{t('home.start_transform')}</h2>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
+            <a href="https://wa.me/628988289551" className="px-10 py-5 bg-white text-black rounded-2xl font-black hover:scale-105 transition-all shadow-xl">{t('services.order_service')}</a>
+            <a href="/contact" className="px-10 py-5 bg-transparent border-2 border-white/20 rounded-2xl font-black hover:bg-white/10 transition-all">{t('services.contact_admin')}</a>
+          </div>
+        </div>
       </main>
     </div>
   );
