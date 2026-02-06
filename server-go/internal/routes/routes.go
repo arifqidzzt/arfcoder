@@ -8,17 +8,17 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	// --- MANDATORY: WEBHOOK (AT THE VERY TOP) ---
-	// Using All to support both GET (test) and POST (Midtrans)
-	app.All("/api/callback/midtrans", func(c *fiber.Ctx) error {
+	// Root API Group
+	api := app.Group("/api", middleware.RateLimitAPI())
+
+	// --- WEBHOOK (TARUH DI SINI AGAR TERBACA OLEH NGINX & GO) ---
+	// URL: https://arfzxdev.com/api/midtrans-callback
+	api.All("/midtrans-callback", func(c *fiber.Ctx) error {
 		if c.Method() == "GET" {
-			return c.SendString("Midtrans Callback is active and reachable!")
+			return c.SendString("OK: Webhook is reachable!")
 		}
 		return handlers.HandleMidtransWebhook(c)
 	})
-
-	// Group /api for Rate Limiting
-	api := app.Group("/api", middleware.RateLimitAPI())
 
 	// --- AUTH ---
 	auth := api.Group("/auth", middleware.RateLimitAuth(), middleware.SecureMiddleware)
@@ -61,19 +61,16 @@ func SetupRoutes(app *fiber.App) {
 	vouchers.Post("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.CreateVoucher)
 	vouchers.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteVoucher)
 
-	// --- FLASH SALES ---
 	fs := api.Group("/flash-sales", middleware.SecureMiddleware)
 	fs.Get("/active", handlers.GetActiveFlashSales)
 	fs.Get("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.GetAllFlashSales)
 	fs.Post("/", middleware.AuthMiddleware, middleware.AdminOnly, handlers.CreateFlashSale)
 	fs.Delete("/:id", middleware.AuthMiddleware, middleware.AdminOnly, handlers.DeleteFlashSale)
 
-	// --- REVIEWS ---
 	reviews := api.Group("/reviews", middleware.SecureMiddleware)
 	reviews.Get("/:productId", handlers.GetProductReviews)
 	reviews.Post("/", middleware.AuthMiddleware, handlers.CreateReview)
 
-	// --- USER PROFILE ---
 	user := api.Group("/user", middleware.SecureMiddleware, middleware.AuthMiddleware)
 	user.Get("/profile", handlers.GetProfile)
 	user.Put("/profile", handlers.UpdateProfile)
@@ -87,18 +84,15 @@ func SetupRoutes(app *fiber.App) {
 	user.Post("/phone/request-new", handlers.RequestNewPhoneOtp)
 	user.Post("/phone/verify-new", handlers.VerifyNewPhone)
 
-	// --- CART ---
 	cart := user.Group("/cart")
 	cart.Get("/", handlers.GetCart)
 	cart.Post("/", handlers.AddToCart)
 	cart.Put("/:productId", handlers.UpdateCartQuantity)
 	cart.Delete("/:productId", handlers.RemoveFromCart)
 
-	// --- CHAT ---
 	user.Post("/chat/send", handlers.SendMessage)
 	user.Get("/chat/history/:userId", handlers.GetUserChatHistory)
 
-	// --- ADMIN ---
 	admin := api.Group("/admin", middleware.SecureMiddleware, middleware.AuthMiddleware, middleware.AdminOnly)
 	admin.Get("/stats", handlers.GetDashboardStats)
 	admin.Get("/orders", handlers.GetAllOrders)
