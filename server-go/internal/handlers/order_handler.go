@@ -122,12 +122,12 @@ func CreateOrder(c *fiber.Ctx) error {
 			},
 		}
 
-		// LOGIKA KHUSUS E-WALLET (WAJIB ADA CALLBACK URL)
+		// FIX CASE SENSITIVITY: CallbackUrl & ShopeePay
 		callbackURL := config.ClientURL + "/orders/" + order.ID
 		if req.PaymentType == "gopay" {
-			coreReq.Gopay = &coreapi.GopayDetails{EnableCallback: true, CallbackURL: callbackURL}
+			coreReq.Gopay = &coreapi.GopayDetails{EnableCallback: true, CallbackUrl: callbackURL}
 		} else if req.PaymentType == "shopeepay" {
-			coreReq.Shopeepay = &coreapi.ShopeepayDetails{CallbackURL: callbackURL}
+			coreReq.ShopeePay = &coreapi.ShopeePayDetails{CallbackUrl: callbackURL}
 		}
 
 		if req.PaymentType == "bank_transfer" {
@@ -145,11 +145,14 @@ func CreateOrder(c *fiber.Ctx) error {
 			details["va_number"] = resp.VaNumbers[0].VANumber
 			details["bank"] = resp.VaNumbers[0].Bank
 		}
+		if resp.PermataVaNumber != "" {
+			details["va_number"] = resp.PermataVaNumber
+			details["bank"] = "permata"
+		}
 		for _, action := range resp.Actions {
 			if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
 			if action.Name == "deeplink-redirect" { details["deeplink"] = action.URL }
 		}
-		// DANA Fallback
 		if details["deeplink"] == nil && resp.RedirectURL != "" {
 			details["deeplink"] = resp.RedirectURL
 		}
@@ -188,7 +191,6 @@ func GetOrderById(c *fiber.Ctx) error {
 		if ok && expiryStr != "" {
 			expiryTime, _ := time.Parse("2006-01-02 15:04:05", expiryStr)
 			if !expiryTime.IsZero() && time.Now().After(expiryTime) {
-				// Auto-Regenerate Logic
 				newTxId := fmt.Sprintf("%s-%d", order.ID, time.Now().Unix())
 				coreReq := &coreapi.ChargeReq{
 					PaymentType: coreapi.CoreapiPaymentType(order.PaymentType),
@@ -203,6 +205,10 @@ func GetOrderById(c *fiber.Ctx) error {
 					if len(resp.VaNumbers) > 0 {
 						details["va_number"] = resp.VaNumbers[0].VANumber
 						details["bank"] = resp.VaNumbers[0].Bank
+					}
+					if resp.PermataVaNumber != "" {
+						details["va_number"] = resp.PermataVaNumber
+						details["bank"] = "permata"
 					}
 					for _, action := range resp.Actions {
 						if action.Name == "generate-qr-code" { details["qr_url"] = action.URL }
