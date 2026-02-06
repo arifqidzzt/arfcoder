@@ -127,6 +127,9 @@ func CreateOrder(c *fiber.Ctx) error {
 			coreReq.Gopay = &coreapi.GopayDetails{EnableCallback: true, CallbackUrl: callbackURL}
 		} else if req.PaymentType == "shopeepay" {
 			coreReq.ShopeePay = &coreapi.ShopeePayDetails{CallbackUrl: callbackURL}
+		} else if req.PaymentType == "dana" {
+			// DANA usually just needs the amount and payment_type, 
+			// it will return a redirect_url in the response
 		}
 
 		if req.PaymentType == "bank_transfer" {
@@ -140,6 +143,10 @@ func CreateOrder(c *fiber.Ctx) error {
 		}
 
 		details := make(utils.JSONField)
+		
+		// Map for easier access
+		details["payment_type"] = string(resp.PaymentType)
+
 		if len(resp.VaNumbers) > 0 {
 			details["va_number"] = resp.VaNumbers[0].VANumber
 			details["bank"] = resp.VaNumbers[0].Bank
@@ -159,8 +166,9 @@ func CreateOrder(c *fiber.Ctx) error {
 		if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
 			details["deeplink"] = resp.RedirectURL
 		}
-
-		details["expiry_time"] = resp.ExpiryTime
+		
+		// ShopeePay specific: sometimes it returns QR in Actions and Deeplink in Actions.
+		// If DANA, resp.RedirectURL is usually the one.
 		database.DB.Model(&order).Update("paymentDetails", details)
 		order.PaymentDetails = details
 

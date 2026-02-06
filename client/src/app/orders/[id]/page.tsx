@@ -197,45 +197,71 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <div><h1 className="text-xl font-bold">{t('orders.title')}</h1><p className="text-sm text-gray-500">{t('orders.invoice')}: {order.invoiceNumber}</p></div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
               <span className="text-sm text-gray-500 mr-2">{t('orders.status')}</span>
               {order.status === 'PENDING' && <CountdownTimer dateString={order.createdAt} expiryTime={order.paymentDetails?.expiry_time} />}
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{order.status}</span>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
+              ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : 
+                order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 
+                order.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : 
+                'bg-blue-100 text-blue-700'}`}>
+              {order.status}
+            </span>
           </div>
 
-          {/* Core API Details */}
-          {order.status === "PENDING" && order.paymentDetails && (
-            <div className="mb-6 bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-200">
-              <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 flex items-center gap-2"><CreditCard size={16} /> {t('orders.instruction')}</h3>
-              
-              {order.paymentDetails.va_number && (
-                <div className="space-y-4">
-                  <p className="text-xs text-gray-500 mb-1">VA Number ({order.paymentDetails.bank?.toUpperCase()})</p>
-                  <div className="flex items-center justify-between bg-white p-4 rounded-xl border">
-                    <span className="text-xl font-mono font-bold tracking-widest">{order.paymentDetails.va_number}</span>
-                    <button onClick={() => {navigator.clipboard.writeText(order.paymentDetails?.va_number || ""); toast.success(t('orders.copy'))}} className="text-blue-600"><Copy size={18} /></button>
-                  </div>
-                </div>
-              )}
+          <div className="flex flex-col gap-3">
+            <div className="text-right mb-4">
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">Total Pembayaran</span>
+              <span className="text-2xl font-black text-black">Rp {order.totalAmount.toLocaleString()}</span>
+            </div>
+          </div>
 
-              {(order.paymentDetails.qr_url || order.paymentDetails.deeplink) && (
-                <div className="flex flex-col items-center">
-                  {order.paymentDetails.qr_url && !order.paymentDetails.deeplink && (
-                    <>
-                      <p className="text-xs text-gray-500 mb-4">{t('orders.scan_qr')}</p>
-                      <div className="bg-white p-4 rounded-2xl border mb-4"><img src={order.paymentDetails.qr_url} className="w-48 h-48" /></div>
-                    </>
-                  )}
-                  {order.paymentDetails.deeplink && (
-                    <a href={order.paymentDetails.deeplink} className={`mt-2 px-8 py-3 text-white rounded-xl font-bold shadow-lg ${order.paymentType === 'gopay' ? 'bg-[#00AABB]' : order.paymentType === 'shopeepay' ? 'bg-[#EE4D2D]' : 'bg-[#118EEA]'}`}>
-                      {t('orders.open_app')} {order.paymentType?.toUpperCase()}
-                    </a>
-                  )}
-                </div>
-              )}
+          {/* Core API Details - REDESIGNED */}
+          {order.status === "PENDING" && order.paymentDetails && (
+            <div className="mb-6 space-y-6">
+              <div className="p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
+                  <CreditCard size={14} /> {t('orders.instruction')}
+                </h3>
+                
+                {order.paymentDetails.va_number && (
+                  <div className="max-w-xs mx-auto">
+                    <p className="text-[10px] font-black text-gray-400 uppercase mb-3">VA Number ({order.paymentDetails.bank?.toUpperCase()})</p>
+                    <div className="flex items-center justify-between bg-white p-5 rounded-2xl border-2 border-black shadow-lg mb-4">
+                      <span className="text-2xl font-black tracking-[0.2em]">{order.paymentDetails.va_number}</span>
+                      <button onClick={() => {navigator.clipboard.writeText(order.paymentDetails?.va_number || ""); toast.success(t('orders.copy'))}} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <Copy size={20} className="text-accent" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {(order.paymentDetails.qr_url || order.paymentDetails.deeplink) && (
+                  <div className="flex flex-col items-center gap-6">
+                    {order.paymentDetails.qr_url && !order.paymentDetails.deeplink && (
+                      <div className="space-y-4">
+                        <div className="bg-white p-6 rounded-[2rem] border-2 border-black shadow-xl inline-block">
+                          <img src={order.paymentDetails.qr_url} className="w-48 h-48" alt="QR Code" />
+                        </div>
+                        <p className="text-xs font-bold text-gray-500 italic">{t('orders.scan_qr')}</p>
+                      </div>
+                    )}
+                    
+                    {order.paymentDetails.deeplink && (
+                      <a href={order.paymentDetails.deeplink} className={`group flex items-center gap-4 px-10 py-5 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 transition-all ${
+                        order.paymentType === 'gopay' ? 'bg-[#00AABB]' : 
+                        order.paymentType === 'shopeepay' ? 'bg-[#EE4D2D]' : 'bg-[#118EEA]'
+                      }`}>
+                        {t('orders.open_app')} {order.paymentType?.toUpperCase()}
+                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

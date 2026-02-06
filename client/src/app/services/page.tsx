@@ -73,15 +73,35 @@ export default function ServicesPage() {
           </div>
         )}
 
-        {/* CTA */}
-        <div className="mt-32 p-12 rounded-[3rem] bg-black text-white text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-accent/10 opacity-50" />
-          <h2 className="text-3xl md:text-5xl font-black mb-6 relative z-10">{t('home.start_transform')}</h2>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-            <a href="https://wa.me/628988289551" className="px-10 py-5 bg-white text-black rounded-2xl font-black hover:scale-105 transition-all shadow-xl">{t('services.order_service')}</a>
-            <a href="/contact" className="px-10 py-5 bg-transparent border-2 border-white/20 rounded-2xl font-black hover:bg-white/10 transition-all">{t('services.contact_admin')}</a>
+        {/* CTA - REDESIGNED */}
+        <section className="mt-32 relative rounded-[4rem] overflow-hidden bg-black py-24 px-8 md:py-32 md:px-16">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px] -mr-64 -mt-64 animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] -ml-64 -mb-64 animate-pulse" style={{ animationDelay: '1s' }} />
+          
+          <div className="relative z-10 text-center flex flex-col items-center">
+            <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center mb-10 border border-white/20 rotate-6 hover:rotate-0 transition-transform duration-500">
+              <Zap className="w-10 h-10 text-accent fill-accent" />
+            </div>
+            
+            <h2 className="text-4xl md:text-7xl font-black text-white tracking-tighter leading-[0.9] mb-10 max-w-4xl">
+              {t('home.start_transform').split(' ').slice(0, -1).join(' ')} <br/>
+              <span className="text-gradient">{t('home.start_transform').split(' ').slice(-1)}</span>
+            </h2>
+            
+            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mb-12 font-medium italic">
+              {t('home.help_desc')}
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
+              <a href="https://wa.me/628988289551" className="px-12 py-6 bg-white text-black rounded-2xl font-black text-sm uppercase tracking-[0.2em] hover:bg-accent hover:text-white transition-all hover:scale-105 shadow-[0_20px_50px_rgba(255,255,255,0.1)]">
+                {t('services.order_service')}
+              </a>
+              <a href="/contact" className="px-12 py-6 bg-transparent border-2 border-white/20 text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] hover:bg-white/10 transition-all">
+                {t('services.contact_admin')}
+              </a>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );
