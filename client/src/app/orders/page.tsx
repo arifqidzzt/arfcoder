@@ -103,19 +103,17 @@ export default function MyOrdersPage() {
                 <div key={order.id} className="block border border-gray-100 rounded-[2rem] p-8 hover:shadow-2xl transition-all bg-white relative group">
                   <div className="flex justify-between items-start mb-8">
                     <div className="space-y-3">
-                      {/* RESTORED STATUS COLORS */}
-                      <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.1em] shadow-sm
-                        ${order.status === 'PAID' ? 'bg-green-500 text-white' : 
-                          order.status === 'PENDING' ? 'bg-orange-500 text-white' : 
-                          order.status === 'CANCELLED' ? 'bg-red-500 text-white' :
-                          'bg-gray-800 text-white'}`}>
+                      <span className={`text-[10px] font-black uppercase tracking-[0.2em]
+                        ${order.status === 'PAID' ? 'text-green-600' : 
+                          order.status === 'PENDING' ? 'text-orange-600' : 
+                          order.status === 'CANCELLED' ? 'text-red-600' :
+                          'text-gray-600'}`}>
                         {order.status}
                       </span>
                       
                       {order.status === 'PENDING' && (
-                        <div className="flex items-center gap-2 bg-red-50 text-red-600 px-3 py-1.5 rounded-xl border border-red-100">
-                          <AlertCircle size={14}/>
-                          <span className="text-[10px] font-black uppercase tracking-widest">{t('orders.limit')}:</span>
+                        <div className="flex items-center gap-2 text-red-600">
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-50">{t('orders.limit')}:</span>
                           <CountdownTimer dateString={order.createdAt} />
                         </div>
                       )}

@@ -118,7 +118,8 @@ func CreateOrder(c *fiber.Ctx) error {
 				GrossAmt: int64(finalAmount),
 			},
 			CustomerDetails: &midtrans.CustomerDetails{
-				FName: user.UserID,
+				FName: user.Name,
+				Email: user.Email,
 			},
 		}
 
@@ -127,9 +128,6 @@ func CreateOrder(c *fiber.Ctx) error {
 			coreReq.Gopay = &coreapi.GopayDetails{EnableCallback: true, CallbackUrl: callbackURL}
 		} else if req.PaymentType == "shopeepay" {
 			coreReq.ShopeePay = &coreapi.ShopeePayDetails{CallbackUrl: callbackURL}
-		} else if req.PaymentType == "dana" {
-			// DANA usually just needs the amount and payment_type, 
-			// it will return a redirect_url in the response
 		}
 
 		if req.PaymentType == "bank_transfer" {
@@ -154,24 +152,18 @@ func CreateOrder(c *fiber.Ctx) error {
 			details["bank"] = "permata"
 		}
 
+		// Fill deeplink from RedirectURL (Mandatory for DANA)
+		if resp.RedirectURL != "" {
+			details["deeplink"] = resp.RedirectURL
+		}
+
 		for _, action := range resp.Actions {
 			if action.Name == "generate-qr-code" {
 				details["qr_url"] = action.URL
 			}
-			if action.Name == "deeplink-redirect" {
+			if action.Name == "deeplink-redirect" && (details["deeplink"] == nil || details["deeplink"] == "") {
 				details["deeplink"] = action.URL
 			}
-		}
-
-		// MANDATORY FOR DANA: RedirectURL is the actual deeplink
-		if req.PaymentType == "dana" || req.PaymentMethod == "dana" {
-			if resp.RedirectURL != "" {
-				details["deeplink"] = resp.RedirectURL
-			}
-		}
-
-		if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
-			details["deeplink"] = resp.RedirectURL
 		}
 
 		details["expiry_time"] = resp.ExpiryTime
