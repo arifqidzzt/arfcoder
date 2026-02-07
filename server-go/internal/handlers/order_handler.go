@@ -140,9 +140,14 @@ func CreateOrder(c *fiber.Ctx) error {
 
 		resp, err := CoreClient.ChargeTransaction(coreReq)
 		if err != nil {
-			fmt.Println("MIDTRANS_ERROR:", err)
+			fmt.Printf("MIDTRANS_CHARGE_ERROR: %v\n", err)
 			return c.Status(201).JSON(fiber.Map{"order": order, "message": "Payment system busy"})
 		}
+
+		// DEBUG LOG - LIHAT DATA MENTAH DARI MIDTRANS
+		fmt.Printf("DEBUG_MIDTRANS_FULL_RESPONSE: %+v\n", resp)
+		fmt.Printf("DEBUG_MIDTRANS_ACTIONS: %+v\n", resp.Actions)
+		fmt.Printf("DEBUG_MIDTRANS_REDIRECT_URL: %s\n", resp.RedirectURL)
 
 		details := make(utils.JSONField)
 		details["payment_type"] = string(resp.PaymentType)
