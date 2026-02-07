@@ -115,8 +115,18 @@ func CreateOrder(c *fiber.Ctx) error {
 	database.DB.Where("\"userId\" = ?", user.ID).Delete(&models.CartItem{})
 
 	if paymentSetting.Mode == models.MidtransModeCore {
+		pType := coreapi.CoreapiPaymentType(req.PaymentType)
+		if req.PaymentType == "dana" {
+			pType = "dana"
+		}
+
+		// LOGGING MENDETAIL UNTUK DEBUGGING
+		isProd := config.MidtransIsProd == "true"
+		fmt.Printf("\n[DEBUG MIDTRANS] ENVIRONMENT: Production=%v (Config Value='%s')\n", isProd, config.MidtransIsProd)
+		fmt.Printf("[DEBUG MIDTRANS] PAYMENT_TYPE: %s\n", req.PaymentType)
+
 		coreReq := &coreapi.ChargeReq{
-			PaymentType: coreapi.CoreapiPaymentType(req.PaymentType),
+			PaymentType: pType,
 			TransactionDetails: midtrans.TransactionDetails{
 				OrderID:  order.ID,
 				GrossAmt: int64(finalAmount),
@@ -124,8 +134,11 @@ func CreateOrder(c *fiber.Ctx) error {
 			CustomerDetails: &midtrans.CustomerDetails{
 				FName: user.Name,
 				Email: user.Email,
+				Phone: user.PhoneNumber,
 			},
 		}
+
+		fmt.Printf("[DEBUG MIDTRANS] PAYLOAD: %+v\n", coreReq)
 
 		callbackURL := config.ClientURL + "/orders/" + order.ID
 		if req.PaymentType == "gopay" {
@@ -140,14 +153,13 @@ func CreateOrder(c *fiber.Ctx) error {
 
 		resp, err := CoreClient.ChargeTransaction(coreReq)
 		if err != nil {
-			fmt.Printf("MIDTRANS_CHARGE_ERROR: %v\n", err)
+			fmt.Printf("[DEBUG MIDTRANS] ERROR: %v\n", err)
 			return c.Status(201).JSON(fiber.Map{"order": order, "message": "Payment system busy"})
 		}
 
-		// DEBUG LOG - LIHAT DATA MENTAH DARI MIDTRANS
-		fmt.Printf("DEBUG_MIDTRANS_FULL_RESPONSE: %+v\n", resp)
-		fmt.Printf("DEBUG_MIDTRANS_ACTIONS: %+v\n", resp.Actions)
-		fmt.Printf("DEBUG_MIDTRANS_REDIRECT_URL: %s\n", resp.RedirectURL)
+		fmt.Printf("[DEBUG MIDTRANS] FULL_RESPONSE: %+v\n", resp)
+		fmt.Printf("[DEBUG MIDTRANS] REDIRECT_URL: %s\n", resp.RedirectURL)
+		fmt.Printf("[DEBUG MIDTRANS] ACTIONS: %+v\n", resp.Actions)
 
 		details := make(utils.JSONField)
 		details["payment_type"] = string(resp.PaymentType)

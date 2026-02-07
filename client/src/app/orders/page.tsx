@@ -103,7 +103,7 @@ export default function MyOrdersPage() {
                 <div key={order.id} className="block border border-gray-100 rounded-[2rem] p-8 hover:shadow-2xl transition-all bg-white relative group">
                   <div className="flex justify-between items-start mb-8">
                     <div className="space-y-2">
-                      <div className={`inline-flex items-center px-2 py-0.5 rounded border text-[9px] font-bold tracking-widest uppercase
+                      <div className={`inline-flex items-center px-2 py-0.5 rounded border-[1px] text-[8px] font-black uppercase tracking-[0.2em]
                         ${order.status === 'PAID' ? 'border-green-500 text-green-600' : 
                           order.status === 'PENDING' ? 'border-orange-400 text-orange-500' : 
                           order.status === 'CANCELLED' ? 'border-red-500 text-red-600' :
@@ -113,7 +113,7 @@ export default function MyOrdersPage() {
                       
                       {order.status === 'PENDING' && (
                         <div className="flex items-center gap-1.5 text-red-600">
-                          <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">{t('orders.limit')}:</span>
+                          <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Payment Deadline:</span>
                           <CountdownTimer dateString={order.createdAt} />
                         </div>
                       )}
