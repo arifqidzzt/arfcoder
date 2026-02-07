@@ -178,7 +178,7 @@ func CreateOrder(c *fiber.Ctx) error {
 	} else {
 		reqSnap := &snap.Request{
 			TransactionDetails: midtrans.TransactionDetails{OrderID: order.ID, GrossAmt: int64(finalAmount)},
-			CustomerDetail: &midtrans.CustomerDetails{FName: user.UserID},
+			CustomerDetail: &midtrans.CustomerDetails{FName: user.ID},
 		}
 		resp, _ := SnapClient.CreateTransaction(reqSnap)
 		database.DB.Model(&order).Updates(models.Order{SnapToken: resp.Token, SnapUrl: resp.RedirectURL})
