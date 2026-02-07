@@ -130,12 +130,11 @@ func CreateOrder(c *fiber.Ctx) error {
 			},
 		}
 
-		// LOGIKA DIRECT DEBIT UNTUK DANA
+		// LOGIKA KHUSUS DANA (Mencoba jalur integrasi lain)
 		if req.PaymentType == "dana" {
-			coreReq.PaymentType = coreapi.PaymentTypeDirectDebit
-			coreReq.DirectDebit = &coreapi.DirectDebitDetails{
-				Channel: "dana",
-			}
+			coreReq.PaymentType = "direct_debit"
+			// Jika SDK tidak memiliki field DirectDebit, kita bisa menggunakan CustomField atau 
+			// memastikan akun Dana tertembak via Redirect URL standar Midtrans.
 		}
 
 		fmt.Printf("[DEBUG MIDTRANS] PAYLOAD: %+v\n", coreReq)
