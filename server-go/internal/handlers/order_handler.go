@@ -29,7 +29,11 @@ func InitMidtrans() {
 }
 
 func CreateOrder(c *fiber.Ctx) error {
-	user := c.Locals("user").(*utils.JWTClaims)
+	userClaims := c.Locals("user").(*utils.JWTClaims)
+
+	// Fetch full user data from DB
+	var user models.User
+	database.DB.First(&user, "id = ?", userClaims.UserID)
 
 	type ItemReq struct {
 		ProductId string `json:"productId"`
@@ -92,7 +96,7 @@ func CreateOrder(c *fiber.Ctx) error {
 	invoiceNumber := fmt.Sprintf("INV-%d-%d", time.Now().UnixMilli(), 100+time.Now().Unix()%900)
 
 	order := models.Order{
-		UserID:          user.UserID,
+		UserID:          user.ID,
 		InvoiceNumber:   invoiceNumber,
 		TotalAmount:     finalAmount,
 		Status:          models.OrderStatusPending,
@@ -108,7 +112,7 @@ func CreateOrder(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"message": "Failed to create order"})
 	}
 
-	database.DB.Where("\"userId\" = ?", user.UserID).Delete(&models.CartItem{})
+	database.DB.Where("\"userId\" = ?", user.ID).Delete(&models.CartItem{})
 
 	if paymentSetting.Mode == models.MidtransModeCore {
 		coreReq := &coreapi.ChargeReq{
