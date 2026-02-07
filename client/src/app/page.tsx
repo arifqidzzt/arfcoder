@@ -158,20 +158,22 @@ export default function Home() {
         </section>
 
         {/* LATEST PRODUCTS */}
-        <section className="py-24 bg-white relative">
+        <section className="py-20 bg-white relative">
           <div className="container-custom px-4 relative z-10">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
               <div data-aos="fade-right">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-px w-10 bg-accent" />
-                  <span className="text-accent font-black tracking-[0.3em] uppercase text-xs">{t('navbar.products')}</span>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-px w-8 bg-accent" />
+                  <span className="text-accent font-black tracking-widest uppercase text-[10px]">{t('navbar.products')}</span>
                 </div>
-                <h2 className="text-xl md:text-3xl font-black tracking-tighter leading-none italic">
+                <h2 className="text-lg md:text-2xl font-black tracking-tighter leading-tight italic">
                   <span className="text-black">{t('home.latest_products').split(' ')[0]}</span><br/>
                   <span className="text-gray-300">{t('home.latest_products').split(' ').slice(1).join(' ')}</span>
                 </h2>
               </div>
-              <Link href="/products" className="btn-hero-secondary text-sm px-8 py-3" data-aos="fade-left">{t('home.view_all')}</Link>
+              <Link href="/products" className="btn-hero-secondary text-[10px] px-6 py-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-all font-black uppercase tracking-widest" data-aos="fade-left">
+                {t('home.view_all')}
+              </Link>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

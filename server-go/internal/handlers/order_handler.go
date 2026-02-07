@@ -116,15 +116,7 @@ func CreateOrder(c *fiber.Ctx) error {
 
 	if paymentSetting.Mode == models.MidtransModeCore {
 		pType := coreapi.CoreapiPaymentType(req.PaymentType)
-		if req.PaymentType == "dana" {
-			pType = "dana"
-		}
-
-		// LOGGING MENDETAIL UNTUK DEBUGGING
-		isProd := config.MidtransIsProd == "true"
-		fmt.Printf("\n[DEBUG MIDTRANS] ENVIRONMENT: Production=%v (Config Value='%s')\n", isProd, config.MidtransIsProd)
-		fmt.Printf("[DEBUG MIDTRANS] PAYMENT_TYPE: %s\n", req.PaymentType)
-
+		
 		coreReq := &coreapi.ChargeReq{
 			PaymentType: pType,
 			TransactionDetails: midtrans.TransactionDetails{
@@ -136,6 +128,14 @@ func CreateOrder(c *fiber.Ctx) error {
 				Email: user.Email,
 				Phone: user.PhoneNumber,
 			},
+		}
+
+		// LOGIKA DIRECT DEBIT UNTUK DANA
+		if req.PaymentType == "dana" {
+			coreReq.PaymentType = coreapi.PaymentTypeDirectDebit
+			coreReq.DirectDebit = &coreapi.DirectDebitDetails{
+				Channel: "dana",
+			}
 		}
 
 		fmt.Printf("[DEBUG MIDTRANS] PAYLOAD: %+v\n", coreReq)
@@ -182,14 +182,16 @@ func CreateOrder(c *fiber.Ctx) error {
 			if action.Name == "generate-qr-code" {
 				details["qr_url"] = action.URL
 			}
-			if (action.Name == "deeplink-redirect" || action.Name == "dana-deeplink") && (details["deeplink"] == nil || details["deeplink"] == "") {
+			if action.URL != "" && (details["deeplink"] == nil || details["deeplink"] == "") {
 				details["deeplink"] = action.URL
 			}
 		}
 
-		// Final fallback for any e-wallet that gives a direct URL
-		if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
-			details["deeplink"] = resp.RedirectURL
+		// Final fallback for DANA if actions and redirect are confusing
+		if req.PaymentType == "dana" && (details["deeplink"] == nil || details["deeplink"] == "") {
+			if len(resp.Actions) > 0 {
+				details["deeplink"] = resp.Actions[0].URL
+			}
 		}
 
 		details["expiry_time"] = resp.ExpiryTime
