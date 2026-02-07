@@ -103,13 +103,13 @@ export default function MyOrdersPage() {
                 <div key={order.id} className="block border border-gray-100 rounded-[2rem] p-8 hover:shadow-2xl transition-all bg-white relative group">
                   <div className="flex justify-between items-start mb-8">
                     <div className="space-y-3">
-                      <span className={`text-[10px] font-black uppercase tracking-[0.2em]
-                        ${order.status === 'PAID' ? 'text-green-600' : 
-                          order.status === 'PENDING' ? 'text-orange-600' : 
-                          order.status === 'CANCELLED' ? 'text-red-600' :
-                          'text-gray-600'}`}>
+                      <div className={`inline-block border-2 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.2em]
+                        ${order.status === 'PAID' ? 'border-green-600 text-green-600' : 
+                          order.status === 'PENDING' ? 'border-orange-600 text-orange-600' : 
+                          order.status === 'CANCELLED' ? 'border-red-600 text-red-600' :
+                          'border-gray-600 text-gray-600'}`}>
                         {order.status}
-                      </span>
+                      </div>
                       
                       {order.status === 'PENDING' && (
                         <div className="flex items-center gap-2 text-red-600">

@@ -235,21 +235,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
                 {(order.paymentDetails.qr_url || order.paymentDetails.deeplink) && (
                   <div className="flex flex-col items-center gap-4">
-                    {order.paymentDetails.qr_url && (
+                    {order.paymentDetails.qr_url && !order.paymentDetails.deeplink && (
                       <div className="bg-white p-3 rounded-xl border inline-block mb-2">
                         <img src={order.paymentDetails.qr_url} className="w-40 h-40" alt="QR Code" />
                       </div>
                     )}
                     
-                    {/* Dana/E-Wallet Button - Improved Logic */}
+                    {/* Dana/E-Wallet Button - Highly Flexible Logic */}
                     {(order.paymentDetails.deeplink || order.paymentDetails.qr_url) && (
                       <a 
                         href={order.paymentDetails.deeplink || order.paymentDetails.qr_url} 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className={`w-full flex items-center justify-center gap-2 py-3 text-white rounded-lg font-bold text-sm shadow-sm transition-transform active:scale-95 ${
-                          order.paymentMethod === 'dana' || order.paymentType === 'dana' ? 'bg-[#118EEA]' :
-                          order.paymentType === 'gopay' ? 'bg-[#00AABB]' : 
+                          order.paymentMethod?.toLowerCase().includes('dana') || order.paymentType?.toLowerCase().includes('dana') ? 'bg-[#118EEA]' :
+                          order.paymentType?.toLowerCase().includes('gopay') ? 'bg-[#00AABB]' : 
                           'bg-[#EE4D2D]'
                         }`}
                       >

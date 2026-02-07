@@ -165,9 +165,14 @@ func CreateOrder(c *fiber.Ctx) error {
 			if action.Name == "generate-qr-code" {
 				details["qr_url"] = action.URL
 			}
-			if action.Name == "deeplink-redirect" && (details["deeplink"] == nil || details["deeplink"] == "") {
+			if (action.Name == "deeplink-redirect" || action.Name == "dana-deeplink") && (details["deeplink"] == nil || details["deeplink"] == "") {
 				details["deeplink"] = action.URL
 			}
+		}
+
+		// Final fallback for any e-wallet that gives a direct URL
+		if (details["deeplink"] == nil || details["deeplink"] == "") && resp.RedirectURL != "" {
+			details["deeplink"] = resp.RedirectURL
 		}
 
 		details["expiry_time"] = resp.ExpiryTime
