@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import { Mail, Smartphone, MessageSquare, AlertTriangle, ShieldCheck, Clock, Zap } from 'lucide-react';
 
 export default function ContactSalesPage() {
-  const email = "arfcoderx@gmail.com";
+  const email = "arfcoder@gmail.com";
   const phone = "628988289551";
 
   const handleEmail = () => {

@@ -53,7 +53,7 @@ export default function TermsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-gray-600">
               <div>
                 <p className="font-bold text-black mb-1 italic">Email Support</p>
-                <p>arfcoderx@gmail.com</p>
+                <p>arfcoder@gmail.com</p>
               </div>
               <div>
                 <p className="font-bold text-black mb-1 italic">WhatsApp</p>

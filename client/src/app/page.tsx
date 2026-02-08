@@ -16,7 +16,7 @@ export default function Home() {
   const [flashSales, setFlashSales] = useState<any[]>([]);
   const { user } = useAuthStore();
   const addItem = useCartStore((state) => state.addItem);
-  
+
   const languages = [
     "JavaScript", "TypeScript", "Python", "Go", "Java", "PHP", "Rust", "Kotlin", "Ruby", "Dart", "Swift", "C++"
   ];
@@ -56,7 +56,7 @@ export default function Home() {
           api.get('/products'),
           api.get('/flash-sales/active')
         ]);
-        setFeaturedProducts(pRes.data.slice(0, 3)); 
+        setFeaturedProducts(pRes.data.slice(0, 3));
         setFlashSales(fsRes.data);
       } catch (error) {
         console.error("Failed to fetch data");
@@ -131,24 +131,24 @@ export default function Home() {
             <ul className="flex items-center justify-center md:justify-start [&_li]:mx-20 animate-marquee text-muted-foreground font-black text-xl uppercase tracking-[0.3em]">
               {languages.map((tech, i) => (
                 <li key={i} className="whitespace-nowrap flex flex-col items-center gap-6">
-                  <img 
-                    src={tech === "Java" 
-                      ? "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" 
-                      : `https://cdn.simpleicons.org/${techLogos[tech] || tech.toLowerCase()}`} 
-                    alt="" 
-                    className="w-20 h-20 object-contain hover:scale-110 transition-transform duration-300" 
+                  <img
+                    src={tech === "Java"
+                      ? "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg"
+                      : `https://cdn.simpleicons.org/${techLogos[tech] || tech.toLowerCase()}`}
+                    alt=""
+                    className="w-20 h-20 object-contain hover:scale-110 transition-transform duration-300"
                   />
                   <span className="text-lg font-bold text-gray-500">{tech}</span>
                 </li>
               ))}
               {languages.map((tech, i) => (
                 <li key={`dup-${i}`} className="whitespace-nowrap flex flex-col items-center gap-6">
-                  <img 
-                    src={tech === "Java" 
-                      ? "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" 
-                      : `https://cdn.simpleicons.org/${techLogos[tech] || tech.toLowerCase()}`} 
-                    alt="" 
-                    className="w-20 h-20 object-contain hover:scale-110 transition-transform duration-300" 
+                  <img
+                    src={tech === "Java"
+                      ? "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg"
+                      : `https://cdn.simpleicons.org/${techLogos[tech] || tech.toLowerCase()}`}
+                    alt=""
+                    className="w-20 h-20 object-contain hover:scale-110 transition-transform duration-300"
                   />
                   <span className="text-lg font-bold text-gray-500">{tech}</span>
                 </li>
@@ -167,7 +167,7 @@ export default function Home() {
                   <span className="text-accent font-black tracking-widest uppercase text-[10px]">{t('navbar.products')}</span>
                 </div>
                 <h2 className="text-lg md:text-2xl font-black tracking-tighter leading-tight italic">
-                  <span className="text-black">{t('home.latest_products').split(' ')[0]}</span><br/>
+                  <span className="text-black">{t('home.latest_products').split(' ')[0]}</span><br />
                   <span className="text-gray-300">{t('home.latest_products').split(' ').slice(1).join(' ')}</span>
                 </h2>
               </div>
@@ -175,14 +175,14 @@ export default function Home() {
                 {t('home.view_all')}
               </Link>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {featuredProducts.map((product: any, idx) => (
                 <Link href={`/products/${product.id}`} key={product.id} data-aos="fade-up" data-aos-delay={idx * 100} className="group bg-white rounded-[2rem] p-5 border border-border hover:border-accent/30 transition-all hover:shadow-2xl flex flex-col">
                   <div className="bg-gray-100 rounded-2xl aspect-[16/10] mb-6 overflow-hidden relative shadow-inner">
                     <img src={product.images[0] || 'https://placehold.co/600x400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button 
+                      <button
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -289,7 +289,7 @@ export default function Home() {
               <ul className="space-y-4 text-sm font-bold text-muted-foreground">
                 <li className="flex gap-3 leading-relaxed"><span>Cirebon, West Java, Indonesia</span></li>
                 <li className="flex items-center gap-3"><span>083127378535</span></li>
-                <li className="flex items-center gap-3"><span>arfcoderx@gmail.com</span></li>
+                <li className="flex items-center gap-3"><span>arfcoder@gmail.com</span></li>
               </ul>
             </div>
           </div>
