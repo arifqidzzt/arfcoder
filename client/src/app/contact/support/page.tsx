@@ -4,9 +4,9 @@ import Navbar from '@/components/Navbar';
 import { Mail, Smartphone, MessageSquare, AlertTriangle, LifeBuoy } from 'lucide-react';
 
 export default function ContactSupportPage() {
-  const email = "arfzxcoder@gmail.com";
-  const phone = "628988289551"; 
-  
+  const email = "arfcoderx@gmail.com";
+  const phone = "628988289551";
+
   const handleEmail = () => {
     const subject = encodeURIComponent("Bantuan Teknis ArfCoder");
     const body = encodeURIComponent("Halo Tim Support ArfCoder,\n\nSaya mengalami kendala pada akun/pesanan saya:\n\n[Jelaskan Masalah Anda Disini]\n\nMohon bantuannya.");

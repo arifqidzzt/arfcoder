@@ -11,7 +11,7 @@ export default function TermsPage() {
           <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-4">Syarat & Ketentuan</h1>
           <p className="text-gray-500 text-sm italic">Terakhir diperbarui: 6 Februari 2026</p>
         </div>
-        
+
         <div className="prose prose-gray max-w-none space-y-12">
           <section>
             <h2 className="text-xl font-bold mb-4 text-black">1. Informasi Umum</h2>
@@ -53,15 +53,15 @@ export default function TermsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-gray-600">
               <div>
                 <p className="font-bold text-black mb-1 italic">Email Support</p>
-                <p>arfzxcoder@gmail.com</p>
+                <p>arfcoderx@gmail.com</p>
               </div>
               <div>
                 <p className="font-bold text-black mb-1 italic">WhatsApp</p>
-                <p>08988289551</p>
+                <p>083127378535</p>
               </div>
               <div className="md:col-span-2">
                 <p className="font-bold text-black mb-1 italic">Alamat Kantor</p>
-                <p>Jl.Kebun Baru Indah Blok Puhun Dusun 4 Kabupaten Cirebon</p>
+                <p>Jalan Kebun Baru Indah Blok Puhun Dusun 4 RT001/RW006, Kabupaten Cirebon</p>
               </div>
             </div>
           </section>

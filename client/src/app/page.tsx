@@ -288,8 +288,8 @@ export default function Home() {
               <h4 className="font-black text-xs uppercase tracking-widest text-black mb-8">{t('footer.contact')}</h4>
               <ul className="space-y-4 text-sm font-bold text-muted-foreground">
                 <li className="flex gap-3 leading-relaxed"><span>Cirebon, West Java, Indonesia</span></li>
-                <li className="flex items-center gap-3"><span>08988289551</span></li>
-                <li className="flex items-center gap-3"><span>arfzxcoder@gmail.com</span></li>
+                <li className="flex items-center gap-3"><span>083127378535</span></li>
+                <li className="flex items-center gap-3"><span>arfcoderx@gmail.com</span></li>
               </ul>
             </div>
           </div>
